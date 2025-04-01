@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sales Requests - Jewelry Inventory System</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>tailwind.config = { theme: { extend: { colors: { primary: '#6366f1', secondary: '#f59e0b' }, borderRadius: { 'none': '0px', 'sm': '4px', DEFAULT: '8px', 'md': '12px', 'lg': '16px', 'xl': '20px', '2xl': '24px', '3xl': '32px', 'full': '9999px', 'button': '8px' } } } }</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+    <style>
+        :where([class^="ri-"])::before {
+            content: "\f3c2";
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f9fafb;
+        }
+
+        input[type="number"]::-webkit-inner-spin-button,
+        input[type="number"]::-webkit-outer-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .custom-checkbox {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #d1d5db;
+            border-radius: 4px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .custom-checkbox:checked {
+            background-color: #6366f1;
+            border-color: #6366f1;
+        }
+
+        .custom-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 2px;
+            width: 6px;
+            height: 10px;
+            border: solid white;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .custom-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+
+        .custom-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .switch-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e5e7eb;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .switch-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.switch-slider {
+            background-color: #6366f1;
+        }
+
+        input:checked+.switch-slider:before {
+            transform: translateX(20px);
+        }
+
+        .table-fixed-header {
+            overflow-y: auto;
+            max-height: 600px;
+        }
+
+        .table-fixed-header thead {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            background-color: white;
+        }
+
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-approved {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .status-rejected {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .status-processing {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+
+        .date-picker {
+            position: relative;
+        }
+
+        .date-picker input {
+            padding-right: 2.5rem;
+        }
+
+        .date-picker-icon {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            pointer-events: none;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white shadow-lg hidden md:block">
+            <div class="p-4 border-b border-gray-100">
+                <div class="font-['Pacifico'] text-2xl text-primary">logo</div>
+            </div>
+            <div class="p-4">
+                <p class="text-xs font-semibold text-gray-400 uppercase mb-4">Main Menu</p>
+                <nav>
+                    <a href="./index.html"
+                        data-readdy="true"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 font-medium mb-1">
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <i class="ri-dashboard-line"></i>
+                        </div>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="./inventory.html"
+                        data-readdy="true"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 font-medium mb-1">
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <i class="ri-store-line"></i>
+                        </div>
+                        <span>Inventory</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary bg-opacity-10 text-primary font-medium mb-1">
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <i class="ri-shopping-bag-line"></i>
+                        </div>
+                        <span>Sales Requests</span>
+                        <span
+                            class="ml-auto bg-primary text-white text-xs font-semibold px-2 py-0.5 rounded-full">8</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 font-medium mb-1">
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <i class="ri-user-line"></i>
+                        </div>
+                        <span>Customers</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 font-medium mb-1">
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <i class="ri-bar-chart-line"></i>
+                        </div>
+                        <span>Reports</span>
+                    </a>
+                </nav>
+                <p class="text-xs font-semibold text-gray-400 uppercase mt-6 mb-4">Admin Settings</p>
+                <nav>
+                    <a href="#"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 font-medium mb-1">
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <i class="ri-team-line"></i>
+                        </div>
+                        <span>User Management</span>
+                    </a>
+                    <a href="#"
+                        class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 font-medium mb-1">
+                        <div class="w-5 h-5 flex items-center justify-center">
+                            <i class="ri-settings-line"></i>
+                        </div>
+                        <span>System Settings</span>
+                    </a>
+                </nav>
+            </div>
+        </aside>
+        <!-- Main Content -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+            <!-- Top Header -->
+            <header class="bg-white shadow-sm z-10">
+                <div class="flex items-center justify-between px-6 h-16">
+                    <div class="flex items-center gap-4">
+                        <button class="md:hidden w-10 h-10 flex items-center justify-center text-gray-600">
+                            <i class="ri-menu-line text-xl"></i>
+                        </button>
+                        <div class="relative w-64">
+                            <input type="text" placeholder="Search requests..."
+                                class="w-full h-10 pl-10 pr-4 text-sm bg-gray-50 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
+                            <div class="absolute left-3 top-0 h-10 w-5 flex items-center justify-center text-gray-400">
+                                <i class="ri-search-line"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <button class="w-10 h-10 flex items-center justify-center text-gray-600 relative">
+                            <i class="ri-notification-line text-xl"></i>
+                            <span
+                                class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center rounded-full">3</span>
+                        </button>
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-medium">
+                                JD</div>
+                            <div class="hidden md:block">
+                                <p class="text-sm font-medium">John Doe</p>
+                                <p class="text-xs text-gray-500">Admin</p>
+                            </div>
+                            <button class="w-8 h-8 flex items-center justify-center text-gray-600">
+                                <i class="ri-arrow-down-s-line"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+            <!-- Main Content Area -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-gray-900">Sales Requests</h1>
+                    <p class="text-gray-600">View and manage pending sales requests from customers</p>
+                </div>
+                <!-- Control Bar -->
+                <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-6">
+                    <div class="flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex flex-wrap items-center gap-4">
+                            <div class="relative">
+                                <button id="statusFilterBtn"
+                                    class="flex items-center gap-2 px-4 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 !rounded-button whitespace-nowrap">
+                                    <span>All Statuses</span>
+                                    <div class="w-4 h-4 flex items-center justify-center">
+                                        <i class="ri-arrow-down-s-line"></i>
+                                    </div>
+                                </button>
+                                <div id="statusDropdown"
+                                    class="hidden absolute left-0 mt-2 w-48 bg-white shadow-lg rounded-lg z-10 border border-gray-200">
+                                    <ul class="py-2">
+                                        <li><a href="#"
+                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">All
+                                                Statuses</a></li>
+                                        <li><a href="#"
+                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Pending</a>
+                                        </li>
+                                        <li><a href="#"
+                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Approved</a>
+                                        </li>
+                                        <li><a href="#"
+                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Rejected</a>
+                                        </li>
+                                        <li><a href="#"
+                                                class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Processing</a>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="date-picker">
+                                <input type="text" placeholder="Date range"
+                                    class="px-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
+                                    readonly>
+                                <div class="date-picker-icon text-gray-400">
+                                    <i class="ri-calendar-line"></i>
+                                </div>
+                            </div>
+                            <div class="relative w-64">
+                                <input type="text" placeholder="Search requests..."
+                                    class="w-full h-10 pl-10 pr-4 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50">
+                                <div
+                                    class="absolute left-3 top-0 h-10 w-5 flex items-center justify-center text-gray-400">
+                                    <i class="ri-search-line"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button id="exportBtn"
+                                class="flex items-center gap-2 px-4 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 !rounded-button whitespace-nowrap">
+                                <div class="w-4 h-4 flex items-center justify-center">
+                                    <i class="ri-download-line"></i>
+                                </div>
+                                <span>Export</span>
+                            </button>
+                            <button id="bulkApproveBtn"
+                                class="flex items-center gap-2 px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 !rounded-button whitespace-nowrap">
+                                <div class="w-4 h-4 flex items-center justify-center">
+                                    <i class="ri-check-line"></i>
+                                </div>
+                                <span>Bulk Approve</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Sales Requests Table -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-100 mb-6">
+                    <div class="flex items-center justify-between p-4 border-b border-gray-100">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="selectAll" class="custom-checkbox mr-3">
+                            <span class="text-sm text-gray-500" id="selectedCount">0 selected</span>
+                        </div>
+                        <div id="bulkActions" class="hidden">
+                            <button
+                                class="px-3 py-1.5 text-sm bg-green-50 text-green-600 rounded-lg mr-2 !rounded-button whitespace-nowrap">Approve
+                                Selected</button>
+                            <button
+                                class="px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded-lg !rounded-button whitespace-nowrap">Reject
+                                Selected</button>
+                        </div>
+                    </div>
+                    <div class="table-fixed-header">
+                        <table class="w-full">
+                            <thead>
+                                <tr
+                                    class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-100">
+                                    <th class="px-6 py-3 w-10"></th>
+                                    <th class="px-6 py-3 cursor-pointer" data-sort="id">
+                                        <div class="flex items-center">
+                                            <span>Request ID</span>
+                                            <div class="w-4 h-4 flex items-center justify-center sort-icon">
+                                                <i class="ri-arrow-up-s-line"></i>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th class="px-6 py-3 cursor-pointer" data-sort="customer">
+                                        <div class="flex items-center">
+                                            <span>Customer</span>
+                                            <div class="w-4 h-4 flex items-center justify-center sort-icon">
+                                                <i class="ri-arrow-up-s-line"></i>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th class="px-6 py-3">Requested Items</th>
+                                    <th class="px-6 py-3 cursor-pointer" data-sort="value">
+                                        <div class="flex items-center">
+                                            <span>Total Value</span>
+                                            <div class="w-4 h-4 flex items-center justify-center sort-icon">
+                                                <i class="ri-arrow-up-s-line"></i>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th class="px-6 py-3 cursor-pointer" data-sort="date">
+                                        <div class="flex items-center">
+                                            <span>Request Date</span>
+                                            <div class="w-4 h-4 flex items-center justify-center sort-icon active">
+                                                <i class="ri-arrow-down-s-line"></i>
+                                            </div>
+                                        </div>
+                                    </th>
+                                    <th class="px-6 py-3">Status</th>
+                                    <th class="px-6 py-3">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100" id="salesRequestsTable">
+                                <!-- Sales requests will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="flex items-center justify-between p-4 border-t border-gray-100">
+                        <div class="text-sm text-gray-500">
+                            Showing <span id="itemsShown">1-8</span> of <span id="totalItems">8</span> requests
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button
+                                class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400">
+                                <i class="ri-arrow-left-s-line"></i>
+                            </button>
+                            <button
+                                class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white">1</button>
+                            <button
+                                class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-700">
+                                <i class="ri-arrow-right-s-line"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <!-- Request Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-500">Total Requests</h3>
+                            <div
+                                class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600">
+                                <i class="ri-shopping-bag-line"></i>
+                            </div>
+                        </div>
+                        <p class="text-2xl font-bold text-gray-900">24</p>
+                        <p class="text-sm text-gray-600 mt-2 flex items-center">
+                            <i class="ri-arrow-up-s-line mr-1 text-green-500"></i> <span
+                                class="text-green-600">12%</span> from last month
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-500">Pending Approval</h3>
+                            <div
+                                class="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600">
+                                <i class="ri-time-line"></i>
+                            </div>
+                        </div>
+                        <p class="text-2xl font-bold text-gray-900">8</p>
+                        <p class="text-sm text-amber-600 mt-2 flex items-center">
+                            <i class="ri-arrow-right-s-line mr-1"></i> Requires attention
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-500">Approved</h3>
+                            <div
+                                class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600">
+                                <i class="ri-check-line"></i>
+                            </div>
+                        </div>
+                        <p class="text-2xl font-bold text-gray-900">12</p>
+                        <p class="text-sm text-green-600 mt-2 flex items-center">
+                            <i class="ri-arrow-up-s-line mr-1"></i> 8% from last month
+                        </p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-medium text-gray-500">Rejected</h3>
+                            <div class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-red-600">
+                                <i class="ri-close-line"></i>
+                            </div>
+                        </div>
+                        <p class="text-2xl font-bold text-gray-900">4</p>
+                        <p class="text-sm text-gray-600 mt-2 flex items-center">
+                            <i class="ri-arrow-down-s-line mr-1 text-red-500"></i> <span class="text-red-600">2%</span>
+                            from last month
+                        </p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <!-- View Request Details Modal -->
+    <div id="viewRequestModal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-xl w-full max-w-3xl">
+            <div class="flex items-center justify-between p-6 border-b border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900">Sales Request Details</h3>
+                <button id="closeModalBtn"
+                    class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100">
+                    <i class="ri-close-line text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">Request Information</h4>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="mb-3">
+                                <p class="text-xs text-gray-500">Request ID</p>
+                                <p class="text-sm font-medium text-gray-900" id="modal-request-id">SR-2025-0001</p>
+                            </div>
+                            <div class="mb-3">
+                                <p class="text-xs text-gray-500">Request Date</p>
+                                <p class="text-sm font-medium text-gray-900" id="modal-request-date">March 28, 2025</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Status</p>
+                                <span class="status-badge status-pending" id="modal-status">Pending</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="text-sm font-medium text-gray-500 mb-2">Customer Information</h4>
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="mb-3">
+                                <p class="text-xs text-gray-500">Customer Name</p>
+                                <p class="text-sm font-medium text-gray-900" id="modal-customer-name">Olivia Bennett</p>
+                            </div>
+                            <div class="mb-3">
+                                <p class="text-xs text-gray-500">Email</p>
+                                <p class="text-sm font-medium text-gray-900" id="modal-customer-email">
+                                    olivia.bennett@example.com</p>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500">Phone</p>
+                                <p class="text-sm font-medium text-gray-900" id="modal-customer-phone">+1 (555) 123-4567
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <h4 class="text-sm font-medium text-gray-500 mb-2">Requested Items</h4>
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <table class="w-full text-sm">
+                        <thead>
+                            <tr class="text-left text-xs font-medium text-gray-500 border-b border-gray-200">
+                                <th class="pb-2">Item</th>
+                                <th class="pb-2">Quantity</th>
+                                <th class="pb-2 text-right">Price</th>
+                                <th class="pb-2 text-right">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modal-items-table">
+                            <tr>
+                                <td class="py-2">Princess Cut Diamond Ring (JR-DIA-001)</td>
+                                <td class="py-2">1</td>
+                                <td class="py-2 text-right">$4,299.00</td>
+                                <td class="py-2 text-right">$4,299.00</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2">18K Gold Chain (JN-GLD-023)</td>
+                                <td class="py-2">1</td>
+                                <td class="py-2 text-right">$1,850.00</td>
+                                <td class="py-2 text-right">$1,850.00</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr class="border-t border-gray-200">
+                                <td colspan="3" class="pt-2 text-right font-medium">Subtotal:</td>
+                                <td class="pt-2 text-right font-medium" id="modal-subtotal">$6,149.00</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="pt-1 text-right text-xs text-gray-500">Tax (8%):</td>
+                                <td class="pt-1 text-right text-xs text-gray-500" id="modal-tax">$491.92</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="pt-1 text-right font-semibold">Total:</td>
+                                <td class="pt-1 text-right font-semibold" id="modal-total">$6,640.92</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <h4 class="text-sm font-medium text-gray-500 mb-2">Additional Notes</h4>
+                <div class="bg-gray-50 p-4 rounded-lg mb-6">
+                    <p class="text-sm text-gray-700" id="modal-notes">Customer is requesting these items for an
+                        anniversary gift. Would like to pick up in store if possible. Prefers to be contacted by email
+                        for confirmation.</p>
+                </div>
+            </div>
+            <div class="flex items-center justify-end p-6 border-t border-gray-100 gap-3">
+                <button id="rejectRequestBtn"
+                    class="px-4 py-2 text-sm bg-white text-red-600 border border-red-200 rounded-lg hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 !rounded-button whitespace-nowrap">
+                    <div class="w-4 h-4 inline-flex items-center justify-center mr-1">
+                        <i class="ri-close-line"></i>
+                    </div>
+                    Reject Request
+                </button>
+                <button id="approveRequestBtn"
+                    class="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 !rounded-button whitespace-nowrap">
+                    <div class="w-4 h-4 inline-flex items-center justify-center mr-1">
+                        <i class="ri-check-line"></i>
+                    </div>
+                    Approve Request
+                </button>
+            </div>
+        </div>
+    </div>
+    <script>
+        // Mock data for sales requests
+        const salesRequestsData = [
+            {
+                id: "SR-2025-0001",
+                customer: "Olivia Bennett",
+                email: "olivia.bennett@example.com",
+                phone: "+1 (555) 123-4567",
+                items: [
+                    { name: "Princess Cut Diamond Ring", sku: "JR-DIA-001", quantity: 1, price: 4299 },
+                    { name: "18K Gold Chain", sku: "JN-GLD-023", quantity: 1, price: 1850 }
+                ],
+                value: "$6,640.92",
+                date: "Mar 28, 2025",
+                status: "pending",
+                notes: "Customer is requesting these items for an anniversary gift. Would like to pick up in store if possible. Prefers to be contacted by email for confirmation."
+            },
+            {
+                id: "SR-2025-0002",
+                customer: "Ethan Richardson",
+                email: "ethan.richardson@example.com",
+                phone: "+1 (555) 987-6543",
+                items: [
+                    { name: "Blue Sapphire Studs", sku: "JE-SAP-015", quantity: 1, price: 2750 }
+                ],
+                value: "$2,970.00",
+                date: "Mar 27, 2025",
+                status: "pending",
+                notes: "Customer is interested in purchasing this as a birthday gift. Requested gift wrapping service."
+            },
+            {
+                id: "SR-2025-0003",
+                customer: "Sophia Martinez",
+                email: "sophia.martinez@example.com",
+                phone: "+1 (555) 456-7890",
+                items: [
+                    { name: "Platinum Bangle", sku: "JB-PLT-007", quantity: 1, price: 1499 },
+                    { name: "Emerald Halo Engagement Ring", sku: "JR-EME-012", quantity: 1, price: 3899 }
+                ],
+                value: "$5,830.52",
+                date: "Mar 26, 2025",
+                status: "pending",
+                notes: "Customer is looking for an engagement ring and matching bangle. Would like to discuss customization options."
+            },
+            {
+                id: "SR-2025-0004",
+                customer: "William Carter",
+                email: "william.carter@example.com",
+                phone: "+1 (555) 234-5678",
+                items: [
+                    { name: "Diamond Tennis Bracelet", sku: "JW-DIA-032", quantity: 1, price: 3200 }
+                ],
+                value: "$3,456.00",
+                date: "Mar 25, 2025",
+                status: "approved",
+                notes: "Customer has been a loyal client for 5 years. Approved for 10% loyalty discount."
+            },
+            {
+                id: "SR-2025-0005",
+                customer: "Emma Thompson",
+                email: "emma.thompson@example.com",
+                phone: "+1 (555) 876-5432",
+                items: [
+                    { name: "Ruby Drop Earrings", sku: "JE-RBY-022", quantity: 1, price: 1650 },
+                    { name: "Freshwater Pearl Necklace", sku: "JN-PRL-008", quantity: 1, price: 899 }
+                ],
+                value: "$2,752.92",
+                date: "Mar 24, 2025",
+                status: "pending",
+                notes: "Customer would like to see these items in person before finalizing purchase. Scheduled for store visit on March 31."
+            },
+            {
+                id: "SR-2025-0006",
+                customer: "Alexander Davis",
+                email: "alexander.davis@example.com",
+                phone: "+1 (555) 345-6789",
+                items: [
+                    { name: "Gold Mechanical Watch", sku: "JW-GLD-019", quantity: 1, price: 5500 }
+                ],
+                value: "$5,940.00",
+                date: "Mar 23, 2025",
+                status: "rejected",
+                notes: "Customer has payment issues on previous orders. Request rejected pending resolution of outstanding balance."
+            },
+            {
+                id: "SR-2025-0007",
+                customer: "Isabella Wilson",
+                email: "isabella.wilson@example.com",
+                phone: "+1 (555) 654-3210",
+                items: [
+                    { name: "Sterling Silver Charm Bracelet", sku: "JB-SLV-045", quantity: 2, price: 450 }
+                ],
+                value: "$972.00",
+                date: "Mar 22, 2025",
+                status: "pending",
+                notes: "Customer is purchasing these as gifts for her daughters. Requested different charm options."
+            },
+            {
+                id: "SR-2025-0008",
+                customer: "James Anderson",
+                email: "james.anderson@example.com",
+                phone: "+1 (555) 789-0123",
+                items: [
+                    { name: "Princess Cut Diamond Ring", sku: "JR-DIA-001", quantity: 1, price: 4299 }
+                ],
+                value: "$4,642.92",
+                date: "Mar 21, 2025",
+                status: "pending",
+                notes: "Customer is requesting this item for a proposal. Would like to discuss engraving options."
+            }
+        ];
+
+        // Populate sales requests table
+        const salesRequestsTable = document.getElementById('salesRequestsTable');
+        salesRequestsData.forEach(request => {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50';
+
+            // Set status class
+            let statusClass = '';
+            let statusText = '';
+
+            switch (request.status) {
+                case 'pending':
+                    statusClass = 'status-pending';
+                    statusText = 'Pending';
+                    break;
+                case 'approved':
+                    statusClass = 'status-approved';
+                    statusText = 'Approved';
+                    break;
+                case 'rejected':
+                    statusClass = 'status-rejected';
+                    statusText = 'Rejected';
+                    break;
+                case 'processing':
+                    statusClass = 'status-processing';
+                    statusText = 'Processing';
+                    break;
+            }
+
+            // Create item list text
+            const itemsList = request.items.map(item => item.name).join(', ');
+
+            row.innerHTML = `
+    <td class="px-6 py-4">
+      <input type="checkbox" class="custom-checkbox item-checkbox" data-id="${request.id}">
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${request.id}</td>
+    <td class="px-6 py-4 text-sm text-gray-700">${request.customer}</td>
+    <td class="px-6 py-4 text-sm text-gray-700 max-w-xs truncate">${itemsList}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${request.value}</td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${request.date}</td>
+    <td class="px-6 py-4 whitespace-nowrap">
+      <span class="status-badge ${statusClass}">${statusText}</span>
+    </td>
+    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+      <div class="flex items-center gap-2">
+        <button class="view-details-btn w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded-full" data-id="${request.id}">
+          <i class="ri-eye-line"></i>
+        </button>
+        ${request.status === 'pending' ? `
+          <button class="approve-btn w-8 h-8 flex items-center justify-center text-gray-500 hover:text-green-500 hover:bg-gray-100 rounded-full" data-id="${request.id}">
+            <i class="ri-check-line"></i>
+          </button>
+          <button class="reject-btn w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded-full" data-id="${request.id}">
+            <i class="ri-close-line"></i>
+          </button>
+        ` : ''}
+      </div>
+    </td>
+  `;
+            salesRequestsTable.appendChild(row);
+        });
+
+        // Toggle status dropdown
+        const statusFilterBtn = document.getElementById('statusFilterBtn');
+        const statusDropdown = document.getElementById('statusDropdown');
+        statusFilterBtn.addEventListener('click', () => {
+            statusDropdown.classList.toggle('hidden');
+        });
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!statusFilterBtn.contains(e.target) && !statusDropdown.contains(e.target)) {
+                statusDropdown.classList.add('hidden');
+            }
+        });
+
+        // Handle select all checkbox
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const itemCheckboxes = document.querySelectorAll('.item-checkbox');
+        const selectedCountElement = document.getElementById('selectedCount');
+        const bulkActionsElement = document.getElementById('bulkActions');
+
+        selectAllCheckbox.addEventListener('change', () => {
+            const isChecked = selectAllCheckbox.checked;
+            itemCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateSelectedCount();
+        });
+
+        // Handle individual checkbox changes
+        itemCheckboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedCount);
+        });
+
+        function updateSelectedCount() {
+            const checkedCount = document.querySelectorAll('.item-checkbox:checked').length;
+            selectedCountElement.textContent = `${checkedCount} selected`;
+
+            if (checkedCount > 0) {
+                bulkActionsElement.classList.remove('hidden');
+            } else {
+                bulkActionsElement.classList.add('hidden');
+            }
+        }
+
+        // Modal functionality
+        const viewRequestModal = document.getElementById('viewRequestModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const viewDetailsBtns = document.querySelectorAll('.view-details-btn');
+        const approveRequestBtn = document.getElementById('approveRequestBtn');
+        const rejectRequestBtn = document.getElementById('rejectRequestBtn');
+
+        // Open modal with request details
+        viewDetailsBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const requestId = btn.getAttribute('data-id');
+                const request = salesRequestsData.find(req => req.id === requestId);
+
+                if (request) {
+                    // Populate modal with request data
+                    document.getElementById('modal-request-id').textContent = request.id;
+                    document.getElementById('modal-request-date').textContent = request.date;
+                    document.getElementById('modal-customer-name').textContent = request.customer;
+                    document.getElementById('modal-customer-email').textContent = request.email;
+                    document.getElementById('modal-customer-phone').textContent = request.phone;
+                    document.getElementById('modal-notes').textContent = request.notes;
+
+                    // Set status badge
+                    const statusElement = document.getElementById('modal-status');
+                    statusElement.className = 'status-badge';
+
+                    switch (request.status) {
+                        case 'pending':
+                            statusElement.classList.add('status-pending');
+                            statusElement.textContent = 'Pending';
+                            break;
+                        case 'approved':
+                            statusElement.classList.add('status-approved');
+                            statusElement.textContent = 'Approved';
+                            break;
+                        case 'rejected':
+                            statusElement.classList.add('status-rejected');
+                            statusElement.textContent = 'Rejected';
+                            break;
+                        case 'processing':
+                            statusElement.classList.add('status-processing');
+                            statusElement.textContent = 'Processing';
+                            break;
+                    }
+
+                    // Populate items table
+                    const itemsTableBody = document.getElementById('modal-items-table');
+                    itemsTableBody.innerHTML = '';
+
+                    let subtotal = 0;
+
+                    request.items.forEach(item => {
+                        const itemTotal = item.price * item.quantity;
+                        subtotal += itemTotal;
+
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+          <td class="py-2">${item.name} (${item.sku})</td>
+          <td class="py-2">${item.quantity}</td>
+          <td class="py-2 text-right">$${item.price.toFixed(2)}</td>
+          <td class="py-2 text-right">$${itemTotal.toFixed(2)}</td>
+        `;
+                        itemsTableBody.appendChild(row);
+                    });
+
+                    const tax = subtotal * 0.08;
+                    const total = subtotal + tax;
+
+                    document.getElementById('modal-subtotal').textContent = `$${subtotal.toFixed(2)}`;
+                    document.getElementById('modal-tax').textContent = `$${tax.toFixed(2)}`;
+                    document.getElementById('modal-total').textContent = `$${total.toFixed(2)}`;
+
+                    // Show/hide approve/reject buttons based on status
+                    if (request.status === 'pending') {
+                        approveRequestBtn.classList.remove('hidden');
+                        rejectRequestBtn.classList.remove('hidden');
+                    } else {
+                        approveRequestBtn.classList.add('hidden');
+                        rejectRequestBtn.classList.add('hidden');
+                    }
+
+                    viewRequestModal.classList.remove('hidden');
+                }
+            });
+        });
+
+        // Close modal
+        closeModalBtn.addEventListener('click', () => {
+            viewRequestModal.classList.add('hidden');
+        });
+
+        // Close modal when clicking outside
+        viewRequestModal.addEventListener('click', (e) => {
+            if (e.target === viewRequestModal) {
+                viewRequestModal.classList.add('hidden');
+            }
+        });
+
+        // Approve request button
+        approveRequestBtn.addEventListener('click', () => {
+            alert('Request approved successfully!');
+            viewRequestModal.classList.add('hidden');
+        });
+
+        // Reject request button
+        rejectRequestBtn.addEventListener('click', () => {
+            alert('Request rejected!');
+            viewRequestModal.classList.add('hidden');
+        });
+
+        // Sorting functionality
+        const sortableHeaders = document.querySelectorAll('th[data-sort]');
+        sortableHeaders.forEach(header => {
+            header.addEventListener('click', () => {
+                // Reset all sort icons
+                document.querySelectorAll('.sort-icon').forEach(icon => {
+                    icon.classList.remove('active');
+                });
+
+                // Set this column as active
+                const sortIcon = header.querySelector('.sort-icon');
+                sortIcon.classList.add('active');
+
+                // Toggle sort direction
+                const currentIcon = sortIcon.querySelector('i');
+                if (currentIcon.classList.contains('ri-arrow-up-s-line')) {
+                    currentIcon.classList.remove('ri-arrow-up-s-line');
+                    currentIcon.classList.add('ri-arrow-down-s-line');
+                } else {
+                    currentIcon.classList.remove('ri-arrow-down-s-line');
+                    currentIcon.classList.add('ri-arrow-up-s-line');
+                }
+
+                // Here you would implement actual sorting logic
+            });
+        });
+
+        // Quick approve/reject buttons
+        const approveBtns = document.querySelectorAll('.approve-btn');
+        const rejectBtns = document.querySelectorAll('.reject-btn');
+
+        approveBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const requestId = btn.getAttribute('data-id');
+                alert(`Request ${requestId} approved successfully!`);
+            });
+        });
+
+        rejectBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const requestId = btn.getAttribute('data-id');
+                alert(`Request ${requestId} rejected!`);
+            });
+        });
+
+        // Bulk approve button
+        document.getElementById('bulkApproveBtn').addEventListener('click', () => {
+            const selectedItems = document.querySelectorAll('.item-checkbox:checked');
+            if (selectedItems.length > 0) {
+                alert(`${selectedItems.length} requests approved successfully!`);
+            } else {
+                alert('Please select at least one request to approve.');
+            }
+        });
+    </script>
+</body>
+
+</html>

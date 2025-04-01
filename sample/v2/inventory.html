@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jewelry Shop Inventory Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com/3.4.16"></script>
+<script>tailwind.config={theme:{extend:{colors:{primary:'#F9C64B',secondary:'#1F2937'},borderRadius:{'none':'0px','sm':'4px',DEFAULT:'8px','md':'12px','lg':'16px','xl':'20px','2xl':'24px','3xl':'32px','full':'9999px','button':'8px'}}}}</script>
+<style>
+:where([class^="ri-"])::before { content: "\f3c2"; }
+body {
+font-family: 'Poppins', sans-serif;
+background-color: #f9f9fb;
+}
+h1, h2, h3, h4, h5 {
+font-family: 'Playfair Display', serif;
+}
+.card {
+background: white;
+border-radius: 8px;
+box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+transition: all 0.2s ease;
+}
+.card:hover {
+box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+input[type="search"]::-webkit-search-decoration,
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-results-button,
+input[type="search"]::-webkit-search-results-decoration {
+display: none;
+}
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+-webkit-appearance: none;
+margin: 0;
+}
+.custom-checkbox {
+position: relative;
+display: flex;
+align-items: center;
+cursor: pointer;
+}
+.custom-checkbox input {
+position: absolute;
+opacity: 0;
+cursor: pointer;
+}
+.checkmark {
+height: 18px;
+width: 18px;
+background-color: white;
+border: 1px solid #ddd;
+border-radius: 4px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+.custom-checkbox input:checked ~ .checkmark {
+background-color: #F9C64B;
+border-color: #F9C64B;
+}
+.checkmark:after {
+content: "";
+display: none;
+width: 5px;
+height: 10px;
+border: solid white;
+border-width: 0 2px 2px 0;
+transform: rotate(45deg);
+}
+.custom-checkbox input:checked ~ .checkmark:after {
+display: block;
+}
+.custom-switch {
+position: relative;
+display: inline-block;
+width: 44px;
+height: 24px;
+}
+.custom-switch input {
+opacity: 0;
+width: 0;
+height: 0;
+}
+.slider {
+position: absolute;
+cursor: pointer;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: #ccc;
+transition: .4s;
+border-radius: 24px;
+}
+.slider:before {
+position: absolute;
+content: "";
+height: 18px;
+width: 18px;
+left: 3px;
+bottom: 3px;
+background-color: white;
+transition: .4s;
+border-radius: 50%;
+}
+input:checked + .slider {
+background-color: #F9C64B;
+}
+input:checked + .slider:before {
+transform: translateX(20px);
+}
+.custom-range {
+-webkit-appearance: none;
+width: 100%;
+height: 4px;
+background: #ddd;
+border-radius: 4px;
+outline: none;
+}
+.custom-range::-webkit-slider-thumb {
+-webkit-appearance: none;
+appearance: none;
+width: 16px;
+height: 16px;
+background: #F9C64B;
+border-radius: 50%;
+cursor: pointer;
+}
+.custom-range::-moz-range-thumb {
+width: 16px;
+height: 16px;
+background: #F9C64B;
+border-radius: 50%;
+cursor: pointer;
+}
+.table-checkbox {
+width: 20px;
+height: 20px;
+}
+.table-checkbox input:indeterminate ~ .checkmark {
+background-color: #F9C64B;
+border-color: #F9C64B;
+}
+.table-checkbox input:indeterminate ~ .checkmark:after {
+content: "";
+display: block;
+width: 10px;
+height: 2px;
+background-color: white;
+position: absolute;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+}
+</style>
+</head>
+<body>
+<div class="min-h-screen flex">
+<!-- Sidebar -->
+<aside class="w-64 bg-white border-r border-gray-100 flex flex-col">
+<div class="p-4 border-b border-gray-100 flex items-center">
+<div class="text-2xl font-['Pacifico'] text-primary">logo</div>
+</div>
+<div class="p-4">
+<div class="flex items-center gap-3 mb-6">
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+<i class="ri-user-3-line text-primary"></i>
+</div>
+<div>
+<div class="font-medium">James Wilson</div>
+<div class="text-xs text-gray-500">Admin</div>
+</div>
+</div>
+<nav class="space-y-1">
+<a href="./index.html" data-readdy="true" class="flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-50">
+<div class="w-5 h-5 flex items-center justify-center">
+<i class="ri-dashboard-line"></i>
+</div>
+<span>Dashboard</span>
+</a>
+<a href="#" class="flex items-center gap-3 p-3 rounded-lg bg-primary/10 text-primary font-medium">
+<div class="w-5 h-5 flex items-center justify-center">
+<i class="ri-store-2-line"></i>
+</div>
+<span>Inventory</span>
+</a>
+<a href="./sales.html" data-readdy="true" class="flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-50">
+<div class="w-5 h-5 flex items-center justify-center">
+<i class="ri-shopping-bag-line"></i>
+</div>
+<span>Sales</span>
+</a>
+<a href="./request.html" data-readdy="true" class="flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-50">
+<div class="w-5 h-5 flex items-center justify-center">
+<i class="ri-shopping-bag-line"></i>
+</div>
+<span>Sales Requests</span>
+</a>
+<a href="#" class="flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-50">
+<div class="w-5 h-5 flex items-center justify-center">
+<i class="ri-user-settings-line"></i>
+</div>
+<span>Users</span>
+</a>
+<a href="#" class="flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-50">
+<div class="w-5 h-5 flex items-center justify-center">
+<i class="ri-bar-chart-line"></i>
+</div>
+<span>Analytics</span>
+</a>
+<a href="#" class="flex items-center gap-3 p-3 rounded-lg text-gray-600 hover:bg-gray-50">
+<div class="w-5 h-5 flex items-center justify-center">
+<i class="ri-settings-3-line"></i>
+</div>
+<span>Settings</span>
+</a>
+</nav>
+</div>
+<div class="mt-auto p-4 border-t border-gray-100">
+<button class="flex items-center gap-2 text-gray-600 hover:text-gray-900 p-2 !rounded-button whitespace-nowrap">
+<div class="w-5 h-5 flex items-center justify-center">
+<i class="ri-logout-box-line"></i>
+</div>
+<span>Logout</span>
+</button>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-auto">
+<!-- Header -->
+<header class="bg-white border-b border-gray-100 sticky top-0 z-10">
+<div class="flex items-center justify-between p-4">
+<div class="flex items-center gap-4">
+<h1 class="text-xl font-medium">Inventory Management</h1>
+</div>
+<div class="relative">
+<div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+<div class="w-4 h-4 flex items-center justify-center text-gray-400">
+<i class="ri-search-line"></i>
+</div>
+</div>
+<input type="search" class="w-80 pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm" placeholder="Search for products, SKUs, categories...">
+</div>
+<div class="flex items-center gap-4">
+<button class="relative w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 hover:bg-gray-100">
+<div class="w-5 h-5 flex items-center justify-center">
+<i class="ri-notification-3-line"></i>
+</div>
+<span class="absolute top-0 right-0 w-2 h-2 rounded-full bg-red-500"></span>
+</button>
+<button class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50 hover:bg-gray-100">
+<div class="w-5 h-5 flex items-center justify-center">
+<i class="ri-settings-3-line"></i>
+</div>
+</button>
+<div class="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-medium">
+JW
+</div>
+</div>
+</div>
+</header>
+<!-- Inventory Content -->
+<div class="p-6">
+<!-- Action Bar -->
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="relative">
+<button id="bulkActionBtn" class="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 !rounded-button whitespace-nowrap">
+<span>Bulk Actions</span>
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-arrow-down-s-line"></i>
+</div>
+</button>
+<div id="bulkActionMenu" class="hidden absolute left-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg z-10 py-1 border border-gray-100">
+<button class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2">
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-delete-bin-line text-red-500"></i>
+</div>
+<span>Delete Selected</span>
+</button>
+<button class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2">
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-archive-line text-gray-500"></i>
+</div>
+<span>Archive Selected</span>
+</button>
+<button class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2">
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-price-tag-3-line text-primary"></i>
+</div>
+<span>Change Category</span>
+</button>
+</div>
+</div>
+<button id="filterBtn" class="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 !rounded-button whitespace-nowrap">
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-filter-3-line"></i>
+</div>
+<span>Filters</span>
+</button>
+<div class="text-sm text-gray-500 flex items-center gap-1">
+<span id="selectedCount">0</span> items selected
+</div>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-2 border border-gray-200 rounded-lg p-1">
+<button class="w-8 h-8 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100">
+<div class="w-5 h-5 flex items-center justify-center">
+<i class="ri-layout-grid-line"></i>
+</div>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center bg-primary text-white">
+<div class="w-5 h-5 flex items-center justify-center">
+<i class="ri-list-check"></i>
+</div>
+</button>
+</div>
+<button class="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 !rounded-button whitespace-nowrap">
+<div class="w-5 h-5 flex items-center justify-center">
+<i class="ri-add-line"></i>
+</div>
+<span>Add Product</span>
+</button>
+</div>
+</div>
+<!-- Filter Panel (Hidden by default) -->
+<div id="filterPanel" class="hidden mb-6 card p-4">
+<div class="flex items-center justify-between mb-4">
+<h3 class="font-medium">Filter Products</h3>
+<button id="closeFilterBtn" class="w-6 h-6 rounded-full flex items-center justify-center hover:bg-gray-100">
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-close-line"></i>
+</div>
+</button>
+</div>
+<div class="grid grid-cols-4 gap-6">
+<div>
+<h4 class="text-sm font-medium mb-2">Categories</h4>
+<div class="space-y-2">
+<label class="custom-checkbox flex items-center gap-2 text-sm">
+<input type="checkbox" class="filter-checkbox" data-filter="category" value="Rings">
+<span class="checkmark"></span>
+<span>Rings</span>
+<span class="ml-auto text-gray-400">(428)</span>
+</label>
+<label class="custom-checkbox flex items-center gap-2 text-sm">
+<input type="checkbox" class="filter-checkbox" data-filter="category" value="Necklaces">
+<span class="checkmark"></span>
+<span>Necklaces</span>
+<span class="ml-auto text-gray-400">(312)</span>
+</label>
+<label class="custom-checkbox flex items-center gap-2 text-sm">
+<input type="checkbox" class="filter-checkbox" data-filter="category" value="Earrings">
+<span class="checkmark"></span>
+<span>Earrings</span>
+<span class="ml-auto text-gray-400">(256)</span>
+</label>
+<label class="custom-checkbox flex items-center gap-2 text-sm">
+<input type="checkbox" class="filter-checkbox" data-filter="category" value="Bracelets">
+<span class="checkmark"></span>
+<span>Bracelets</span>
+<span class="ml-auto text-gray-400">(184)</span>
+</label>
+<label class="custom-checkbox flex items-center gap-2 text-sm">
+<input type="checkbox" class="filter-checkbox" data-filter="category" value="Watches">
+<span class="checkmark"></span>
+<span>Watches</span>
+<span class="ml-auto text-gray-400">(66)</span>
+</label>
+</div>
+</div>
+<div>
+<h4 class="text-sm font-medium mb-2">Materials</h4>
+<div class="space-y-2">
+<label class="custom-checkbox flex items-center gap-2 text-sm">
+<input type="checkbox" class="filter-checkbox" data-filter="material" value="Gold">
+<span class="checkmark"></span>
+<span>Gold</span>
+<span class="ml-auto text-gray-400">(386)</span>
+</label>
+<label class="custom-checkbox flex items-center gap-2 text-sm">
+<input type="checkbox" class="filter-checkbox" data-filter="material" value="Silver">
+<span class="checkmark"></span>
+<span>Silver</span>
+<span class="ml-auto text-gray-400">(294)</span>
+</label>
+<label class="custom-checkbox flex items-center gap-2 text-sm">
+<input type="checkbox" class="filter-checkbox" data-filter="material" value="Platinum">
+<span class="checkmark"></span>
+<span>Platinum</span>
+<span class="ml-auto text-gray-400">(142)</span>
+</label>
+<label class="custom-checkbox flex items-center gap-2 text-sm">
+<input type="checkbox" class="filter-checkbox" data-filter="material" value="Diamond">
+<span class="checkmark"></span>
+<span>Diamond</span>
+<span class="ml-auto text-gray-400">(218)</span>
+</label>
+<label class="custom-checkbox flex items-center gap-2 text-sm">
+<input type="checkbox" class="filter-checkbox" data-filter="material" value="Other">
+<span class="checkmark"></span>
+<span>Other</span>
+<span class="ml-auto text-gray-400">(206)</span>
+</label>
+</div>
+</div>
+<div>
+<h4 class="text-sm font-medium mb-2">Price Range</h4>
+<div class="px-1">
+<div class="flex items-center justify-between mb-2">
+<span class="text-sm text-gray-500">$<span id="minPriceDisplay">0</span></span>
+<span class="text-sm text-gray-500">$<span id="maxPriceDisplay">10,000</span></span>
+</div>
+<input type="range" id="priceRange" class="custom-range" min="0" max="10000" value="10000">
+</div>
+</div>
+<div>
+<h4 class="text-sm font-medium mb-2">Stock Status</h4>
+<div class="space-y-2">
+<label class="flex items-center justify-between">
+<span class="text-sm">In Stock Only</span>
+<label class="custom-switch">
+<input type="checkbox" class="filter-checkbox" data-filter="stock" value="in-stock">
+<span class="slider"></span>
+</label>
+</label>
+<label class="flex items-center justify-between">
+<span class="text-sm">Show Low Stock</span>
+<label class="custom-switch">
+<input type="checkbox" class="filter-checkbox" data-filter="stock" value="low-stock">
+<span class="slider"></span>
+</label>
+</label>
+</div>
+</div>
+</div>
+<div class="pt-4 mt-4 border-t border-gray-100 flex items-center justify-end gap-3">
+<button id="resetFilterBtn" class="px-4 py-2 text-gray-500 hover:text-gray-700 text-sm !rounded-button whitespace-nowrap">Reset All</button>
+<button id="applyFilterBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 text-sm !rounded-button whitespace-nowrap">Apply Filters</button>
+</div>
+</div>
+<!-- Products Table -->
+<div class="card overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full">
+<thead>
+<tr class="bg-gray-50 text-left">
+<th class="p-4 w-12">
+<label class="custom-checkbox table-checkbox">
+<input type="checkbox" id="selectAll">
+<span class="checkmark"></span>
+</label>
+</th>
+<th class="p-4 w-20"></th>
+<th class="p-4 text-sm font-medium text-gray-600 cursor-pointer hover:text-gray-900">
+<div class="flex items-center gap-1">
+<span>Product Name</span>
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-arrow-up-s-line"></i>
+</div>
+</div>
+</th>
+<th class="p-4 text-sm font-medium text-gray-600 cursor-pointer hover:text-gray-900">
+<div class="flex items-center gap-1">
+<span>SKU</span>
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-arrow-down-s-line"></i>
+</div>
+</div>
+</th>
+<th class="p-4 text-sm font-medium text-gray-600 cursor-pointer hover:text-gray-900">
+<div class="flex items-center gap-1">
+<span>Category</span>
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-arrow-down-s-line"></i>
+</div>
+</div>
+</th>
+<th class="p-4 text-sm font-medium text-gray-600 cursor-pointer hover:text-gray-900">
+<div class="flex items-center gap-1">
+<span>Material</span>
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-arrow-down-s-line"></i>
+</div>
+</div>
+</th>
+<th class="p-4 text-sm font-medium text-gray-600 cursor-pointer hover:text-gray-900">
+<div class="flex items-center gap-1">
+<span>Price</span>
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-arrow-down-s-line"></i>
+</div>
+</div>
+</th>
+<th class="p-4 text-sm font-medium text-gray-600 cursor-pointer hover:text-gray-900">
+<div class="flex items-center gap-1">
+<span>Stock</span>
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-arrow-down-s-line"></i>
+</div>
+</div>
+</th>
+<th class="p-4 text-sm font-medium text-gray-600">Actions</th>
+</tr>
+</thead>
+<tbody id="productsTableBody">
+<!-- Products will be populated here -->
+</tbody>
+</table>
+</div>
+<!-- Pagination -->
+<div class="flex items-center justify-between p-4 border-t border-gray-100">
+<div class="text-sm text-gray-500">Showing <span class="font-medium">1-10</span> of <span class="font-medium">1,246</span> products</div>
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 text-gray-400 !rounded-button whitespace-nowrap">
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-arrow-left-s-line"></i>
+</div>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center bg-primary text-white !rounded-button whitespace-nowrap">1</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 hover:bg-gray-50 !rounded-button whitespace-nowrap">2</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 hover:bg-gray-50 !rounded-button whitespace-nowrap">3</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 hover:bg-gray-50 !rounded-button whitespace-nowrap">4</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 hover:bg-gray-50 !rounded-button whitespace-nowrap">5</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center border border-gray-200 text-gray-600 hover:bg-gray-50 !rounded-button whitespace-nowrap">
+<div class="w-4 h-4 flex items-center justify-center">
+<i class="ri-arrow-right-s-line"></i>
+</div>
+</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+<script>
+// Mock data for products
+const products = [
+{ id: 1, name: 'Diamond Engagement Ring', sku: 'RNG-DMD-001', category: 'Rings', material: 'Platinum', price: 4850, stock: 12, image: 'https://public.readdy.ai/ai/img_res/929d562df29d11067042bededc898e93.jpg' },
+{ id: 2, name: 'Gold Chain Necklace', sku: 'NCK-GLD-002', category: 'Necklaces', material: 'Gold', price: 1250, stock: 8, image: 'https://public.readdy.ai/ai/img_res/a3a2626c24f6bdf955cf1c14ff7fe6ab.jpg' },
+{ id: 3, name: 'Silver Hoop Earrings', sku: 'EAR-SLV-003', category: 'Earrings', material: 'Silver', price: 350, stock: 24, image: 'https://public.readdy.ai/ai/img_res/8c4562ad8c4b995920ee1b6f981e9ea9.jpg' },
+{ id: 4, name: 'Sapphire Tennis Bracelet', sku: 'BRC-SPH-004', category: 'Bracelets', material: 'White Gold', price: 2750, stock: 5, image: 'https://public.readdy.ai/ai/img_res/422e51e506b2ba783f60326b0b41e2a6.jpg' },
+{ id: 5, name: 'Men\'s Luxury Watch', sku: 'WTC-LUX-005', category: 'Watches', material: 'Stainless Steel', price: 5950, stock: 3, image: 'https://public.readdy.ai/ai/img_res/034cc1a60670637bf4092c04fdf00cdf.jpg' },
+{ id: 6, name: 'Pearl Drop Earrings', sku: 'EAR-PRL-006', category: 'Earrings', material: 'Gold', price: 890, stock: 15, image: 'https://public.readdy.ai/ai/img_res/f829a2585c5192f9342cca522de6d223.jpg' },
+{ id: 7, name: 'Emerald Cut Diamond Ring', sku: 'RNG-EMD-007', category: 'Rings', material: 'White Gold', price: 6250, stock: 4, image: 'https://public.readdy.ai/ai/img_res/f829a2585c5192f9342cca522de6d223.jpg' },
+{ id: 8, name: 'Vintage Pearl Necklace', sku: 'NCK-PRL-008', category: 'Necklaces', material: 'Silver', price: 1850, stock: 7, image: 'https://public.readdy.ai/ai/img_res/f829a2585c5192f9342cca522de6d223.jpg' },
+{ id: 9, name: 'Ruby Stud Earrings', sku: 'EAR-RBY-009', category: 'Earrings', material: 'Gold', price: 1450, stock: 9, image: 'https://public.readdy.ai/ai/img_res/f829a2585c5192f9342cca522de6d223.jpg' },
+{ id: 10, name: 'Diamond Tennis Bracelet', sku: 'BRC-DMD-010', category: 'Bracelets', material: 'Platinum', price: 8750, stock: 2, image: 'https://public.readdy.ai/ai/img_res/f829a2585c5192f9342cca522de6d223.jpg' }
+];
+// Render products table
+const productsTableBody = document.getElementById('productsTableBody');
+function renderProductsTable() {
+productsTableBody.innerHTML = '';
+products.forEach(product => {
+const row = document.createElement('tr');
+row.className = 'border-t border-gray-100 hover:bg-gray-50';
+row.innerHTML = `
+<td class="p-4">
+<label class="custom-checkbox table-checkbox">
+<input type="checkbox" class="product-checkbox" data-id="${product.id}">
+<span class="checkmark"></span>
+</label>
+</td>
+<td class="p-4">
+<img src="${product.image}" alt="${product.name}" class="w-12 h-12 object-cover object-top rounded">
+</td>
+<td class="p-4">
+<div class="font-medium">${product.name}</div>
+</td>
+<td class="p-4 text-sm text-gray-500">${product.sku}</td>
+<td class="p-4">
+<span class="px-2 py-1 bg-gray-100 text-gray-700 text-xs rounded-full">${product.category}</span>
+</td>
+<td class="p-4 text-sm">${product.material}</td>
+<td class="p-4 font-medium text-primary">$${product.price.toLocaleString()}</td>
+<td class="p-4">
+${product.stock <= 5
+? `<div class="flex items-center"><span class="font-medium text-red-500">${product.stock}</span><span class="ml-2 px-2 py-0.5 bg-red-100 text-red-600 text-xs rounded-full">Low</span></div>`
+: `<span class="font-medium">${product.stock}</span>`}
+</td>
+<td class="p-4">
+<div class="flex items-center gap-2">
+<button class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 !rounded-button whitespace-nowrap">
+<div class="w-4 h-4 flex items-center justify-center text-gray-500">
+<i class="ri-eye-line"></i>
+</div>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 !rounded-button whitespace-nowrap">
+<div class="w-4 h-4 flex items-center justify-center text-primary">
+<i class="ri-edit-line"></i>
+</div>
+</button>
+<button class="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-gray-100 !rounded-button whitespace-nowrap">
+<div class="w-4 h-4 flex items-center justify-center text-red-500">
+<i class="ri-delete-bin-line"></i>
+</div>
+</button>
+</div>
+</td>
+`;
+productsTableBody.appendChild(row);
+});
+// Add event listeners to checkboxes
+const productCheckboxes = document.querySelectorAll('.product-checkbox');
+productCheckboxes.forEach(checkbox => {
+checkbox.addEventListener('change', updateSelectedCount);
+});
+}
+// Initialize the table
+renderProductsTable();
+// Filter panel toggle
+const filterBtn = document.getElementById('filterBtn');
+const filterPanel = document.getElementById('filterPanel');
+const closeFilterBtn = document.getElementById('closeFilterBtn');
+filterBtn.addEventListener('click', () => {
+filterPanel.classList.toggle('hidden');
+});
+closeFilterBtn.addEventListener('click', () => {
+filterPanel.classList.add('hidden');
+});
+// Bulk action dropdown
+const bulkActionBtn = document.getElementById('bulkActionBtn');
+const bulkActionMenu = document.getElementById('bulkActionMenu');
+bulkActionBtn.addEventListener('click', () => {
+bulkActionMenu.classList.toggle('hidden');
+});
+// Close bulk action menu when clicking outside
+document.addEventListener('click', (event) => {
+if (!bulkActionBtn.contains(event.target) && !bulkActionMenu.contains(event.target)) {
+bulkActionMenu.classList.add('hidden');
+}
+});
+// Select all functionality
+const selectAllCheckbox = document.getElementById('selectAll');
+selectAllCheckbox.addEventListener('change', () => {
+const productCheckboxes = document.querySelectorAll('.product-checkbox');
+productCheckboxes.forEach(checkbox => {
+checkbox.checked = selectAllCheckbox.checked;
+});
+updateSelectedCount();
+});
+// Update selected count
+function updateSelectedCount() {
+const selectedCheckboxes = document.querySelectorAll('.product-checkbox:checked');
+const selectedCount = document.getElementById('selectedCount');
+selectedCount.textContent = selectedCheckboxes.length;
+// Update select all checkbox state
+const productCheckboxes = document.querySelectorAll('.product-checkbox');
+if (selectedCheckboxes.length === 0) {
+selectAllCheckbox.checked = false;
+selectAllCheckbox.indeterminate = false;
+} else if (selectedCheckboxes.length === productCheckboxes.length) {
+selectAllCheckbox.checked = true;
+selectAllCheckbox.indeterminate = false;
+} else {
+selectAllCheckbox.indeterminate = true;
+}
+}
+// Price range slider
+const priceRange = document.getElementById('priceRange');
+const minPriceDisplay = document.getElementById('minPriceDisplay');
+const maxPriceDisplay = document.getElementById('maxPriceDisplay');
+priceRange.addEventListener('input', () => {
+maxPriceDisplay.textContent = parseInt(priceRange.value).toLocaleString();
+});
+// Reset filters
+const resetFilterBtn = document.getElementById('resetFilterBtn');
+resetFilterBtn.addEventListener('click', () => {
+const filterCheckboxes = document.querySelectorAll('.filter-checkbox');
+filterCheckboxes.forEach(checkbox => {
+checkbox.checked = false;
+});
+priceRange.value = 10000;
+maxPriceDisplay.textContent = '10,000';
+});
+// Apply filters (just hide the panel for demo)
+const applyFilterBtn = document.getElementById('applyFilterBtn');
+applyFilterBtn.addEventListener('click', () => {
+filterPanel.classList.add('hidden');
+});
+</script>
+</body>
+</html>

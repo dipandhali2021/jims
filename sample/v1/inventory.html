@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inventory Management - Jewelry Inventory System</title>
+    <script src="https://cdn.tailwindcss.com/3.4.16"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: { primary: "#6366f1", secondary: "#f59e0b" },
+            borderRadius: {
+              none: "0px",
+              sm: "4px",
+              DEFAULT: "8px",
+              md: "12px",
+              lg: "16px",
+              xl: "20px",
+              "2xl": "24px",
+              "3xl": "32px",
+              full: "9999px",
+              button: "8px",
+            },
+          },
+        },
+      };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css"
+      rel="stylesheet"
+    />
+    <style>
+      :where([class^="ri-"])::before { content: "\f3c2"; }
+      body {
+      font-family: 'Inter', sans-serif;
+      background-color: #f9fafb;
+      }
+      input[type="number"]::-webkit-inner-spin-button,
+      input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+      }
+      .custom-checkbox {
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid #d1d5db;
+      border-radius: 4px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.2s;
+      }
+      .custom-checkbox:checked {
+      background-color: #6366f1;
+      border-color: #6366f1;
+      }
+      .custom-checkbox:checked::after {
+      content: '';
+      position: absolute;
+      left: 5px;
+      top: 2px;
+      width: 6px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      }
+      .custom-switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 22px;
+      }
+      .custom-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+      }
+      .switch-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #e5e7eb;
+      transition: .4s;
+      border-radius: 34px;
+      }
+      .switch-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 2px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+      }
+      input:checked + .switch-slider {
+      background-color: #6366f1;
+      }
+      input:checked + .switch-slider:before {
+      transform: translateX(20px);
+      }
+      .table-fixed-header {
+      overflow-y: auto;
+      max-height: 600px;
+      }
+      .table-fixed-header thead {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background-color: white;
+      }
+      .low-stock {
+      color: #ef4444;
+      }
+      .sort-icon {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      margin-left: 4px;
+      }
+      .sort-icon.active {
+      color: #6366f1;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="flex h-screen overflow-hidden">
+      <!-- Sidebar -->
+      <aside class="w-64 bg-white shadow-lg hidden md:block">
+        <div class="p-4 border-b border-gray-100">
+          <div class="font-['Pacifico'] text-2xl text-primary">logo</div>
+        </div>
+        <div class="p-4">
+          <p class="text-xs font-semibold text-gray-400 uppercase mb-4">
+            Main Menu
+          </p>
+          <nav>
+            <a
+              href="./index.html"
+              data-readdy="true"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 font-medium mb-1"
+            >
+              <div class="w-5 h-5 flex items-center justify-center">
+                <i class="ri-dashboard-line"></i>
+              </div>
+              <span>Dashboard</span>
+            </a>
+            <a
+              href="#"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-primary bg-opacity-10 text-primary font-medium mb-1"
+            >
+              <div class="w-5 h-5 flex items-center justify-center">
+                <i class="ri-store-line"></i>
+              </div>
+              <span>Inventory</span>
+            </a>
+            <a
+              href="./request.html"
+              data-readdy="true"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 font-medium mb-1"
+            >
+              <div class="w-5 h-5 flex items-center justify-center">
+                <i class="ri-shopping-bag-line"></i>
+              </div>
+              <span>Sales Requests</span>
+              <span
+                class="ml-auto bg-primary text-white text-xs font-semibold px-2 py-0.5 rounded-full"
+                >8</span
+              >
+            </a>
+            <a
+              href="#"
+              data-readdy="true"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 font-medium mb-1"
+            >
+              <div class="w-5 h-5 flex items-center justify-center">
+                <i class="ri-user-line"></i>
+              </div>
+              <span>Customers</span>
+            </a>
+            <a
+              href="#"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 font-medium mb-1"
+            >
+              <div class="w-5 h-5 flex items-center justify-center">
+                <i class="ri-bar-chart-line"></i>
+              </div>
+              <span>Reports</span>
+            </a>
+          </nav>
+          <p class="text-xs font-semibold text-gray-400 uppercase mt-6 mb-4">
+            Admin Settings
+          </p>
+          <nav>
+            <a
+              href="#"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 font-medium mb-1"
+            >
+              <div class="w-5 h-5 flex items-center justify-center">
+                <i class="ri-team-line"></i>
+              </div>
+              <span>User Management</span>
+            </a>
+            <a
+              href="#"
+              class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-gray-50 font-medium mb-1"
+            >
+              <div class="w-5 h-5 flex items-center justify-center">
+                <i class="ri-settings-line"></i>
+              </div>
+              <span>System Settings</span>
+            </a>
+          </nav>
+        </div>
+      </aside>
+      <!-- Main Content -->
+      <div class="flex-1 flex flex-col overflow-hidden">
+        <!-- Top Header -->
+        <header class="bg-white shadow-sm z-10">
+          <div class="flex items-center justify-between px-6 h-16">
+            <div class="flex items-center gap-4">
+              <button
+                class="md:hidden w-10 h-10 flex items-center justify-center text-gray-600"
+              >
+                <i class="ri-menu-line text-xl"></i>
+              </button>
+              <div class="relative w-64">
+                <input
+                  type="text"
+                  placeholder="Search inventory..."
+                  class="w-full h-10 pl-10 pr-4 text-sm bg-gray-50 border-none rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
+                />
+                <div
+                  class="absolute left-3 top-0 h-10 w-5 flex items-center justify-center text-gray-400"
+                >
+                  <i class="ri-search-line"></i>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center gap-4">
+              <button
+                class="w-10 h-10 flex items-center justify-center text-gray-600 relative"
+              >
+                <i class="ri-notification-line text-xl"></i>
+                <span
+                  class="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs flex items-center justify-center rounded-full"
+                  >3</span
+                >
+              </button>
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-full bg-primary text-white flex items-center justify-center font-medium"
+                >
+                  JD
+                </div>
+                <div class="hidden md:block">
+                  <p class="text-sm font-medium">John Doe</p>
+                  <p class="text-xs text-gray-500">Admin</p>
+                </div>
+                <button
+                  class="w-8 h-8 flex items-center justify-center text-gray-600"
+                >
+                  <i class="ri-arrow-down-s-line"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </header>
+        <!-- Main Content Area -->
+        <main class="flex-1 overflow-y-auto p-6">
+          <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">
+              Inventory Management
+            </h1>
+            <p class="text-gray-600">
+              Manage and track your jewelry inventory items
+            </p>
+          </div>
+          <!-- Control Bar -->
+          <div
+            class="bg-white p-4 rounded-lg shadow-sm border border-gray-100 mb-6"
+          >
+            <div class="flex flex-wrap items-center justify-between gap-4">
+              <div class="flex flex-wrap items-center gap-4">
+                <div class="relative">
+                  <button
+                    id="categoryFilterBtn"
+                    class="flex items-center gap-2 px-4 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 !rounded-button whitespace-nowrap"
+                  >
+                    <span>All Categories</span>
+                    <div class="w-4 h-4 flex items-center justify-center">
+                      <i class="ri-arrow-down-s-line"></i>
+                    </div>
+                  </button>
+                  <div
+                    id="categoryDropdown"
+                    class="hidden absolute left-0 mt-2 w-48 bg-white shadow-lg rounded-lg z-10 border border-gray-200"
+                  >
+                    <ul class="py-2">
+                      <li>
+                        <a
+                          href="#"
+                          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >All Categories</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          href="#"
+                          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >Rings</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          href="#"
+                          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >Necklaces</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          href="#"
+                          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >Earrings</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          href="#"
+                          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >Bracelets</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          href="#"
+                          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >Watches</a
+                        >
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="relative">
+                  <button
+                    id="stockFilterBtn"
+                    class="flex items-center gap-2 px-4 py-2 text-sm bg-gray-50 text-gray-700 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 !rounded-button whitespace-nowrap"
+                  >
+                    <span>Stock Status</span>
+                    <div class="w-4 h-4 flex items-center justify-center">
+                      <i class="ri-arrow-down-s-line"></i>
+                    </div>
+                  </button>
+                  <div
+                    id="stockDropdown"
+                    class="hidden absolute left-0 mt-2 w-48 bg-white shadow-lg rounded-lg z-10 border border-gray-200"
+                  >
+                    <ul class="py-2">
+                      <li>
+                        <a
+                          href="#"
+                          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >All Items</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          href="#"
+                          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >In Stock</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          href="#"
+                          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >Low Stock</a
+                        >
+                      </li>
+                      <li>
+                        <a
+                          href="#"
+                          class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                          >Out of Stock</a
+                        >
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <div class="relative w-64">
+                  <input
+                    type="text"
+                    placeholder="Search inventory..."
+                    class="w-full h-10 pl-10 pr-4 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50"
+                  />
+                  <div
+                    class="absolute left-3 top-0 h-10 w-5 flex items-center justify-center text-gray-400"
+                  >
+                    <i class="ri-search-line"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <button
+                  id="exportBtn"
+                  class="flex items-center gap-2 px-4 py-2 text-sm bg-white text-gray-700 border border-gray-200 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 !rounded-button whitespace-nowrap"
+                >
+                  <div class="w-4 h-4 flex items-center justify-center">
+                    <i class="ri-download-line"></i>
+                  </div>
+                  <span>Export</span>
+                </button>
+                <button
+                  id="addNewItemBtn"
+                  class="flex items-center gap-2 px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 !rounded-button whitespace-nowrap"
+                >
+                  <div class="w-4 h-4 flex items-center justify-center">
+                    <i class="ri-add-line"></i>
+                  </div>
+                  <span>Add New Item</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Inventory Table -->
+          <div
+            class="bg-white rounded-lg shadow-sm border border-gray-100 mb-6"
+          >
+            <div
+              class="flex items-center justify-between p-4 border-b border-gray-100"
+            >
+              <div class="flex items-center">
+                <input
+                  type="checkbox"
+                  id="selectAll"
+                  class="custom-checkbox mr-3"
+                />
+                <span class="text-sm text-gray-500" id="selectedCount"
+                  >0 selected</span
+                >
+              </div>
+              <div id="bulkActions" class="hidden">
+                <button
+                  class="px-3 py-1.5 text-sm bg-gray-100 text-gray-700 rounded-lg mr-2 !rounded-button whitespace-nowrap"
+                >
+                  Bulk Edit
+                </button>
+                <button
+                  class="px-3 py-1.5 text-sm bg-red-50 text-red-600 rounded-lg !rounded-button whitespace-nowrap"
+                >
+                  Delete Selected
+                </button>
+              </div>
+            </div>
+            <div class="table-fixed-header">
+              <table class="w-full">
+                <thead>
+                  <tr
+                    class="text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-b border-gray-100"
+                  >
+                    <th class="px-6 py-3 w-10"></th>
+                    <th class="px-6 py-3 cursor-pointer" data-sort="sku">
+                      <div class="flex items-center">
+                        <span>SKU</span>
+                        <div
+                          class="w-4 h-4 flex items-center justify-center sort-icon"
+                        >
+                          <i class="ri-arrow-up-s-line"></i>
+                        </div>
+                      </div>
+                    </th>
+                    <th class="px-6 py-3 cursor-pointer" data-sort="name">
+                      <div class="flex items-center">
+                        <span>Product Name</span>
+                        <div
+                          class="w-4 h-4 flex items-center justify-center sort-icon"
+                        >
+                          <i class="ri-arrow-up-s-line"></i>
+                        </div>
+                      </div>
+                    </th>
+                    <th class="px-6 py-3">Category</th>
+                    <th class="px-6 py-3 cursor-pointer" data-sort="price">
+                      <div class="flex items-center">
+                        <span>Price</span>
+                        <div
+                          class="w-4 h-4 flex items-center justify-center sort-icon"
+                        >
+                          <i class="ri-arrow-up-s-line"></i>
+                        </div>
+                      </div>
+                    </th>
+                    <th class="px-6 py-3 cursor-pointer" data-sort="stock">
+                      <div class="flex items-center">
+                        <span>Current Stock</span>
+                        <div
+                          class="w-4 h-4 flex items-center justify-center sort-icon active"
+                        >
+                          <i class="ri-arrow-down-s-line"></i>
+                        </div>
+                      </div>
+                    </th>
+                    <th class="px-6 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100" id="inventoryTable">
+                  <!-- Inventory items will be populated here -->
+                </tbody>
+              </table>
+            </div>
+            <div
+              class="flex items-center justify-between p-4 border-t border-gray-100"
+            >
+              <div class="text-sm text-gray-500">
+                Showing <span id="itemsShown">1-10</span> of
+                <span id="totalItems">42</span> items
+              </div>
+              <div class="flex items-center gap-2">
+                <button
+                  class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-400"
+                >
+                  <i class="ri-arrow-left-s-line"></i>
+                </button>
+                <button
+                  class="w-8 h-8 flex items-center justify-center rounded-lg bg-primary text-white"
+                >
+                  1
+                </button>
+                <button
+                  class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  2
+                </button>
+                <button
+                  class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  3
+                </button>
+                <button
+                  class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  4
+                </button>
+                <button
+                  class="w-8 h-8 flex items-center justify-center rounded-lg text-gray-700 hover:bg-gray-50"
+                >
+                  5
+                </button>
+                <button
+                  class="w-8 h-8 flex items-center justify-center rounded-lg border border-gray-200 text-gray-700"
+                >
+                  <i class="ri-arrow-right-s-line"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Inventory Stats -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div
+              class="bg-white p-6 rounded-lg shadow-sm border border-gray-100"
+            >
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-medium text-gray-500">Total Items</h3>
+                <div
+                  class="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600"
+                >
+                  <i class="ri-store-line"></i>
+                </div>
+              </div>
+              <p class="text-2xl font-bold text-gray-900">42</p>
+              <p class="text-sm text-green-600 mt-2 flex items-center">
+                <i class="ri-arrow-up-s-line mr-1"></i> 5 new items this month
+              </p>
+            </div>
+            <div
+              class="bg-white p-6 rounded-lg shadow-sm border border-gray-100"
+            >
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-medium text-gray-500">Total Value</h3>
+                <div
+                  class="w-10 h-10 rounded-lg bg-green-100 flex items-center justify-center text-green-600"
+                >
+                  <i class="ri-money-dollar-circle-line"></i>
+                </div>
+              </div>
+              <p class="text-2xl font-bold text-gray-900">$1,254,890</p>
+              <p class="text-sm text-green-600 mt-2 flex items-center">
+                <i class="ri-arrow-up-s-line mr-1"></i> 12.5% from last month
+              </p>
+            </div>
+            <div
+              class="bg-white p-6 rounded-lg shadow-sm border border-gray-100"
+            >
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="text-sm font-medium text-gray-500">
+                  Low Stock Items
+                </h3>
+                <div
+                  class="w-10 h-10 rounded-lg bg-red-100 flex items-center justify-center text-red-600"
+                >
+                  <i class="ri-alert-line"></i>
+                </div>
+              </div>
+              <p class="text-2xl font-bold text-gray-900">5</p>
+              <p class="text-sm text-amber-600 mt-2 flex items-center">
+                <i class="ri-arrow-right-s-line mr-1"></i> Requires attention
+              </p>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <!-- Add New Item Modal -->
+    <div
+      id="addItemModal"
+      class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden"
+    >
+      <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl">
+        <div
+          class="flex items-center justify-between p-6 border-b border-gray-100"
+        >
+          <h3 class="text-lg font-semibold text-gray-900">
+            Add New Inventory Item
+          </h3>
+          <button
+            id="closeModalBtn"
+            class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
+          >
+            <i class="ri-close-line text-xl"></i>
+          </button>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >SKU</label
+              >
+              <input
+                type="text"
+                class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                placeholder="Enter SKU"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Product Name</label
+              >
+              <input
+                type="text"
+                class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                placeholder="Enter product name"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Category</label
+              >
+              <div class="relative">
+                <select
+                  class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg appearance-none focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary pr-8"
+                >
+                  <option value="">Select category</option>
+                  <option value="rings">Rings</option>
+                  <option value="necklaces">Necklaces</option>
+                  <option value="earrings">Earrings</option>
+                  <option value="bracelets">Bracelets</option>
+                  <option value="watches">Watches</option>
+                </select>
+                <div
+                  class="absolute right-3 top-2.5 text-gray-500 pointer-events-none"
+                >
+                  <i class="ri-arrow-down-s-line"></i>
+                </div>
+              </div>
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Price ($)</label
+              >
+              <input
+                type="number"
+                class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                placeholder="0.00"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Initial Stock</label
+              >
+              <input
+                type="number"
+                class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                placeholder="0"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Low Stock Threshold</label
+              >
+              <input
+                type="number"
+                class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                placeholder="5"
+              />
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2"
+                >Description</label
+              >
+              <textarea
+                class="w-full px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                rows="3"
+                placeholder="Enter product description"
+              ></textarea>
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex items-center justify-end p-6 border-t border-gray-100 gap-3"
+        >
+          <button
+            id="cancelModalBtn"
+            class="px-4 py-2 text-sm bg-white text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 !rounded-button whitespace-nowrap"
+          >
+            Cancel
+          </button>
+          <button
+            class="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-opacity-50 !rounded-button whitespace-nowrap"
+          >
+            Add Item
+          </button>
+        </div>
+      </div>
+    </div>
+    <script>
+      // Mock data for inventory items
+      const inventoryData = [
+        {
+          id: 1,
+          sku: "JR-DIA-001",
+          name: "Princess Cut Diamond Ring",
+          category: "Rings",
+          price: "$4,299",
+          stock: 12,
+          threshold: 5,
+        },
+        {
+          id: 2,
+          sku: "JN-GLD-023",
+          name: "18K Gold Chain",
+          category: "Necklaces",
+          price: "$1,850",
+          stock: 8,
+          threshold: 8,
+        },
+        {
+          id: 3,
+          sku: "JE-SAP-015",
+          name: "Blue Sapphire Studs",
+          category: "Earrings",
+          price: "$2,750",
+          stock: 3,
+          threshold: 4,
+        },
+        {
+          id: 4,
+          sku: "JB-PLT-007",
+          name: "Platinum Bangle",
+          category: "Bracelets",
+          price: "$1,499",
+          stock: 2,
+          threshold: 5,
+        },
+        {
+          id: 5,
+          sku: "JW-DIA-032",
+          name: "Diamond Tennis Bracelet",
+          category: "Watches",
+          price: "$3,200",
+          stock: 1,
+          threshold: 3,
+        },
+        {
+          id: 6,
+          sku: "JR-EME-012",
+          name: "Emerald Halo Engagement Ring",
+          category: "Rings",
+          price: "$3,899",
+          stock: 5,
+          threshold: 3,
+        },
+        {
+          id: 7,
+          sku: "JN-PRL-008",
+          name: "Freshwater Pearl Necklace",
+          category: "Necklaces",
+          price: "$899",
+          stock: 15,
+          threshold: 5,
+        },
+        {
+          id: 8,
+          sku: "JE-RBY-022",
+          name: "Ruby Drop Earrings",
+          category: "Earrings",
+          price: "$1,650",
+          stock: 4,
+          threshold: 3,
+        },
+        {
+          id: 9,
+          sku: "JB-SLV-045",
+          name: "Sterling Silver Charm Bracelet",
+          category: "Bracelets",
+          price: "$450",
+          stock: 20,
+          threshold: 10,
+        },
+        {
+          id: 10,
+          sku: "JW-GLD-019",
+          name: "Gold Mechanical Watch",
+          category: "Watches",
+          price: "$5,500",
+          stock: 2,
+          threshold: 2,
+        },
+      ];
+      // Populate inventory table
+      const inventoryTable = document.getElementById("inventoryTable");
+      inventoryData.forEach((item) => {
+        const row = document.createElement("tr");
+        row.className = "hover:bg-gray-50";
+        // Determine if item is low stock
+        const isLowStock = item.stock <= item.threshold;
+        const stockClass = isLowStock ? "low-stock" : "";
+        row.innerHTML = `
+      <td class="px-6 py-4">
+      <input type="checkbox" class="custom-checkbox item-checkbox" data-id="${item.id}">
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.sku}</td>
+      <td class="px-6 py-4 text-sm text-gray-700">
+      <a href="#" data-readdy="true" class="hover:text-primary">${item.name}</a>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${item.category}</td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${item.price}</td>
+      <td class="px-6 py-4 whitespace-nowrap">
+      <span class="px-2 py-1 text-xs font-semibold rounded-full ${isLowStock ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"}">${item.stock}</span>
+      </td>
+      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+      <div class="flex items-center gap-2">
+      <button class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary hover:bg-gray-100 rounded-full">
+      <i class="ri-edit-line"></i>
+      </button>
+      <button class="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-red-500 hover:bg-gray-100 rounded-full">
+      <i class="ri-delete-bin-line"></i>
+      </button>
+      </div>
+      </td>
+      `;
+        inventoryTable.appendChild(row);
+      });
+      // Toggle category dropdown
+      const categoryFilterBtn = document.getElementById("categoryFilterBtn");
+      const categoryDropdown = document.getElementById("categoryDropdown");
+      categoryFilterBtn.addEventListener("click", () => {
+        categoryDropdown.classList.toggle("hidden");
+        stockDropdown.classList.add("hidden"); // Hide other dropdown
+      });
+      // Toggle stock status dropdown
+      const stockFilterBtn = document.getElementById("stockFilterBtn");
+      const stockDropdown = document.getElementById("stockDropdown");
+      stockFilterBtn.addEventListener("click", () => {
+        stockDropdown.classList.toggle("hidden");
+        categoryDropdown.classList.add("hidden"); // Hide other dropdown
+      });
+      // Close dropdowns when clicking outside
+      document.addEventListener("click", (e) => {
+        if (
+          !categoryFilterBtn.contains(e.target) &&
+          !categoryDropdown.contains(e.target)
+        ) {
+          categoryDropdown.classList.add("hidden");
+        }
+        if (!stockFilterBtn.contains(e.target) && !stockDropdown.contains(e.target)) {
+          stockDropdown.classList.add("hidden");
+        }
+      });
+      // Handle select all checkbox
+      const selectAllCheckbox = document.getElementById("selectAll");
+      const itemCheckboxes = document.querySelectorAll(".item-checkbox");
+      const selectedCountElement = document.getElementById("selectedCount");
+      const bulkActionsElement = document.getElementById("bulkActions");
+      selectAllCheckbox.addEventListener("change", () => {
+        const isChecked = selectAllCheckbox.checked;
+        itemCheckboxes.forEach((checkbox) => {
+          checkbox.checked = isChecked;
+        });
+        updateSelectedCount();
+      });
+      // Handle individual checkbox changes
+      itemCheckboxes.forEach((checkbox) => {
+        checkbox.addEventListener("change", updateSelectedCount);
+      });
+      function updateSelectedCount() {
+        const checkedCount = document.querySelectorAll(
+          ".item-checkbox:checked",
+        ).length;
+        selectedCountElement.textContent = `${checkedCount} selected`;
+        if (checkedCount > 0) {
+          bulkActionsElement.classList.remove("hidden");
+        } else {
+          bulkActionsElement.classList.add("hidden");
+        }
+      }
+      // Modal functionality
+      const addNewItemBtn = document.getElementById("addNewItemBtn");
+      const addItemModal = document.getElementById("addItemModal");
+      const closeModalBtn = document.getElementById("closeModalBtn");
+      const cancelModalBtn = document.getElementById("cancelModalBtn");
+      addNewItemBtn.addEventListener("click", () => {
+        addItemModal.classList.remove("hidden");
+      });
+      closeModalBtn.addEventListener("click", () => {
+        addItemModal.classList.add("hidden");
+      });
+      cancelModalBtn.addEventListener("click", () => {
+        addItemModal.classList.add("hidden");
+      });
+      // Close modal when clicking outside
+      addItemModal.addEventListener("click", (e) => {
+        if (e.target === addItemModal) {
+          addItemModal.classList.add("hidden");
+        }
+      });
+      // Sorting functionality
+      const sortableHeaders = document.querySelectorAll("th[data-sort]");
+      sortableHeaders.forEach((header) => {
+        header.addEventListener("click", () => {
+          // Reset all sort icons
+          document.querySelectorAll(".sort-icon").forEach((icon) => {
+            icon.classList.remove("active");
+          });
+          // Set this column as active
+          const sortIcon = header.querySelector(".sort-icon");
+          sortIcon.classList.add("active");
+          // Toggle sort direction
+          const currentIcon = sortIcon.querySelector("i");
+          if (currentIcon.classList.contains("ri-arrow-up-s-line")) {
+            currentIcon.classList.remove("ri-arrow-up-s-line");
+            currentIcon.classList.add("ri-arrow-down-s-line");
+          } else {
+            currentIcon.classList.remove("ri-arrow-down-s-line");
+            currentIcon.classList.add("ri-arrow-up-s-line");
+          }
+          // Here you would implement actual sorting logic
+        });
+      });
+    </script>
+  </body>
+</html>
