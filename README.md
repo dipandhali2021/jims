@@ -1,126 +1,109 @@
-# Jewelry Shop Inventory Management System
+# TodoMaster - Role-Based Auth Todo App
 
-## Overview
-
-A modern, secure web-based inventory management system designed for jewelry shops. This system streamlines daily operations, maintains accurate stock levels, and facilitates smooth sales processes. Built to handle approximately 250 jewelry items with complete product details and real-time inventory tracking.
-
-## Key Features
-
-### Inventory Management
-- Comprehensive product catalog with detailed item information
-- Real-time stock tracking and low inventory alerts
-- Complete history logging of inventory changes
-- Advanced search and filtering capabilities
-- Product categorization (necklaces, rings, bracelets, etc.)
-
-### User Roles & Access Control
-#### Admin (Owner)
-- Full system access
-- Inventory management
-- Sales approval workflow
-- User management
-- Access to audit logs and security settings
-- Reporting capabilities
-
-#### Shopkeeper (Worker)
-- Day-to-day operations access
-- Inventory view access
-- Sales request initiation
-- Order status management
-- New product addition (subject to approval)
-
-### Order Processing & Workflow
-- Real-time inventory verification
-- Structured sales request workflow
-- Order status tracking
-- Automated inventory updates post-approval
-
-### Product Management
-- Detailed product listings with images
-- Mobile-responsive design
-- Advanced sorting and filtering
-- Product addition/editing with validation
-- Image upload support
-
-## Technical Stack
-
-- Frontend: React + TypeScript
-- Styling: TailwindCSS
-- Build Tool: Vite
-- Type Checking: TypeScript
-- Code Quality: ESLint
-- CSS Processing: PostCSS
+TodoMaster is a powerful task management application built with Next.js, featuring role-based authentication using Clerk and a PostgreSQL database with Neon.
 
 ## Getting Started
 
 ### Prerequisites
-```bash
-- Node.js (v16 or higher)
-- npm (v7 or higher)
-```
+
+- Node.js (v14 or later)
+- npm (v6 or later)
+- A Clerk account (for authentication)
+- A Neon account (for PostgreSQL database)
 
 ### Installation
+
 1. Clone the repository:
-```bash
-git clone [repository-url]
-```
+
+   ```
+   git clone https://github.com/aryan877/todo-master.git
+   cd role-based-auth
+   ```
 
 2. Install dependencies:
-```bash
-npm install
-```
 
-3. Start the development server:
-```bash
-npm run dev
-```
+   ```
+   npm install
+   ```
 
-4. Build for production:
-```bash
-npm run build
-```
+3. Set up environment variables:
+   Create a `.env.local` file in the root directory and add the following variables:
 
-## Project Structure
-```
-src/               # Source files
-├── components/    # React components
-├── pages/        # Page components
-├── services/     # API services
-├── store/        # State management
-└── types/        # TypeScript types
+   ```
+   # Clerk
+   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+   CLERK_SECRET_KEY=your_clerk_secret_key
 
-public/           # Static files
-```
+   # Neon Database
+   DATABASE_URL=your_neon_database_url
 
-## Workflow Process
+   # Webhook Secret (for Clerk)
+   WEBHOOK_SECRET=your_webhook_secret
+   ```
 
-1. **Inventory Check**
-   - System validates available quantities
-   - Real-time stock level verification
+4. Set up the database:
 
-2. **Sales Request**
-   - Shopkeeper initiates request
-   - Includes product details and quantity
-   - Customer information captured
+   ```
+   npx prisma db push
+   ```
 
-3. **Approval Process**
-   - Owner reviews sales requests
-   - Automated inventory updates upon approval
-   - Rejection feedback if declined
+5. Generate Prisma client:
+   ```
+   npx prisma generate
+   ```
 
-4. **Product Management**
-   - Add new products with full details
-   - Update existing inventory
-   - Automated stock tracking
+### Running the Application
+
+To run the development server:
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+## Features
+
+- User authentication with Clerk
+- Role-based access control (Admin and User roles)
+- Todo management (Create, Read, Update, Delete)
+- Subscription-based todo limits
+- Admin dashboard for user management
+
+## Webhook Setup
+
+This application uses a Clerk webhook to synchronize user data with the database. Specifically, it listens for the `user.created` event to create a corresponding user record in the database.
+
+To set up the webhook:
+
+1. Go to the Clerk Dashboard.
+2. Navigate to the "Webhooks" section.
+3. Click on "Add Endpoint".
+4. Set the Endpoint URL to `https://your-app-url.com/api/webhook/register` (replace with your actual URL).
+5. Under "Events", select "user.created".
+6. Save the endpoint.
+7. Copy the "Signing Secret" and add it to your `.env.local` file as `WEBHOOK_SECRET`.
+
+The webhook handler is implemented in `app/api/webhook/register/route.ts`. It verifies the webhook signature and creates a new user record in the database when a user is created in Clerk.
+
+## @Codebase
+
+### Setting up an Admin User
+
+To test the admin functionality, you need to manually set the user's role to "admin" in Clerk. Here's how to do it:
+
+1. Log in to your Clerk Dashboard.
+2. Go to the "Users" section.
+3. Find the user you want to make an admin.
+4. Click on the user to open their details.
+5. Scroll down to the "Public metadata" section.
+6. Add a new key-value pair:
+   - Key: `role`
+   - Value: `admin`
+7. Save the changes.
+
+Now, when this user logs in, they will have admin privileges in the application.
 
 ## Contributing
 
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Open a pull request
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
