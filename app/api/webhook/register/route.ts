@@ -66,14 +66,26 @@ export async function POST(req: Request) {
       }
 
       // Create the user in the database
-      const newUser = await prisma.user.create({
-        data: {
-          id: evt.data.id!,
-          email: primaryEmail.email_address,
-          isSubscribed: false, // Default setting
-        },
+      // Check if user already exists
+      const existingUser = await prisma.user.findUnique({
+        where: { id: evt.data.id! }
       });
-      console.log("New user created:", newUser);
+
+      if (!existingUser) {
+        const newUser = await prisma.user.create({
+          data: {
+            id: evt.data.id!,
+            email: primaryEmail.email_address,
+            isSubscribed: false, // Default setting
+            firstName: evt.data.first_name || "",
+            lastName: evt.data.last_name || "",
+            role:"user"
+          },
+        });
+        console.log("New user created:", newUser);
+      } else {
+        console.log("User already exists:", existingUser.id);
+      }
     } catch (error) {
       console.error("Error creating user in database:", error);
       return new Response("Error creating user", { status: 500 });

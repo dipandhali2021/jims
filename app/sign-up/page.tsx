@@ -47,6 +47,8 @@ export default function SignUp() {
       setError('');
 
       await signUp.create({
+        firstName,
+        lastName,
         emailAddress,
         password,
       });
