@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { AddProductDialog } from '@/components/products/AddProductDialog';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Product, useProducts } from '@/hooks/use-products';
 
 import {
   LayoutGrid,
@@ -19,6 +20,7 @@ import {
   ChevronDown,
   Filter,
   X,
+  Loader2,
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -28,100 +30,34 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Switch } from '@/components/ui/switch';
 
-interface Product {
-  id: string;
-  name: string;
-  sku: string;
-  category: string;
-  material: string;
-  price: number;
-  stock: number;
-  image: string;
-  lowStock?: boolean;
-}
 
-const products: Product[] = [
-  {
-    id: '1',
-    name: 'Diamond Engagement Ring',
-    sku: 'RNG-DMD-001',
-    category: 'Rings',
-    material: 'Platinum',
-    price: 4850,
-    stock: 12,
-    image: 'https://images.unsplash.com/photo-1605100804763-247f67b3557e?w=300',
-  },
-  {
-    id: '2',
-    name: 'Gold Chain Necklace',
-    sku: 'NCK-GLD-002',
-    category: 'Necklaces',
-    material: 'Gold',
-    price: 1250,
-    stock: 8,
-    image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=300',
-  },
-  {
-    id: '3',
-    name: 'Silver Hoop Earrings',
-    sku: 'EAR-SLV-003',
-    category: 'Earrings',
-    material: 'Silver',
-    price: 350,
-    stock: 24,
-    image: 'https://images.unsplash.com/photo-1635767798638-3e25273a8236?w=300',
-  },
-  {
-    id: '4',
-    name: 'Sapphire Tennis Bracelet',
-    sku: 'BRC-SPH-004',
-    category: 'Bracelets',
-    material: 'White Gold',
-    price: 2750,
-    stock: 5,
-    image: 'https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?w=300',
-    lowStock: true,
-  },
-  {
-    id: '5',
-    name: "Men's Luxury Watch",
-    sku: 'WTC-LUX-005',
-    category: 'Watches',
-    material: 'Stainless Steel',
-    price: 5950,
-    stock: 3,
-    image: 'https://images.unsplash.com/photo-1587836374828-4dbafa94cf0e?w=300',
-    lowStock: true,
-  },
-  {
-    id: '6',
-    name: 'Pearl Drop Earrings',
-    sku: 'EAR-PRL-006',
-    category: 'Earrings',
-    material: 'Gold',
-    price: 890,
-    stock: 15,
-    image: 'https://images.unsplash.com/photo-1635767798638-3e25273a8236?w=300',
-  },
-];
+// Derive categories and materials from products
+const getCategoriesAndCounts = (products: Product[]) => {
+  const categoryCount = products.reduce((acc, product) => {
+    acc[product.category] = (acc[product.category] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
 
-const categories = [
-  { name: 'Rings', count: 428 },
-  { name: 'Necklaces', count: 312 },
-  { name: 'Earrings', count: 256 },
-  { name: 'Bracelets', count: 184 },
-  { name: 'Watches', count: 66 },
-];
+  return Object.entries(categoryCount).map(([name, count]) => ({
+    name,
+    count,
+  }));
+};
 
-const materials = [
-  { name: 'Gold', count: 386 },
-  { name: 'Silver', count: 294 },
-  { name: 'Platinum', count: 142 },
-  { name: 'Diamond', count: 218 },
-  { name: 'Other', count: 206 },
-];
+const getMaterialsAndCounts = (products: Product[]) => {
+  const materialCount = products.reduce((acc, product) => {
+    acc[product.material] = (acc[product.material] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
+  return Object.entries(materialCount).map(([name, count]) => ({
+    name,
+    count,
+  }));
+};
 
 export default function InventoryPage() {
+  const { products, isLoading, error } = useProducts();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -166,27 +102,34 @@ export default function InventoryPage() {
     );
   };
 
-  const filteredProducts = products.filter((product) => {
-    const matchesSearch = product.name
-      .toLowerCase()
-      .includes(searchTerm.toLowerCase());
-    const matchesCategory =
-      filters.categories.size === 0 ||
-      filters.categories.has(product.category);
-    const matchesMaterial =
-      filters.materials.size === 0 || filters.materials.has(product.material);
-    const matchesStock = !filters.inStockOnly || product.stock > 0;
-    const matchesPrice =
-      product.price >= priceRange[0] && product.price <= priceRange[1];
+  const filteredProducts = products
+    .map(product => ({
+      ...product,
+      lowStock: product.stock < 10
+    }))
+    .filter((product) => {
+      const matchesSearch =
+        product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.sku.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesCategory =
+        filters.categories.size === 0 ||
+        filters.categories.has(product.category);
+      const matchesMaterial =
+        filters.materials.size === 0 || filters.materials.has(product.material);
+      const matchesStock = !filters.inStockOnly || product.stock > 0;
+      const matchesLowStock = !filters.showLowStock || product.lowStock;
+      const matchesPrice =
+        product.price >= priceRange[0] && product.price <= priceRange[1];
 
-    return (
-      matchesSearch &&
-      matchesCategory &&
-      matchesMaterial &&
-      matchesStock &&
-      matchesPrice
-    );
-  });
+      return (
+        matchesSearch &&
+        matchesCategory &&
+        matchesMaterial &&
+        matchesStock &&
+        matchesLowStock &&
+        matchesPrice
+      );
+    });
 
   return (
     <div className="p-6">
@@ -287,7 +230,7 @@ export default function InventoryPage() {
                   <div>
                     <h3 className="font-semibold mb-4">Categories</h3>
                     <div className="space-y-2">
-                      {categories.map((category) => (
+                      {getCategoriesAndCounts(products).map((category) => (
                         <div
                           key={category.name}
                           className="flex items-center justify-between"
@@ -314,7 +257,7 @@ export default function InventoryPage() {
                   <div>
                     <h3 className="font-semibold mb-4">Materials</h3>
                     <div className="space-y-2">
-                      {materials.map((material) => (
+                      {getMaterialsAndCounts(products).map((material) => (
                         <div
                           key={material.name}
                           className="flex items-center justify-between"
@@ -399,11 +342,34 @@ export default function InventoryPage() {
         <div className={showFilters ? "md:col-span-3" : "md:col-span-4"}>
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              {filteredProducts.map((product) => (
+              {isLoading ? (
+                // Loading skeleton
+                Array.from({ length: 10 }).map((_, index) => (
+                  <Card key={index} className="overflow-hidden animate-pulse">
+                    <div className="aspect-square bg-muted"/>
+                    <CardContent className="p-4 space-y-2">
+                      <div className="h-4 bg-muted rounded w-3/4"/>
+                      <div className="h-4 bg-muted rounded w-1/2"/>
+                      <div className="h-4 bg-muted rounded w-1/4"/>
+                    </CardContent>
+                  </Card>
+                ))
+              ) : error ? (
+                <div className="col-span-full text-center py-10">
+                  <p className="text-red-500">Failed to load products</p>
+                  <Button
+                    variant="outline"
+                    onClick={() => window.location.reload()}
+                    className="mt-4"
+                  >
+                    Try Again
+                  </Button>
+                </div>
+              ) : filteredProducts.map((product) => (
                 <Card key={product.id} className="overflow-hidden">
                   <div className="aspect-square relative">
                     <img
-                      src={product.image}
+                      src={product.imageUrl}
                       alt={product.name}
                       className="object-cover w-full h-full"
                     />
@@ -473,7 +439,7 @@ export default function InventoryPage() {
                         <td className="p-4">
                           <div className="flex items-center gap-3">
                             <img
-                              src={product.image}
+                              src={product.imageUrl}
                               alt={product.name}
                               className="w-12 h-12 object-cover rounded"
                             />

@@ -119,24 +119,7 @@ export async function GET(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const { searchParams } = new URL(req.url);
-    const search = searchParams.get('search') || '';
-    const category = searchParams.get('category') || '';
-    const material = searchParams.get('material') || '';
-
     const products = await prisma.product.findMany({
-      where: {
-        userId,
-        ...(search && {
-          OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { sku: { contains: search, mode: 'insensitive' } },
-          ],
-        }),
-        ...(category && { category }),
-        ...(material && { material }),
-      },
       orderBy: { createdAt: 'desc' },
     });
 
