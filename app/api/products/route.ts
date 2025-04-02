@@ -122,12 +122,54 @@ export async function GET(req: NextRequest) {
     const products = await prisma.product.findMany({
       orderBy: { createdAt: 'desc' },
     });
-
+    console.log('Fetched products:', products.length);
     return NextResponse.json(products);
   } catch (error) {
     console.error('Error fetching products:', error);
     return NextResponse.json(
       { error: 'Error fetching products' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const id = params.id;
+    console.log(`Deleting product with ID: ${id}`);
+
+    // Check if product exists
+    const existingProduct = await prisma.product.findUnique({
+      where: { id },
+    });
+
+    if (!existingProduct) {
+      console.log(`Product with ID ${id} not found`);
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      );
+    }
+
+    // Delete product from database
+    await prisma.product.delete({
+      where: { id },
+    });
+    
+    console.log(`Product ${id} deleted successfully`);
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error(`Error deleting product: ${error}`);
+    return NextResponse.json(
+      { error: 'Error deleting product' },
       { status: 500 }
     );
   }

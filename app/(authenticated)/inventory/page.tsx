@@ -6,6 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { AddProductDialog } from '@/components/products/AddProductDialog';
+import { ProductPreviewDialog } from '@/components/products/ProductPreviewDialog';
+import { EditProductDialog } from '@/components/products/EditProductDialog';
+import { DeleteProductDialog } from '@/components/products/DeleteProductDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product, useProducts } from '@/hooks/use-products';
 
@@ -57,7 +60,7 @@ const getMaterialsAndCounts = (products: Product[]) => {
 };
 
 export default function InventoryPage() {
-  const { products, isLoading, error } = useProducts();
+  const { products, isLoading, error, refreshProducts } = useProducts();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
@@ -117,7 +120,7 @@ export default function InventoryPage() {
       const matchesMaterial =
         filters.materials.size === 0 || filters.materials.has(product.material);
       const matchesStock = !filters.inStockOnly || product.stock > 0;
-      const matchesLowStock = !filters.showLowStock || product.lowStock;
+      const matchesLowStock = filters.showLowStock ? product.lowStock : true;
       const matchesPrice =
         product.price >= priceRange[0] && product.price <= priceRange[1];
 
@@ -153,7 +156,7 @@ export default function InventoryPage() {
           >
             <List className="h-4 w-4" />
           </Button>
-          <AddProductDialog />
+          <AddProductDialog onProductAdded={refreshProducts} />
         </div>
       </div>
 
@@ -367,13 +370,13 @@ export default function InventoryPage() {
                 </div>
               ) : filteredProducts.map((product) => (
                 <Card key={product.id} className="overflow-hidden">
-                  <div className="aspect-square relative">
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="object-cover w-full h-full"
-                    />
-                    {product.lowStock && (
+                  <div className="aspect-square relative cursor-pointer" onClick={() => (document.getElementById(`preview-${product.id}`) as HTMLButtonElement)?.click()}>
+                  <img
+                    src={product.imageUrl}
+                    alt={product.name}
+                    className="object-cover w-full h-full"
+                  />
+                  {product.lowStock && (
                       <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
                         Low Stock
                       </span>
@@ -398,15 +401,14 @@ export default function InventoryPage() {
                         Stock: {product.stock}
                       </span>
                     </div>
-                    <div className="flex gap-2 mt-4">
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
-                        <Pencil className="h-4 w-4 mr-1" />
-                        Edit
-                      </Button>
+                    <div className="flex mt-4 justify-evenly"> 
+                      <ProductPreviewDialog product={product} />
+                      <EditProductDialog product={product} onProductUpdated={refreshProducts} />
+                      <DeleteProductDialog product={product} onProductDeleted={refreshProducts} />
+                      {/* <Button variant="outline" size="sm" className="flex-1 text-red-500 hover:text-red-700 hover:bg-red-50">
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button> */}
                     </div>
                   </CardContent>
                 </Card>
@@ -470,15 +472,9 @@ export default function InventoryPage() {
                         </td>
                         <td className="p-4">
                           <div className="flex gap-2">
-                            <Button variant="outline" size="sm">
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            <ProductPreviewDialog product={product} />
+                            <EditProductDialog product={product}  onProductUpdated={refreshProducts} />
+                            <DeleteProductDialog product={product} onProductDeleted={refreshProducts} />
                           </div>
                         </td>
                       </tr>

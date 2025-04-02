@@ -1,15 +1,27 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Plus, Upload, X, Loader2 } from 'lucide-react';
+import { PenSquare, Upload, X, Loader2 } from 'lucide-react';
+import { Product } from '@/hooks/use-products';
 
 const categories = [
   'Rings',
@@ -31,47 +43,115 @@ const materials = [
   'Other',
 ];
 
-export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promise<void>}) {
+interface EditProductDialogProps {
+  product: Product;
+  onProductUpdated: () => Promise<void>;
+}
+
+export function EditProductDialog({
+  product,
+  onProductUpdated,
+}: EditProductDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
+  const [removeImage, setRemoveImage] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
   const [formData, setFormData] = useState({
-    name: '',
-    sku: '',
-    description: '',
-    category: '',
-    material: '',
-    price: '',
-    stock: '',
+    name: product.name,
+    sku: product.sku,
+    description: product.description || '',
+    category: product.category,
+    material: product.material,
+    price: product.price.toString(),
+    stock: product.stock.toString(),
   });
+
+  useEffect(() => {
+    // Reset form data when product changes
+    setFormData({
+      name: product.name,
+      sku: product.sku,
+      description: product.description || '',
+      category: product.category,
+      material: product.material,
+      price: product.price.toString(),
+      stock: product.stock.toString(),
+    });
+
+    setPreviewUrl(product.imageUrl);
+    setImageFile(null);
+    setRemoveImage(false);
+    setError(null);
+  }, [product]);
 
   const resetForm = () => {
     setFormData({
-      name: '',
-      sku: '',
-      description: '',
-      category: '',
-      material: '',
-      price: '',
-      stock: '',
+      name: product.name,
+      sku: product.sku,
+      description: product.description || '',
+      category: product.category,
+      material: product.material,
+      price: product.price.toString(),
+      stock: product.stock.toString(),
     });
+    
+    // Reset image state
+    if (previewUrl && previewUrl !== product.imageUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
     setImageFile(null);
-    setPreviewUrl('');
+    setPreviewUrl(product.imageUrl);
+    setRemoveImage(false);
     setError(null);
   };
 
+  // Handle file input change
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Revoke any existing object URL to prevent memory leaks
+      if (previewUrl && previewUrl !== product.imageUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+      
+      // Create a preview URL for the new file
+      const url = URL.createObjectURL(file);
+      setImageFile(file);
+      setPreviewUrl(url);
+      setRemoveImage(false);
+    }
+  };
+
+  // Handle removing image
+  const handleRemoveImage = () => {
+    // If we have a preview URL that's not the original, revoke it
+    if (previewUrl && previewUrl !== product.imageUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+
+    // Clear the image file state
+    setImageFile(null);
+
+    // Set flag to indicate image should be removed
+    setRemoveImage(true);
+
+    // Set empty preview
+    setPreviewUrl('');
+  };
+
+  // Form submission handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
+
     // Form validation
     if (!formData.name.trim()) {
-      setError("Product name is required");
+      setError('Product name is required');
       toast({
         title: 'Error',
         description: 'Product name is required',
@@ -79,9 +159,9 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       });
       return;
     }
-    
+
     if (!formData.sku.trim()) {
-      setError("SKU is required");
+      setError('SKU is required');
       toast({
         title: 'Error',
         description: 'SKU is required',
@@ -89,9 +169,9 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       });
       return;
     }
-    
+
     if (!formData.category) {
-      setError("Category is required");
+      setError('Category is required');
       toast({
         title: 'Error',
         description: 'Please select a category',
@@ -99,9 +179,9 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       });
       return;
     }
-    
+
     if (!formData.material) {
-      setError("Material is required");
+      setError('Material is required');
       toast({
         title: 'Error',
         description: 'Please select a material',
@@ -109,9 +189,9 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       });
       return;
     }
-    
+
     if (!formData.price || isNaN(parseFloat(formData.price))) {
-      setError("Valid price is required");
+      setError('Valid price is required');
       toast({
         title: 'Error',
         description: 'Please enter a valid price',
@@ -119,9 +199,9 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       });
       return;
     }
-    
+
     if (!formData.stock || isNaN(parseInt(formData.stock))) {
-      setError("Valid stock quantity is required");
+      setError('Valid stock quantity is required');
       toast({
         title: 'Error',
         description: 'Please enter a valid stock quantity',
@@ -129,68 +209,55 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       });
       return;
     }
-    
-    if (!imageFile) {
-      setError("Product image is required");
-      toast({
-        title: 'Error',
-        description: 'Please select an image',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     try {
       setIsLoading(true);
-      
+
       // Create a new FormData instance
       const data = new FormData();
-      
+
       // Append form data fields
       Object.entries(formData).forEach(([key, value]) => {
         data.append(key, value);
       });
-      
-      // Append the image file
-      data.append('image', imageFile);
 
-      console.log('Submitting product data');
-      
+      // Append the image file if a new one was selected
+      if (imageFile) {
+        data.append('image', imageFile);
+      }
+
+      // Add a flag to indicate if image should be removed
+      data.append('removeImage', removeImage.toString());
+
+      console.log(`Updating product with ID: ${product.id}`);
+
       // Send the request to the API endpoint
-      const response = await fetch('/api/products', {
-        method: 'POST',
+      const response = await fetch(`/api/products/${product.id}`, {
+        method: 'PUT',
         body: data,
       });
 
-      // Parse the response as JSON
-      const result = await response.json();
-
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to create product');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update product');
       }
 
-      // Call the callback to refresh products
-      await onProductAdded();
-
-      // Show success toast
+      const updatedProduct = await response.json();
+      
       toast({
         title: 'Success',
-        description: 'Product created successfully',
+        description: 'Product updated successfully',
       });
-
-      // Close the dialog and reset form
+      
+      // Close the dialog and refresh data
       setIsOpen(false);
-      resetForm();
+      await onProductUpdated();
       
-      // Refresh the page to show updated products
-      router.refresh();
-    } catch (error: any) {
-      console.error('Error creating product:', error);
+    } catch (error) {
+      console.error('Error updating product:', error);
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
       
-      // Set error message and show toast
-      const errorMessage = error.message || 'Failed to create product';
       setError(errorMessage);
-      
       toast({
         title: 'Error',
         description: errorMessage,
@@ -201,63 +268,39 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Check file size (limit to 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: 'Error',
-          description: 'Image size should be less than 10MB',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: 'Error',
-          description: 'Please select a valid image file',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      setImageFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
-    }
-  };
-
   return (
-    <Dialog 
-      open={isOpen} 
+    <Dialog
+      open={isOpen}
       onOpenChange={(open) => {
         setIsOpen(open);
         if (!open) resetForm();
       }}
     >
-      <DialogTrigger asChild>
-        <Button className="bg-primary hover:bg-primary/90 text-white font-medium">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Product
-        </Button>
-      </DialogTrigger>
+      <Button
+        onClick={() => setIsOpen(true)}
+        variant="ghost"
+        size="icon"
+        className="h-8 w-8"
+      >
+        <PenSquare className="h-4 w-4" />
+      </Button>
       <DialogContent className="sm:max-w-[600px] p-6 bg-white rounded-lg shadow-lg border-0">
         <DialogHeader className="mb-4">
-          <DialogTitle className="text-xl font-bold">Add New Product</DialogTitle>
+          <DialogTitle className="text-xl font-bold">Edit Product</DialogTitle>
         </DialogHeader>
-        
+
         {error && (
           <div className="bg-red-50 text-red-800 px-4 py-3 rounded-md mb-4 text-sm">
             {error}
           </div>
         )}
-        
+
         <form onSubmit={handleSubmit} className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="name" className="font-medium">Product Name *</Label>
+              <Label htmlFor="name" className="font-medium">
+                Product Name *
+              </Label>
               <Input
                 id="name"
                 value={formData.name}
@@ -269,7 +312,9 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sku" className="font-medium">SKU *</Label>
+              <Label htmlFor="sku" className="font-medium">
+                SKU *
+              </Label>
               <Input
                 id="sku"
                 value={formData.sku}
@@ -281,9 +326,10 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
               />
             </div>
           </div>
-
           <div className="space-y-2">
-            <Label htmlFor="description" className="font-medium">Description</Label>
+            <Label htmlFor="description" className="font-medium">
+              Description
+            </Label>
             <Textarea
               id="description"
               value={formData.description}
@@ -293,10 +339,11 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
               className="min-h-24 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
             />
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="category" className="font-medium">Category *</Label>
+              <Label htmlFor="category" className="font-medium">
+                Category *
+              </Label>
               <Select
                 value={formData.category}
                 onValueChange={(value) =>
@@ -316,7 +363,9 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
               </Select>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="material" className="font-medium">Material *</Label>
+              <Label htmlFor="material" className="font-medium">
+                Material *
+              </Label>
               <Select
                 value={formData.material}
                 onValueChange={(value) =>
@@ -336,10 +385,11 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
               </Select>
             </div>
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price" className="font-medium">Price ($) *</Label>
+              <Label htmlFor="price" className="font-medium">
+                Price ($) *
+              </Label>
               <Input
                 id="price"
                 type="number"
@@ -354,7 +404,9 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="stock" className="font-medium">Stock *</Label>
+              <Label htmlFor="stock" className="font-medium">
+                Stock *
+              </Label>
               <Input
                 id="stock"
                 type="number"
@@ -368,9 +420,8 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
               />
             </div>
           </div>
-
           <div className="space-y-2">
-            <Label className="font-medium">Product Image *</Label>
+            <Label className="font-medium">Product Image</Label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
               {previewUrl ? (
                 <div className="relative">
@@ -384,10 +435,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
                     variant="ghost"
                     size="icon"
                     className="absolute top-0 right-0 bg-white rounded-full shadow-sm hover:bg-gray-100"
-                    onClick={() => {
-                      setImageFile(null);
-                      setPreviewUrl('');
-                    }}
+                    onClick={handleRemoveImage}
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -399,10 +447,10 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
                     accept="image/*"
                     onChange={handleImageChange}
                     className="hidden"
-                    id="image-upload"
+                    id="image-upload-edit"
                   />
                   <label
-                    htmlFor="image-upload"
+                    htmlFor="image-upload-edit"
                     className="cursor-pointer flex flex-col items-center py-6"
                   >
                     <Upload className="h-10 w-10 mb-3 text-gray-400" />
@@ -417,7 +465,6 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
               )}
             </div>
           </div>
-
           <div className="flex justify-end space-x-3 pt-2">
             <Button
               type="button"
@@ -430,18 +477,18 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
             >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={isLoading}
               className="bg-primary hover:bg-primary/90 text-white font-medium"
             >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  Updating...
                 </>
               ) : (
-                'Create Product'
+                'Update Product'
               )}
             </Button>
           </div>
