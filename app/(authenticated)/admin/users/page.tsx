@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -50,12 +50,28 @@ export default function UsersPage() {
   const { toast } = useToast();
   const router = useRouter();
 
-  useEffect(() => {
-    fetchUsers();
-    getCurrentUserRole();
-  }, []);
+  const fetchUsers = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/admin/users');
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+      const data = await response.json();
+      setUsers(data.users);
+    } catch (error) {
+      console.error('Error fetching users:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch users',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
 
-  const getCurrentUserRole = async () => {
+  const getCurrentUserRole = useCallback(async () => {
     try {
       const response = await fetch('/api/me');
       if (response.ok) {
@@ -65,7 +81,12 @@ export default function UsersPage() {
     } catch (error) {
       console.error('Error fetching current user role:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    fetchUsers();
+    getCurrentUserRole();
+  }, [fetchUsers, getCurrentUserRole]);
 
   const handleDeleteUser = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
@@ -101,26 +122,6 @@ export default function UsersPage() {
     }
   };
 
-  const fetchUsers = async () => {
-    try {
-      setIsLoading(true);
-      const response = await fetch('/api/admin/users');
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-      const data = await response.json();
-      setUsers(data.users);
-    } catch (error) {
-      console.error('Error fetching users:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch users',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const handleRoleChange = async (userId: string, newRole: string) => {
     try {
