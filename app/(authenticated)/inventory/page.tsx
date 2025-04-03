@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,8 +31,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { CreateBulkSalesRequestDialog } from '@/components/products/CreateBulkSalesRequestDialog';
 import { Switch } from '@/components/ui/switch';
-
+import { CreateSalesRequestDialog } from '@/components/products/CreateSalesRequestDialog';
 
 // Derive categories and materials from products
 const getCategoriesAndCounts = (products: Product[]) => {
@@ -106,9 +107,9 @@ export default function InventoryPage() {
   };
 
   const filteredProducts = products
-    .map(product => ({
+    .map((product) => ({
       ...product,
-      lowStock: product.stock < 10
+      lowStock: product.stock < 10,
     }))
     .filter((product) => {
       const matchesSearch =
@@ -173,21 +174,24 @@ export default function InventoryPage() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                  Bulk Actions
-                  <ChevronDown className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuItem>Delete Selected</DropdownMenuItem>
-                <DropdownMenuItem>Export Selected</DropdownMenuItem>
-                <DropdownMenuItem>Update Stock</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button 
-              variant={showFilters ? "default" : "outline"}
+            <div className="flex gap-2">
+              <CreateBulkSalesRequestDialog products={products} onRequestCreated={refreshProducts} />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                    Bulk Actions
+                    <ChevronDown className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem>Delete Selected</DropdownMenuItem>
+                  <DropdownMenuItem>Export Selected</DropdownMenuItem>
+                  <DropdownMenuItem>Update Stock</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+            <Button
+              variant={showFilters ? 'default' : 'outline'}
               onClick={() => setShowFilters(!showFilters)}
               className="relative"
             >
@@ -221,9 +225,9 @@ export default function InventoryPage() {
               <Card className="p-4">
                 <div className="flex justify-between items-center mb-4">
                   <h3 className="font-bold text-lg">Filters</h3>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setShowFilters(false)}
                   >
                     <X className="h-4 w-4" />
@@ -342,18 +346,18 @@ export default function InventoryPage() {
         </AnimatePresence>
 
         {/* Products Grid/List - Responsive column span */}
-        <div className={showFilters ? "md:col-span-3" : "md:col-span-4"}>
+        <div className={showFilters ? 'md:col-span-3' : 'md:col-span-4'}>
           {viewMode === 'grid' ? (
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               {isLoading ? (
                 // Loading skeleton
                 Array.from({ length: 10 }).map((_, index) => (
                   <Card key={index} className="overflow-hidden animate-pulse">
-                    <div className="aspect-square bg-muted"/>
+                    <div className="aspect-square bg-muted" />
                     <CardContent className="p-4 space-y-2">
-                      <div className="h-4 bg-muted rounded w-3/4"/>
-                      <div className="h-4 bg-muted rounded w-1/2"/>
-                      <div className="h-4 bg-muted rounded w-1/4"/>
+                      <div className="h-4 bg-muted rounded w-3/4" />
+                      <div className="h-4 bg-muted rounded w-1/2" />
+                      <div className="h-4 bg-muted rounded w-1/4" />
                     </CardContent>
                   </Card>
                 ))
@@ -368,51 +372,73 @@ export default function InventoryPage() {
                     Try Again
                   </Button>
                 </div>
-              ) : filteredProducts.map((product) => (
-                <Card key={product.id} className="overflow-hidden">
-                  <div className="aspect-square relative cursor-pointer" onClick={() => (document.getElementById(`preview-${product.id}`) as HTMLButtonElement)?.click()}>
-                  <img
-                    src={product.imageUrl}
-                    alt={product.name}
-                    className="object-cover w-full h-full"
-                  />
-                  {product.lowStock && (
-                      <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
-                        Low Stock
-                      </span>
-                    )}
-                  </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold mb-1">{product.name}</h3>
-                    <div className="text-sm text-muted-foreground mb-2">
-                      {product.sku}
+              ) : (
+                filteredProducts.map((product) => (
+                  <Card key={product.id} className="overflow-hidden">
+                    <div
+                      className="aspect-square relative cursor-pointer"
+                      onClick={() =>
+                        (
+                          document.getElementById(
+                            `preview-${product.id}`
+                          ) as HTMLButtonElement
+                        )?.click()
+                      }
+                    >
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="object-cover w-full h-full"
+                      />
+                      {product.lowStock && (
+                        <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
+                          Low Stock
+                        </span>
+                      )}
                     </div>
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-lg font-bold">
-                        ${product.price.toLocaleString()}
-                      </span>
-                      <span
-                        className={`text-sm ${
-                          product.stock < 10
-                            ? 'text-red-500'
-                            : 'text-green-500'
-                        }`}
-                      >
-                        Stock: {product.stock}
-                      </span>
-                    </div>
-                    <div className="flex mt-4 justify-evenly"> 
-                      <ProductPreviewDialog product={product} />
-                      <EditProductDialog product={product} onProductUpdated={refreshProducts} />
-                      <DeleteProductDialog product={product} onProductDeleted={refreshProducts} />
-                      {/* <Button variant="outline" size="sm" className="flex-1 text-red-500 hover:text-red-700 hover:bg-red-50">
+                    <CardContent className="p-4">
+                      <h3 className="font-semibold mb-1">{product.name}</h3>
+                      <div className="text-sm text-muted-foreground mb-2">
+                        {product.sku}
+                      </div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-lg font-bold">
+                          ${product.price.toLocaleString()}
+                        </span>
+                        <span
+                          className={`text-sm ${
+                            product.stock < 10
+                              ? 'text-red-500'
+                              : 'text-green-500'
+                          }`}
+                        >
+                          Stock: {product.stock}
+                        </span>
+                      </div>
+                      <div className="flex mt-4 justify-evenly">
+                        <CreateSalesRequestDialog
+                          product={product}
+                          onRequestCreated={refreshProducts}
+                        />
+
+                        <ProductPreviewDialog product={product} />
+                        <EditProductDialog
+                          product={product}
+                          onProductUpdated={refreshProducts}
+                        />
+                        <DeleteProductDialog
+                          product={product}
+                          onProductDeleted={refreshProducts}
+                        />
+                        {/* <Button variant="outline" size="sm" className="flex-1 text-red-500 hover:text-red-700 hover:bg-red-50">
                         <Trash2 className="h-4 w-4 mr-1" />
                         Delete
                       </Button> */}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              )}
             </div>
           ) : (
             <Card>
@@ -473,8 +499,14 @@ export default function InventoryPage() {
                         <td className="p-4">
                           <div className="flex gap-2">
                             <ProductPreviewDialog product={product} />
-                            <EditProductDialog product={product}  onProductUpdated={refreshProducts} />
-                            <DeleteProductDialog product={product} onProductDeleted={refreshProducts} />
+                            <EditProductDialog
+                              product={product}
+                              onProductUpdated={refreshProducts}
+                            />
+                            <DeleteProductDialog
+                              product={product}
+                              onProductDeleted={refreshProducts}
+                            />
                           </div>
                         </td>
                       </tr>

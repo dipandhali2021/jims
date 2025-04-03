@@ -120,7 +120,7 @@ export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMob
           </div>
         )}
 
-        <SidebarContent>
+        <SidebarContent className="p-4">
           <SidebarMenu>
             {filteredLinks.map((link) => (
               <SidebarMenuItem key={link.label}>

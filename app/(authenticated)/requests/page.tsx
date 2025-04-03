@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   Search,
   Calendar,
@@ -17,6 +18,10 @@ import {
   Clock,
   Check,
   X,
+  Filter,
+  Loader2,
+  LayoutGrid,
+  List,
 } from 'lucide-react';
 import {
   Select,
@@ -25,109 +30,101 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+
+interface SalesItem {
+  id: string;
+  quantity: number;
+  price: number;
+  product: {
+    name: string;
+    sku: string;
+  };
+}
 
 interface SalesRequest {
   id: string;
+  requestId: string;
   customer: string;
-  items: string[];
+  items: SalesItem[];
   totalValue: number;
   requestDate: string;
   status: 'Pending' | 'Approved' | 'Rejected';
 }
 
-const salesRequests: SalesRequest[] = [
-  {
-    id: 'SR-2025-0001',
-    customer: 'Olivia Bennett',
-    items: ['Princess Cut Diamond Ring, 18K Gold Chain'],
-    totalValue: 6640.92,
-    requestDate: 'Mar 28, 2025',
-    status: 'Pending',
-  },
-  {
-    id: 'SR-2025-0002',
-    customer: 'Ethan Richardson',
-    items: ['Blue Sapphire Studs'],
-    totalValue: 2970.00,
-    requestDate: 'Mar 27, 2025',
-    status: 'Pending',
-  },
-  {
-    id: 'SR-2025-0003',
-    customer: 'Sophia Martinez',
-    items: ['Platinum Bangle', 'Emerald Halo Engagement Ring'],
-    totalValue: 5830.52,
-    requestDate: 'Mar 26, 2025',
-    status: 'Pending',
-  },
-  {
-    id: 'SR-2025-0004',
-    customer: 'William Carter',
-    items: ['Diamond Tennis Bracelet'],
-    totalValue: 3456.00,
-    requestDate: 'Mar 25, 2025',
-    status: 'Approved',
-  },
-  {
-    id: 'SR-2025-0005',
-    customer: 'Emma Thompson',
-    items: ['Ruby Drop Earrings', 'Freshwater Pearl Necklace'],
-    totalValue: 2752.92,
-    requestDate: 'Mar 24, 2025',
-    status: 'Pending',
-  },
-  {
-    id: 'SR-2025-0006',
-    customer: 'Alexander Davis',
-    items: ['Gold Mechanical Watch'],
-    totalValue: 5940.00,
-    requestDate: 'Mar 23, 2025',
-    status: 'Rejected',
-  },
-  {
-    id: 'SR-2025-0007',
-    customer: 'Isabella Wilson',
-    items: ['Sterling Silver Charm Bracelet'],
-    totalValue: 972.00,
-    requestDate: 'Mar 22, 2025',
-    status: 'Pending',
-  },
-  {
-    id: 'SR-2025-0008',
-    customer: 'James Anderson',
-    items: ['Princess Cut Diamond Ring'],
-    totalValue: 4642.92,
-    requestDate: 'Mar 21, 2025',
-    status: 'Pending',
-  },
-];
-
-const stats = {
-  total: {
-    count: 24,
-    change: 12.5,
-    trend: 'up',
-  },
-  pending: {
-    count: 8,
-    needsAttention: true,
-  },
-  approved: {
-    count: 12,
-    change: 8,
-    trend: 'up',
-  },
-  rejected: {
-    count: 4,
-    change: 2,
-    trend: 'down',
-  },
-};
-
 export default function RequestsPage() {
+  const [salesRequests, setSalesRequests] = useState<SalesRequest[]>([]);
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [isLoading, setIsLoading] = useState(true);
+  const [selectedRequest, setSelectedRequest] = useState<SalesRequest | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
+  const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
+  const { toast } = useToast();
+
+  const fetchSalesRequests = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/sales-requests');
+      if (!response.ok) {
+        throw new Error('Failed to fetch sales requests');
+      }
+      const data = await response.json();
+      setSalesRequests(data);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch sales requests',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    fetchSalesRequests();
+  }, [fetchSalesRequests]);
+
+  const handleStatusUpdate = async (
+    requestId: string,
+    newStatus: 'Approved' | 'Rejected'
+  ) => {
+    try {
+      const response = await fetch(`/api/sales-requests/${requestId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update request status');
+      }
+
+      toast({
+        title: 'Success',
+        description: `Request ${newStatus.toLowerCase()} successfully`,
+      });
+
+      // Refresh the requests list
+      fetchSalesRequests();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update request status',
+        variant: 'destructive',
+      });
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -142,6 +139,91 @@ export default function RequestsPage() {
     }
   };
 
+  const filteredRequests = salesRequests.filter((request) => {
+    const matchesSearch =
+      request.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      request.requestId.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus =
+      statusFilter === 'all' || request.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const stats = {
+    total: salesRequests.length,
+    pending: salesRequests.filter((r) => r.status === 'Pending').length,
+    approved: salesRequests.filter((r) => r.status === 'Approved').length,
+    rejected: salesRequests.filter((r) => r.status === 'Rejected').length,
+  };
+
+  const StatsCardSkeleton = () => (
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-8 w-12 mt-2" />
+          </div>
+          <Skeleton className="h-12 w-12 rounded-full" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  const GridCardSkeleton = () => (
+    <Card className="overflow-hidden">
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start mb-4">
+          <Skeleton className="h-16 w-2/3" />
+          <Skeleton className="h-6 w-16 rounded-full" />
+        </div>
+        
+        <Skeleton className="h-20 w-full mb-4" />
+        
+        <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+          <Skeleton className="h-8 w-24 rounded" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+
+  if (isLoading) {
+    return (
+      <div className="p-6">
+        <div className="mb-6">
+          <Skeleton className="h-8 w-48 mb-2" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+
+        {/* Stats Grid Skeleton */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+          <StatsCardSkeleton />
+          <StatsCardSkeleton />
+          <StatsCardSkeleton />
+          <StatsCardSkeleton />
+        </div>
+
+        {/* Filters and Actions Skeleton */}
+        <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4">
+            <Skeleton className="h-10 w-[180px]" />
+            <Skeleton className="h-10 w-[300px]" />
+          </div>
+          <div className="flex gap-2">
+            <Skeleton className="h-10 w-20" />
+            <Skeleton className="h-10 w-28" />
+          </div>
+        </div>
+
+        {/* Grid View Skeleton */}
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {[...Array(6)].map((_, i) => (
+            <GridCardSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6">
       <div className="mb-6">
@@ -152,7 +234,7 @@ export default function RequestsPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
         <Card>
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
@@ -160,10 +242,7 @@ export default function RequestsPage() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Total Requests
                 </p>
-                <h3 className="text-2xl font-bold mt-2">{stats.total.count}</h3>
-                <p className="text-sm text-green-600 flex items-center mt-1">
-                  +{stats.total.change}% from last month
-                </p>
+                <h3 className="text-2xl font-bold mt-2">{stats.total}</h3>
               </div>
               <div className="bg-blue-500/10 p-3 rounded-full">
                 <Box className="h-6 w-6 text-blue-600" />
@@ -179,12 +258,7 @@ export default function RequestsPage() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Pending Approval
                 </p>
-                <h3 className="text-2xl font-bold mt-2">{stats.pending.count}</h3>
-                {stats.pending.needsAttention && (
-                  <p className="text-sm text-yellow-600 flex items-center mt-1">
-                    Requires attention
-                  </p>
-                )}
+                <h3 className="text-2xl font-bold mt-2">{stats.pending}</h3>
               </div>
               <div className="bg-yellow-500/10 p-3 rounded-full">
                 <Clock className="h-6 w-6 text-yellow-600" />
@@ -200,12 +274,7 @@ export default function RequestsPage() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Approved
                 </p>
-                <h3 className="text-2xl font-bold mt-2">
-                  {stats.approved.count}
-                </h3>
-                <p className="text-sm text-green-600 flex items-center mt-1">
-                  +{stats.approved.change}% from last month
-                </p>
+                <h3 className="text-2xl font-bold mt-2">{stats.approved}</h3>
               </div>
               <div className="bg-green-500/10 p-3 rounded-full">
                 <Check className="h-6 w-6 text-green-600" />
@@ -221,10 +290,7 @@ export default function RequestsPage() {
                 <p className="text-sm font-medium text-muted-foreground">
                   Rejected
                 </p>
-                <h3 className="text-2xl font-bold mt-2">{stats.rejected.count}</h3>
-                <p className="text-sm text-red-600 flex items-center mt-1">
-                  -{stats.rejected.change}% from last month
-                </p>
+                <h3 className="text-2xl font-bold mt-2">{stats.rejected}</h3>
               </div>
               <div className="bg-red-500/10 p-3 rounded-full">
                 <X className="h-6 w-6 text-red-600" />
@@ -243,18 +309,11 @@ export default function RequestsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="approved">Approved</SelectItem>
-              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="Pending">Pending</SelectItem>
+              <SelectItem value="Approved">Approved</SelectItem>
+              <SelectItem value="Rejected">Rejected</SelectItem>
             </SelectContent>
           </Select>
-
-          <div className="relative">
-            <Button variant="outline" className="w-[180px]">
-              <Calendar className="mr-2 h-4 w-4" />
-              Date range
-            </Button>
-          </div>
 
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -268,135 +327,267 @@ export default function RequestsPage() {
         </div>
 
         <div className="flex gap-2">
+          {/* View Toggle Buttons */}
+          <div className="border rounded-md flex">
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`rounded-r-none ${viewMode === 'grid' ? 'bg-gray-100' : ''}`}
+              onClick={() => setViewMode('grid')}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className={`rounded-l-none ${viewMode === 'list' ? 'bg-gray-100' : ''}`}
+              onClick={() => setViewMode('list')}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+          </div>
           <Button variant="outline">
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Button variant="default" className="bg-indigo-600 hover:bg-indigo-700">
-            Bulk Approve
-          </Button>
         </div>
       </div>
 
-      {/* Requests Table */}
-      <Card>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b">
-                  <th className="text-left p-4">
-                    <input
-                      type="checkbox"
-                      className="rounded border-gray-300"
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedRequests(
-                            salesRequests.map((request) => request.id)
-                          );
-                        } else {
-                          setSelectedRequests([]);
-                        }
-                      }}
-                    />
-                  </th>
-                  <th className="text-left p-4">REQUEST ID</th>
-                  <th className="text-left p-4">CUSTOMER</th>
-                  <th className="text-left p-4">REQUESTED ITEMS</th>
-                  <th className="text-left p-4">TOTAL VALUE</th>
-                  <th className="text-left p-4">REQUEST DATE</th>
-                  <th className="text-left p-4">STATUS</th>
-                  <th className="text-left p-4">ACTIONS</th>
-                </tr>
-              </thead>
-              <tbody>
-                {salesRequests.map((request) => (
-                  <tr key={request.id} className="border-b">
-                    <td className="p-4">
-                      <input
-                        type="checkbox"
-                        className="rounded border-gray-300"
-                        checked={selectedRequests.includes(request.id)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedRequests([
-                              ...selectedRequests,
-                              request.id,
-                            ]);
-                          } else {
-                            setSelectedRequests(
-                              selectedRequests.filter((id) => id !== request.id)
-                            );
-                          }
-                        }}
-                      />
-                    </td>
-                    <td className="p-4 font-medium">{request.id}</td>
-                    <td className="p-4">{request.customer}</td>
-                    <td className="p-4">{request.items.join(', ')}</td>
-                    <td className="p-4">
-                      ${request.totalValue.toLocaleString()}
-                    </td>
-                    <td className="p-4">{request.requestDate}</td>
-                    <td className="p-4">
-                      <span
-                        className={`px-2 py-1 rounded-full text-sm ${getStatusColor(
-                          request.status
-                        )}`}
+      {/* Grid View */}
+      {viewMode === 'grid' && (
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredRequests.map((request) => (
+            <Card key={request.id} className="overflow-hidden">
+              <CardContent className="p-4">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="font-semibold">{request.requestId}</h3>
+                    <p className="text-sm text-gray-600">{request.customer}</p>
+                  </div>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
+                      request.status
+                    )}`}
+                  >
+                    {request.status}
+                  </span>
+                </div>
+                
+                <div className="text-sm mb-4">
+                  <p className="text-gray-500">Items:</p>
+                  <p className="truncate">
+                    {request.items
+                      .map((item) => `${item.product.name} (${item.quantity})`)
+                      .join(', ')}
+                  </p>
+                  <p className="text-gray-500 mt-1">
+                    Total Quantity: {request.items.reduce((sum, item) => sum + item.quantity, 0)}
+                  </p>
+                </div>
+                
+                <div className="flex justify-between text-sm mb-4">
+                  <span className="text-gray-500">Total Value:</span>
+                  <span className="font-medium">${request.totalValue.toLocaleString()}</span>
+                </div>
+                
+                <div className="flex justify-between text-sm mb-4">
+                  <span className="text-gray-500">Date:</span>
+                  <span>{new Date(request.requestDate).toLocaleDateString()}</span>
+                </div>
+                
+                <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedRequest(request);
+                      setShowDetails(true);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                  {request.status === 'Pending' && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-green-600 hover:text-green-700"
+                        onClick={() => handleStatusUpdate(request.id, 'Approved')}
                       >
-                        {request.status}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm">
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                        {request.status === 'Pending' && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-green-600 hover:text-green-700"
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                        <CheckCircle className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => handleStatusUpdate(request.id, 'Rejected')}
+                      >
+                        <XCircle className="h-4 w-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-          {/* Pagination */}
-          <div className="flex items-center justify-between p-4 border-t">
-            <p className="text-sm text-muted-foreground">
-              Showing 1-8 of 8 requests
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="default" size="sm">
-                1
-              </Button>
-              <Button variant="outline" size="sm">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
+      {/* List View (Original Table) */}
+      {viewMode === 'list' && (
+        <Card>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b">
+                    <th className="text-left p-4">REQUEST ID</th>
+                    <th className="text-left p-4">CUSTOMER</th>
+                    <th className="text-left p-4">ITEMS</th>
+                    <th className="text-left p-4">TOTAL QTY</th>
+                    <th className="text-left p-4">TOTAL VALUE</th>
+                    <th className="text-left p-4">REQUEST DATE</th>
+                    <th className="text-left p-4">STATUS</th>
+                    <th className="text-left p-4">ACTIONS</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredRequests.map((request) => (
+                    <tr key={request.id} className="border-b">
+                      <td className="p-4 font-medium">{request.requestId}</td>
+                      <td className="p-4">{request.customer}</td>
+                      <td className="p-4">
+                        {request.items
+                          .map((item) => `${item.product.name} (${item.quantity})`)
+                          .join(', ')}
+                      </td>
+                      <td className="p-4">
+                        {request.items.reduce((sum, item) => sum + item.quantity, 0)}
+                      </td>
+                      <td className="p-4">
+                        ${request.totalValue.toLocaleString()}
+                      </td>
+                      <td className="p-4">
+                        {new Date(request.requestDate).toLocaleDateString()}
+                      </td>
+                      <td className="p-4">
+                        <span
+                          className={`px-2 py-1 rounded-full text-sm ${getStatusColor(
+                            request.status
+                          )}`}
+                        >
+                          {request.status}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedRequest(request);
+                              setShowDetails(true);
+                            }}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          {request.status === 'Pending' && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-green-600 hover:text-green-700"
+                                onClick={() =>
+                                  handleStatusUpdate(request.id, 'Approved')
+                                }
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-red-600 hover:text-red-700"
+                                onClick={() =>
+                                  handleStatusUpdate(request.id, 'Rejected')
+                                }
+                              >
+                                <XCircle className="h-4 w-4" />
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Details Dialog */}
+      <Dialog open={showDetails} onOpenChange={setShowDetails}>
+        <DialogContent className="sm:max-w-[600px] bg-white border-0 shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-gray-800">
+              Request Details
+            </DialogTitle>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Request ID</p>
+                  <p className="font-medium text-gray-800">
+                    {selectedRequest.requestId}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Customer</p>
+                  <p className="font-medium text-gray-800">
+                    {selectedRequest.customer}
+                  </p>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-2">Items</p>
+                <div className="space-y-2">
+                  {selectedRequest.items.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex justify-between p-2 bg-gray-50 border border-gray-200 rounded"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-800">
+                          {item.product.name}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          SKU: {item.product.sku}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="font-medium text-gray-800">
+                          ${item.price.toLocaleString()}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Qty: {item.quantity}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="flex justify-between pt-4 border-t border-gray-200">
+                <p className="font-medium text-gray-800">Total Value:</p>
+                <p className="font-bold text-gray-900">
+                  ${selectedRequest.totalValue.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
