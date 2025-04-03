@@ -175,21 +175,7 @@ export default function InventoryPage() {
               />
             </div>
             <div className="flex gap-2">
-              <CreateBulkSalesRequestDialog products={products} onRequestCreated={refreshProducts} />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                    Bulk Actions
-                    <ChevronDown className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem>Delete Selected</DropdownMenuItem>
-                  <DropdownMenuItem>Export Selected</DropdownMenuItem>
-                  <DropdownMenuItem>Update Stock</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+            <CreateBulkSalesRequestDialog products={products} onRequestCreated={refreshProducts} />
             <Button
               variant={showFilters ? 'default' : 'outline'}
               onClick={() => setShowFilters(!showFilters)}
@@ -207,6 +193,7 @@ export default function InventoryPage() {
                 </span>
               )}
             </Button>
+            </div>
           </div>
         </div>
       </div>

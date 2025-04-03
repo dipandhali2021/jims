@@ -171,8 +171,9 @@ export function CreateBulkSalesRequestDialog({
           <DialogTitle className="text-lg font-semibold text-gray-800">Create Bulk Sales Request</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-          <div className="grid grid-cols-2 gap-6">
-            {/* Left Column - Customer Details & Product Search */}
+          {/* Responsive grid - stacks on mobile, side-by-side on desktop */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+            {/* Customer Details & Product Search - Top section on mobile */}
             <div className="space-y-4">
               <div>
                 <Label htmlFor="customerName" className="text-sm font-medium text-gray-700">Customer Name</Label>
@@ -198,7 +199,7 @@ export function CreateBulkSalesRequestDialog({
                   />
                 </div>
 
-                <div className="mt-2 border rounded-md max-h-[400px] overflow-y-auto">
+                <div className="mt-2 border rounded-md max-h-[250px] md:max-h-[400px] overflow-y-auto">
                   {filteredProductOptions.map((product) => (
                     <div
                       key={product.id}
@@ -230,7 +231,7 @@ export function CreateBulkSalesRequestDialog({
               </div>
             </div>
 
-            {/* Right Column - Selected Products & Summary */}
+            {/* Selected Products & Summary - Bottom section on mobile */}
             <div className="space-y-4">
               <div>
                 <div className="flex justify-between items-center mb-3">
@@ -242,9 +243,9 @@ export function CreateBulkSalesRequestDialog({
                   )}
                 </div>
 
-                <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                <div className="space-y-3 max-h-[250px] md:max-h-[400px] overflow-y-auto">
                   {selectedProducts.map(({ product, quantity }, index) => (
-                    <div key={index} className="flex gap-4 p-4 rounded-lg bg-gray-50 border border-gray-200">
+                    <div key={index} className="flex gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
                       <img
                         src={product.imageUrl}
                         alt={product.name}
@@ -275,7 +276,7 @@ export function CreateBulkSalesRequestDialog({
                             max={product.stock}
                             value={quantity}
                             onChange={(e) => updateQuantity(index, parseInt(e.target.value) || 0)}
-                            className="w-20 text-center"
+                            className="w-16 text-center"
                           />
                           <Button
                             type="button"
