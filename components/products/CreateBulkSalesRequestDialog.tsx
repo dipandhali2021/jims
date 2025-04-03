@@ -163,7 +163,7 @@ export function CreateBulkSalesRequestDialog({
       <DialogTrigger asChild>
         <Button variant="outline">
           <ShoppingBag className="mr-2 h-4 w-4" />
-          Bulk Sales Request
+          Bulk Request
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[800px] bg-white border-0 shadow-xl max-h-[90vh] overflow-y-auto">

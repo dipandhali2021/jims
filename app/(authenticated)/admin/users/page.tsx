@@ -356,7 +356,7 @@ export default function UsersPage() {
                             </AvatarFallback>
                           </Avatar>
                           <div>
-                            <div className="font-medium">
+                            <div className="font-medium text-center">
                               {user.firstName} {user.lastName}
                             </div>
                           </div>
@@ -380,7 +380,7 @@ export default function UsersPage() {
                           </span>
                         </div>
                       </td>
-                      <td className="p-4 space-x-2">
+                      <td className="flex p-4 space-x-2">
                         <Select
                           value={user.publicMetadata.role || 'user'}
                           onValueChange={(value) =>
@@ -418,7 +418,18 @@ export default function UsersPage() {
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {filteredUsers.map((user) => (
-            <Card key={user.id} className="overflow-hidden">
+            <Card key={user.id} className="overflow-hidden relative">
+              {currentUserRole === 'admin' && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDeleteUser(user.id)}
+                  disabled={isLoading}
+                  className="absolute top-2 right-2 h-8 w-8 p-1 hover:bg-red-100 hover:text-red-700 z-10"
+                >
+                  <Trash2 className="h-4 w-4 text-red-500" />
+                </Button>
+              )}
               <CardContent className="p-0">
                 <div className="p-6">
                   <div className="flex flex-col items-center mb-4">
@@ -429,10 +440,10 @@ export default function UsersPage() {
                         {user.lastName?.[0]}
                       </AvatarFallback>
                     </Avatar>
-                    <h3 className="font-medium text-lg">
+                    <h3 className="font-medium text-lg text-center">
                       {user.firstName} {user.lastName}
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground break-all text-center">
                       {getUserEmail(user)}
                     </p>
                   </div>
@@ -470,18 +481,6 @@ export default function UsersPage() {
                         <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
                     </Select>
-                    {currentUserRole === 'admin' && (
-                      <Button
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => handleDeleteUser(user.id)}
-                        disabled={isLoading}
-                        className="mt-2 w-full"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete User
-                      </Button>
-                    )}
                   </div>
                 </div>
               </CardContent>

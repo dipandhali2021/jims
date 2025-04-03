@@ -139,7 +139,7 @@ export default function InventoryPage() {
     <div className="p-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center md:items-center mb-6 gap-4">
-        <h1 className="text-3xl md:text-3xl font-bold">Inventory Management</h1>
+        <h1 className="text-2xl md:text-2xl font-bold">Inventory Management</h1>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -402,12 +402,11 @@ export default function InventoryPage() {
                           Stock: {product.stock}
                         </span>
                       </div>
-                      <div className="flex mt-4 justify-evenly">
+                        <div className="flex mt-4 justify-evenly flex-wrap md:flex-nowrap">
                         <CreateSalesRequestDialog
                           product={product}
                           onRequestCreated={refreshProducts}
                         />
-
                         <ProductPreviewDialog product={product} />
                         <EditProductDialog
                           product={product}
@@ -417,11 +416,7 @@ export default function InventoryPage() {
                           product={product}
                           onProductDeleted={refreshProducts}
                         />
-                        {/* <Button variant="outline" size="sm" className="flex-1 text-red-500 hover:text-red-700 hover:bg-red-50">
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Delete
-                      </Button> */}
-                      </div>
+                        </div>
                     </CardContent>
                   </Card>
                 ))
