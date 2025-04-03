@@ -1,23 +1,23 @@
-"use client"
+'use client';
 
-import { useState, useEffect } from "react"
-import type React from "react"
-import { usePathname } from "next/navigation"
-import Link from "next/link"
-import { useClerk } from "@clerk/nextjs"
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingBag, 
-  History, 
-  PieChart, 
-  Users, 
-  Settings, 
-  ChevronDown, 
-  LogOut, 
-  Menu, 
-  X 
-} from "lucide-react"
+import { useState, useEffect } from 'react';
+import type React from 'react';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
+import { useClerk } from '@clerk/nextjs';
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingBag,
+  History,
+  PieChart,
+  Users,
+  Settings,
+  ChevronDown,
+  LogOut,
+  Menu,
+  X,
+} from 'lucide-react';
 
 import {
   Sidebar,
@@ -31,53 +31,62 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
   SidebarRail,
-} from "@/components/ui/sidebar"
+} from '@/components/ui/sidebar';
 
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export type SidebarLink = {
-  href: string
-  label: string
-  icon: React.ElementType
-  adminOnly?: boolean
-  subItems?: { href: string; label: string }[]
-}
+  href: string;
+  label: string;
+  icon: React.ElementType;
+  adminOnly?: boolean;
+  shopkeeperOnly?: boolean;
+  subItems?: { href: string; label: string }[];
+};
 
 interface DashboardSidebarProps {
-  isAdmin?: boolean
-  user?: any
-  isMobileOpen: boolean
-  toggleMobileMenu: () => void
+  isAdmin?: boolean;
+  isShopkeeper?: boolean;
+  user?: any;
+  isMobileOpen: boolean;
+  toggleMobileMenu: () => void;
 }
 
 const sidebarLinks: SidebarLink[] = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/inventory", label: "Inventory", icon: Package },
-  // { href: "/orders", label: "Orders", icon: ShoppingBag },
-  { href:"/sales", label: "Sales", icon: ShoppingBag },
-  { href: "/requests", label: "Requests", icon: History },
-  { href: "/analytics", label: "Analytics", icon: PieChart, adminOnly: true },
-  { href: "/users", label: "Users", icon: Users, adminOnly: true },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/inventory', label: 'Inventory', icon: Package },
+  { href: '/sales', label: 'Sales', icon: ShoppingBag },
+  { href: '/requests', label: 'Requests', icon: History },
+  { href: '/analytics', label: 'Analytics', icon: PieChart, adminOnly: true },
+  { href: '/admin/users', label: 'Users', icon: Users, adminOnly: true },
   {
-    href: "/settings",
-    label: "Settings",
+    href: '/settings',
+    label: 'Settings',
     icon: Settings,
     subItems: [
-      { href: "/settings/profile", label: "Profile" },
-      { href: "/settings/account", label: "Account" },
-      { href: "/settings/notifications", label: "Notifications" },
+      { href: '/settings/profile', label: 'Profile' },
+      { href: '/settings/account', label: 'Account' },
+      { href: '/settings/notifications', label: 'Notifications' },
     ],
   },
-]
+];
 
-export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMobileMenu }: DashboardSidebarProps) {
-  const pathname = usePathname()
-  const { signOut } = useClerk()
+export function DashboardSidebar({
+  isAdmin = false,
+  isShopkeeper = false,
+  user,
+  isMobileOpen,
+  toggleMobileMenu,
+}: DashboardSidebarProps) {
+  const pathname = usePathname();
+  const { signOut } = useClerk();
 
-
-  const filteredLinks = sidebarLinks.filter((link) => !link.adminOnly || (link.adminOnly && isAdmin))
-
+  const filteredLinks = sidebarLinks.filter(
+    (link) =>
+      (!link.adminOnly || (link.adminOnly && isAdmin)) &&
+      (!link.shopkeeperOnly || (link.shopkeeperOnly && isShopkeeper))
+  );
 
   // For desktop view - regular sidebar
   const desktopSidebar = (
@@ -93,7 +102,13 @@ export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMob
                   </div>
                   <div className="flex flex-col gap-0.5 leading-none">
                     <span className="font-semibold text-lg">Jewelry Admin</span>
-                    <span className="text-xs opacity-70">Management Dashboard</span>
+                    <span className="text-xs opacity-70">
+                      {isAdmin
+                        ? 'Admin Dashboard'
+                        : isShopkeeper
+                        ? 'Shopkeeper Dashboard'
+                        : 'User Dashboard'}
+                    </span>
                   </div>
                 </Link>
               </SidebarMenuButton>
@@ -120,7 +135,7 @@ export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMob
           </div>
         )}
 
-        <SidebarContent className="p-4">
+        <SidebarContent>
           <SidebarMenu>
             {filteredLinks.map((link) => (
               <SidebarMenuItem key={link.label}>
@@ -136,22 +151,20 @@ export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMob
                     <SidebarMenuSub>
                       {link.subItems.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.label}>
-                          <SidebarMenuSubButton 
-                            asChild 
+                          <SidebarMenuSubButton
+                            asChild
                             isActive={pathname === subItem.href}
                             className="hover:bg-accent/50 pl-10"
                           >
-                            <Link href={subItem.href}>
-                              {subItem.label}
-                            </Link>
+                            <Link href={subItem.href}>{subItem.label}</Link>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       ))}
                     </SidebarMenuSub>
                   </>
                 ) : (
-                  <SidebarMenuButton 
-                    asChild 
+                  <SidebarMenuButton
+                    asChild
                     isActive={pathname === link.href}
                     className="hover:bg-accent/50"
                   >
@@ -165,12 +178,12 @@ export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMob
             ))}
           </SidebarMenu>
         </SidebarContent>
-        
+
         <SidebarFooter className="mt-auto">
           <div className="border-t">
             <SidebarMenu>
               <SidebarMenuItem>
-                <SidebarMenuButton 
+                <SidebarMenuButton
                   onClick={() => signOut()}
                   className="text-red-600 hover:bg-red-50 hover:text-red-700"
                 >
@@ -187,15 +200,17 @@ export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMob
         <SidebarRail />
       </Sidebar>
     </div>
-  )
+  );
 
   // Full screen mobile sidebar
   const mobileSidebar = (
-    <div className={`
+    <div
+      className={`
       fixed inset-0 bg-white z-50 md:hidden
       transform transition-transform duration-300 ease-in-out
       ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'}
-    `}>
+    `}
+    >
       <div className="flex flex-col h-full overflow-y-auto">
         {/* Mobile header with close button */}
         <div className="flex items-center justify-between p-4 border-b">
@@ -205,12 +220,18 @@ export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMob
             </div>
             <div className="flex flex-col">
               <span className="font-semibold text-lg">Jewelry Admin</span>
-              <span className="text-xs opacity-70">Management Dashboard</span>
+              <span className="text-xs opacity-70">
+                {isAdmin
+                  ? 'Admin Dashboard'
+                  : isShopkeeper
+                  ? 'Shopkeeper Dashboard'
+                  : 'User Dashboard'}
+              </span>
             </div>
           </div>
-          <Button 
-            variant="ghost" 
-            size="icon" 
+          <Button
+            variant="ghost"
+            size="icon"
             onClick={toggleMobileMenu}
             aria-label="Close menu"
           >
@@ -245,8 +266,8 @@ export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMob
               <div key={link.label} className="mb-1">
                 {link.subItems ? (
                   <div className="space-y-1">
-                    <Button 
-                      variant="ghost" 
+                    <Button
+                      variant="ghost"
                       className="w-full justify-between text-left font-normal h-12"
                     >
                       <div className="flex items-center">
@@ -261,14 +282,13 @@ export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMob
                           key={subItem.label}
                           variant="ghost"
                           className={`w-full justify-start text-left font-normal h-11 ${
-                            pathname === subItem.href ? 'bg-accent text-accent-foreground' : ''
+                            pathname === subItem.href
+                              ? 'bg-accent text-accent-foreground'
+                              : ''
                           }`}
                           asChild
                         >
-                          <Link 
-                            href={subItem.href}
-                            onClick={toggleMobileMenu}
-                          >
+                          <Link href={subItem.href} onClick={toggleMobileMenu}>
                             {subItem.label}
                           </Link>
                         </Button>
@@ -279,14 +299,13 @@ export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMob
                   <Button
                     variant="ghost"
                     className={`w-full justify-start text-left font-normal h-12 ${
-                      pathname === link.href ? 'bg-accent text-accent-foreground' : ''
+                      pathname === link.href
+                        ? 'bg-accent text-accent-foreground'
+                        : ''
                     }`}
                     asChild
                   >
-                    <Link 
-                      href={link.href} 
-                      onClick={toggleMobileMenu}
-                    >
+                    <Link href={link.href} onClick={toggleMobileMenu}>
                       <link.icon className="mr-3 h-5 w-5" />
                       <span>{link.label}</span>
                     </Link>
@@ -300,8 +319,8 @@ export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMob
         {/* Footer with logout */}
         <div className="border-t mt-auto">
           <div className="p-2">
-            <Button 
-              variant="ghost" 
+            <Button
+              variant="ghost"
               className="w-full justify-start text-left font-normal h-12 text-red-600 hover:text-red-700 hover:bg-red-50"
               onClick={() => signOut()}
             >
@@ -315,7 +334,7 @@ export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMob
         </div>
       </div>
     </div>
-  )
+  );
 
   return (
     <>
@@ -323,5 +342,5 @@ export function DashboardSidebar({ isAdmin = true, user, isMobileOpen, toggleMob
       {desktopSidebar}
       {mobileSidebar}
     </>
-  )
+  );
 }
