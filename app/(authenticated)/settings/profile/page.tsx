@@ -119,16 +119,30 @@ export default function ProfilePage() {
     setIsLoading(true);
 
     try {
+      // Update Clerk profile
       await user.update({
         firstName: formData.firstName,
         lastName: formData.lastName,
       });
 
+      // Update profile image if changed
       if (imageFile) {
         await user.setProfileImage({
           file: imageFile,
         });
       }
+
+      // Update database
+      await fetch('/api/user/update', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+        }),
+      });
 
       toast({
         title: 'Success',
@@ -202,154 +216,6 @@ export default function ProfilePage() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-2xl font-bold">Profile Settings</CardTitle>
             
-          <div className="mb-6">
-              <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline">
-                    <Key className="h-4 w-4 mr-2" />
-                    Change Password
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="bg-white">
-                  <DialogHeader>
-                    <DialogTitle>Change Password</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    {passwordError && (
-                      <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-md">
-                        {passwordError}
-                      </div>
-                    )}
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="current-password">Current Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="current-password"
-                          type={showCurrentPassword ? "text" : "password"}
-                          value={currentPassword}
-                          onChange={(e) => setCurrentPassword(e.target.value)}
-                          placeholder="Enter current password"
-                          className="bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-blue-500 pr-10"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                        >
-                          {showCurrentPassword ? (
-                            <EyeOff className="h-4 w-4 text-gray-500" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-gray-500" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="new-password">New Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="new-password"
-                          type={showNewPassword ? "text" : "password"}
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          placeholder="Enter new password"
-                          className="bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-blue-500 pr-10"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowNewPassword(!showNewPassword)}
-                        >
-                          {showNewPassword ? (
-                            <EyeOff className="h-4 w-4 text-gray-500" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-gray-500" />
-                          )}
-                        </Button>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Password must be at least 8 characters long
-                      </p>
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Label htmlFor="confirm-password">Confirm New Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="confirm-password"
-                          type={showConfirmPassword ? "text" : "password"}
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          placeholder="Confirm new password"
-                          className="bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-blue-500 pr-10"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        >
-                          {showConfirmPassword ? (
-                            <EyeOff className="h-4 w-4 text-gray-500" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-gray-500" />
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                    
-                    <div className="flex items-center space-x-2 pt-2">
-                      <input
-                        type="checkbox"
-                        id="sign-out-others"
-                        checked={signOutOthers}
-                        onChange={(e) => setSignOutOthers(e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
-                      />
-                      <Label htmlFor="sign-out-others" className="text-sm font-normal">
-                        Sign out of all other sessions
-                      </Label>
-                    </div>
-                  </div>
-                  <DialogFooter className="flex justify-between sm:justify-between">
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsPasswordDialogOpen(false)}
-                      disabled={isUpdatingPassword}
-                      className="border-gray-200 hover:bg-gray-50"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleUpdatePassword}
-                      disabled={
-                        isUpdatingPassword ||
-                        !currentPassword ||
-                        !newPassword ||
-                        !confirmPassword
-                      }
-                      className="bg-blue-500 hover:bg-blue-600 text-white"
-                    >
-                      {isUpdatingPassword ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Updating...
-                        </>
-                      ) : (
-                        'Update Password'
-                      )}
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
-            </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -532,7 +398,7 @@ export default function ProfilePage() {
             </div>
 
             {/* Submit Button */}
-            <div className="flex justify-end pt-6">
+            <div className="flex justify-end">
               <Button type="submit" disabled={isLoading}>
                 {isLoading ? (
                   <>
