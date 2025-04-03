@@ -32,6 +32,24 @@ export default function SignIn() {
     return null;
   }
 
+  async function handleGoogleSignIn() {
+    try {
+      setIsLoading(true);
+      setError('');
+
+      await signIn?.authenticateWithRedirect({
+        strategy: 'oauth_google',
+        redirectUrl: '/sso-callback',
+        redirectUrlComplete: '/dashboard',
+      });
+    } catch (err: any) {
+      console.error('Error signing in with Google:', err);
+      setError('Failed to sign in with Google. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!isLoaded) return;
@@ -74,6 +92,34 @@ export default function SignIn() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <Button
+            onClick={handleGoogleSignIn}
+            className="w-full mb-4 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <img
+                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                alt="Google"
+                className="w-5 h-5 mr-2"
+              />
+            )}
+            Continue with Google
+          </Button>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-300"></div>
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-2 bg-white text-gray-500">
+                Or continue with email
+              </span>
+            </div>
+          </div>
+
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
