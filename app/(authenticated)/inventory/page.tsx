@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -61,6 +62,7 @@ const getMaterialsAndCounts = (products: Product[]) => {
 };
 
 export default function InventoryPage() {
+  const { user } = useUser();
   const { products, isLoading, error, refreshProducts } = useProducts();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
@@ -157,7 +159,9 @@ export default function InventoryPage() {
           >
             <List className="h-4 w-4" />
           </Button>
-          <AddProductDialog onProductAdded={refreshProducts} />
+          {user?.publicMetadata?.role === 'admin' && (
+            <AddProductDialog onProductAdded={refreshProducts} />
+          )}
         </div>
       </div>
 
@@ -408,14 +412,18 @@ export default function InventoryPage() {
                           onRequestCreated={refreshProducts}
                         />
                         <ProductPreviewDialog product={product} />
-                        <EditProductDialog
-                          product={product}
-                          onProductUpdated={refreshProducts}
-                        />
-                        <DeleteProductDialog
-                          product={product}
-                          onProductDeleted={refreshProducts}
-                        />
+                        {user?.publicMetadata?.role === 'admin' && (
+                          <>
+                            <EditProductDialog
+                              product={product}
+                              onProductUpdated={refreshProducts}
+                            />
+                            <DeleteProductDialog
+                              product={product}
+                              onProductDeleted={refreshProducts}
+                            />
+                          </>
+                        )}
                         </div>
                     </CardContent>
                   </Card>
@@ -481,14 +489,18 @@ export default function InventoryPage() {
                         <td className="p-4">
                           <div className="flex gap-2">
                             <ProductPreviewDialog product={product} />
-                            <EditProductDialog
-                              product={product}
-                              onProductUpdated={refreshProducts}
-                            />
-                            <DeleteProductDialog
-                              product={product}
-                              onProductDeleted={refreshProducts}
-                            />
+                            {user?.publicMetadata?.role === 'admin' && (
+                              <>
+                                <EditProductDialog
+                                  product={product}
+                                  onProductUpdated={refreshProducts}
+                                />
+                                <DeleteProductDialog
+                                  product={product}
+                                  onProductDeleted={refreshProducts}
+                                />
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>

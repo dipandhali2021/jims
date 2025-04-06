@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useUser } from '@clerk/nextjs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +60,7 @@ interface SalesRequest {
 }
 
 export default function RequestsPage() {
+  const { user } = useUser();
   const [salesRequests, setSalesRequests] = useState<SalesRequest[]>([]);
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -406,7 +408,7 @@ export default function RequestsPage() {
                   >
                     <Eye className="h-4 w-4" />
                   </Button>
-                  {request.status === 'Pending' && (
+                  {request.status === 'Pending' && user?.publicMetadata?.role === 'admin' && (
                     <>
                       <Button
                         variant="outline"
@@ -491,7 +493,7 @@ export default function RequestsPage() {
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          {request.status === 'Pending' && (
+                          {request.status === 'Pending' && user?.publicMetadata?.role === 'admin' && (
                             <>
                               <Button
                                 variant="outline"

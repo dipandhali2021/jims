@@ -28,34 +28,41 @@ export async function DELETE(
       );
     }
 
-    // Delete all associated data from Postgres in correct order
-    await prisma.$transaction(async (tx) => {
-      // First delete sales items that reference products
-      await tx.salesItem.deleteMany({
-        where: {
-          product: {
-            userId: targetUserId
-          }
-        }
-      });
-
-      // Then delete sales requests
-      await tx.salesRequest.deleteMany({
-        where: { userId: targetUserId }
-      });
-
-      // Now safe to delete products
-      await tx.product.deleteMany({
-        where: { userId: targetUserId }
-      });
-
-      // Finally delete the user record
-      await tx.user.delete({
-        where: { id: targetUserId }
-      });
+    // First check if user exists in Postgres
+    const dbUser = await prisma.user.findUnique({
+      where: { id: targetUserId }
     });
 
-    // Delete the user from Clerk after Postgres cleanup
+    if (dbUser) {
+      // Delete all associated data from Postgres in correct order
+      await prisma.$transaction(async (tx) => {
+        // First delete sales items that reference products
+        await tx.salesItem.deleteMany({
+          where: {
+            product: {
+              userId: targetUserId
+            }
+          }
+        });
+
+        // Then delete sales requests
+        await tx.salesRequest.deleteMany({
+          where: { userId: targetUserId }
+        });
+
+        // Now safe to delete products
+        await tx.product.deleteMany({
+          where: { userId: targetUserId }
+        });
+
+        // Finally delete the user record
+        await tx.user.delete({
+          where: { id: targetUserId }
+        });
+      });
+    }
+
+    // Delete the user from Clerk regardless of Postgres state
     await clerkClient.users.deleteUser(targetUserId);
 
     return NextResponse.json({ success: true });
