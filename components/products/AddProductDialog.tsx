@@ -134,7 +134,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       const DEFAULT_IMAGE_URL = "https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png";
       setIsLoading(true);
       
-      let requestOptions: RequestInit = {
+      const requestOptions: RequestInit = {
         method: 'POST'
       };
 
@@ -452,7 +452,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-2 sticky bottom-0 bg-white">
+          <div className="flex justify-end space-x-3 pt-2 bottom-0 bg-white">
             <Button
               type="button"
               variant="outline"

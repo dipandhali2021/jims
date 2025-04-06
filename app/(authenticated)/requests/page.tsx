@@ -179,7 +179,7 @@ export default function RequestsPage() {
         
         <Skeleton className="h-20 w-full mb-4" />
         
-        <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+        <div className="flex justify-end gap-1 w-full mt-4 pt-4 border-t">
           <Skeleton className="h-8 w-24 rounded" />
         </div>
       </CardContent>
@@ -395,7 +395,7 @@ export default function RequestsPage() {
                   <span>{new Date(request.requestDate).toLocaleDateString()}</span>
                 </div>
                 
-                <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+                <div className="flex justify-evenly gap-1 w-full mt-4 pt-4 border-t">
                   <Button
                     variant="outline"
                     size="sm"
@@ -528,7 +528,7 @@ export default function RequestsPage() {
 
       {/* Details Dialog */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="sm:max-w-[600px] bg-white border-0 shadow-xl">
+        <DialogContent className="sm:max-w-[600px] bg-white border-0 shadow-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-gray-800">
               Request Details

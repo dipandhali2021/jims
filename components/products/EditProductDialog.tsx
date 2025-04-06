@@ -284,7 +284,7 @@ export function EditProductDialog({
       >
         <PenSquare className="h-4 w-4" />
       </Button>
-      <DialogContent className="sm:max-w-[600px] p-6 bg-white rounded-lg shadow-lg border-0">
+      <DialogContent className="sm:max-w-[600px] p-6 bg-white rounded-lg shadow-lg border-0 max-h-[90vh] overflow-y-auto">
         <DialogHeader className="mb-4">
           <DialogTitle className="text-xl font-bold">Edit Product</DialogTitle>
         </DialogHeader>
@@ -336,7 +336,7 @@ export function EditProductDialog({
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              className="min-h-24 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+              className="min-h-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
             />
           </div>
           <div className="grid grid-cols-2 gap-4">

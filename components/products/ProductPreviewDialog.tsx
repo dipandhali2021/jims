@@ -51,7 +51,7 @@ export function ProductPreviewDialog({ product }: ProductPreviewDialogProps) {
       >
         <Eye className="h-4 w-4" />
       </Button>
-      <DialogContent className="sm:max-w-[600px] p-0 bg-white rounded-lg overflow-hidden shadow-xl">
+      <DialogContent className="sm:max-w-[600px] p-0 bg-white rounded-lg overflow-hidden shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="grid grid-cols-1 md:grid-cols-2">
           {/* Product Image */}
           <div className="bg-gray-100 flex items-center justify-center p-6 h-full">
