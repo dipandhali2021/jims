@@ -81,10 +81,10 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
     }
     
     if (!formData.sku.trim()) {
-      setError("SKU is required");
+      setError("Product ID is required");
       toast({
         title: 'Error',
-        description: 'SKU is required',
+        description: 'Product ID is required',
         variant: 'destructive',
       });
       return;
@@ -129,38 +129,38 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       });
       return;
     }
-    
-    if (!imageFile) {
-      setError("Product image is required");
-      toast({
-        title: 'Error',
-        description: 'Please select an image',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     try {
+      const DEFAULT_IMAGE_URL = "https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png";
       setIsLoading(true);
       
-      // Create a new FormData instance
-      const data = new FormData();
-      
-      // Append form data fields
-      Object.entries(formData).forEach(([key, value]) => {
-        data.append(key, value);
-      });
-      
-      // Append the image file
-      data.append('image', imageFile);
+      let requestOptions: RequestInit = {
+        method: 'POST'
+      };
+
+      // If there's an image file, use FormData
+      if (imageFile) {
+        const data = new FormData();
+        Object.entries(formData).forEach(([key, value]) => {
+          data.append(key, value);
+        });
+        data.append('image', imageFile);
+        requestOptions.body = data;
+      } else {
+        // If no image, send as JSON with default imageUrl
+        requestOptions.headers = {
+          'Content-Type': 'application/json'
+        };
+        requestOptions.body = JSON.stringify({
+          ...formData,
+          imageUrl: DEFAULT_IMAGE_URL
+        });
+      }
 
       console.log('Submitting product data');
       
       // Send the request to the API endpoint
-      const response = await fetch('/api/products', {
-        method: 'POST',
-        body: data,
-      });
+      const response = await fetch('/api/products', requestOptions);
 
       // Parse the response as JSON
       const result = await response.json();
@@ -243,7 +243,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
           Add Product
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] p-6 bg-white rounded-lg shadow-lg border-0">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] p-6 bg-white rounded-lg shadow-lg border-0 overflow-y-auto">
         <DialogHeader className="mb-4">
           <DialogTitle className="text-xl font-bold">Add New Product</DialogTitle>
         </DialogHeader>
@@ -269,7 +269,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sku" className="font-medium">SKU *</Label>
+              <Label htmlFor="sku" className="font-medium">Product ID *</Label>
               <Input
                 id="sku"
                 value={formData.sku}
@@ -290,7 +290,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              className="min-h-24 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+              className="min-h-10  border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
             />
           </div>
 
@@ -370,7 +370,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
           </div>
 
           <div className="space-y-2">
-            <Label className="font-medium">Product Image *</Label>
+            <Label className="font-medium">Product Image</Label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
               {previewUrl ? (
                 <div className="relative">
@@ -393,7 +393,41 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
                   </Button>
                 </div>
               ) : (
-                <div>
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const droppedFile = e.dataTransfer.files[0];
+                    if (droppedFile) {
+                      // Check file size (limit to 10MB)
+                      if (droppedFile.size > 10 * 1024 * 1024) {
+                        toast({
+                          title: 'Error',
+                          description: 'Image size should be less than 10MB',
+                          variant: 'destructive',
+                        });
+                        return;
+                      }
+                      
+                      // Check file type
+                      if (!droppedFile.type.startsWith('image/')) {
+                        toast({
+                          title: 'Error',
+                          description: 'Please drop a valid image file',
+                          variant: 'destructive',
+                        });
+                        return;
+                      }
+                      
+                      setImageFile(droppedFile);
+                      setPreviewUrl(URL.createObjectURL(droppedFile));
+                    }
+                  }}
+                >
                   <input
                     type="file"
                     accept="image/*"
@@ -418,7 +452,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
             </div>
           </div>
 
-          <div className="flex justify-end space-x-3 pt-2">
+          <div className="flex justify-end space-x-3 pt-2 sticky bottom-0 bg-white">
             <Button
               type="button"
               variant="outline"

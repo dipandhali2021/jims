@@ -98,12 +98,18 @@ export function CreateSalesRequestDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="flex-1">
-          <ShoppingBag className="h-4 w-4 mr-1" />
-          Request Sale
-        </Button>
-      </DialogTrigger>
+        {/* <Button variant="outline" size="sm" className="flex-1"> */}
+          {/* <ShoppingBag className="h-4 w-4 mr-1 flex" /> */}
+          {/* Request Sale
+        </Button> */}
+        <Button 
+                onClick={() => setIsOpen(true)}
+                variant="ghost" 
+                size="icon"
+                className="h-8 w-8"
+              >
+                <ShoppingBag className="h-4 w-4" />
+              </Button>
       <DialogContent className="sm:max-w-[425px] bg-white border-0 shadow-xl">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold text-gray-800">Create Sales Request</DialogTitle>

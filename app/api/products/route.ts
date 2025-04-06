@@ -19,22 +19,48 @@ export async function POST(req: NextRequest) {
     // Log the start of the request processing
     console.log('Processing product creation request');
 
-    const formData = await req.formData();
-    
-    // Log the received form data (excluding image binary data)
-    const formDataEntries = Array.from(formData.entries())
-      .filter(([key]) => key !== 'image')
-      .map(([key, value]) => `${key}: ${value}`);
-    console.log('Form data received:', formDataEntries);
-    
-    const name = formData.get('name') as string;
-    const sku = formData.get('sku') as string;
-    const description = formData.get('description') as string;
-    const category = formData.get('category') as string;
-    const material = formData.get('material') as string;
-    const price = parseFloat(formData.get('price') as string);
-    const stock = parseInt(formData.get('stock') as string);
-    const image = formData.get('image');
+    let name: string;
+    let sku: string;
+    let description: string;
+    let category: string;
+    let material: string;
+    let price: number;
+    let stock: number;
+    let imageUrl: string | undefined;
+    let uploadedImage: File | Blob | null = null;
+
+    const contentType = req.headers.get('content-type');
+    if (contentType?.includes('application/json')) {
+      // Handle JSON request
+      const jsonData = await req.json();
+      name = jsonData.name;
+      sku = jsonData.sku;
+      description = jsonData.description || '';
+      category = jsonData.category;
+      material = jsonData.material;
+      price = parseFloat(jsonData.price);
+      stock = parseInt(jsonData.stock);
+      imageUrl = jsonData.imageUrl;
+    } else {
+      // Handle FormData request
+      const formData = await req.formData();
+      uploadedImage = formData.get('image') as File | null;
+      
+      // Log the received form data (excluding image binary data)
+      const formDataEntries = Array.from(formData.entries())
+        .filter(([key]) => key !== 'image')
+        .map(([key, value]) => `${key}: ${value}`);
+      console.log('Form data received:', formDataEntries);
+      
+      name = formData.get('name') as string;
+      sku = formData.get('sku') as string;
+      description = formData.get('description') as string || '';
+      category = formData.get('category') as string;
+      material = formData.get('material') as string;
+      price = parseFloat(formData.get('price') as string);
+      stock = parseInt(formData.get('stock') as string);
+
+    }
 
     // Validate required fields
     if (!name || !sku || !category || !material || isNaN(price) || isNaN(stock)) {
@@ -45,33 +71,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if image is provided and is a File
-    if (!image || !(image instanceof Blob)) {
-      console.error('Invalid image format');
+    // For FormData requests, handle image upload
+    if (contentType?.includes('multipart/form-data')) {
+      if (uploadedImage && uploadedImage instanceof Blob) {
+        // Convert the file to base64
+        const bytes = await uploadedImage.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        const base64Image = buffer.toString('base64');
+        
+        // Upload to Cloudinary
+        console.log('Uploading to Cloudinary...');
+        const result = await cloudinary.uploader.upload(
+          `data:${uploadedImage.type};base64,${base64Image}`,
+          {
+            folder: 'jewelry-inventory',
+          }
+        );
+        imageUrl = result.secure_url;
+        console.log('Cloudinary upload successful:', imageUrl);
+      }
+    }
+
+    // Ensure we have either an uploaded image URL or a provided image URL
+    if (!imageUrl) {
+      console.error('No image URL provided');
       return NextResponse.json(
-        { error: 'Invalid image format' },
+        { error: 'Image URL is required' },
         { status: 400 }
       );
     }
 
-    console.log('Image received:', image.type, image.size);
-
-    // Convert the file to base64
-    const bytes = await image.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-    const base64Image = buffer.toString('base64');
-    
-    console.log('Image converted to base64');
-
-    // Upload to Cloudinary
-    console.log('Uploading to Cloudinary...');
-    const result = await cloudinary.uploader.upload(
-      `data:${image.type};base64,${base64Image}`,
-      {
-        folder: 'jewelry-inventory',
-      }
-    );
-    console.log('Cloudinary upload successful:', result.secure_url);
 
     // Check if SKU already exists
     const existingProduct = await prisma.product.findUnique({
@@ -92,12 +121,12 @@ export async function POST(req: NextRequest) {
       data: {
         name,
         sku,
-        description: description || '',
+        description,
         category,
         material,
         price,
         stock,
-        imageUrl: result.secure_url,
+        imageUrl,
         userId,
       },
     });
