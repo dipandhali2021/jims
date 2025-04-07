@@ -1,16 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
 import { Bell, RefreshCw, Trash2, Check } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 interface Notification {
   id: string;
@@ -21,8 +16,7 @@ interface Notification {
   createdAt: string;
 }
 
-export function NotificationDialog() {
-  const [open, setOpen] = useState(false);
+export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -48,14 +42,7 @@ export function NotificationDialog() {
   };
 
   useEffect(() => {
-    // Initial fetch when component mounts
     fetchNotifications();
-    
-    // // Set up periodic refresh every 30 seconds
-    // const intervalId = setInterval(fetchNotifications, 30000);
-    
-    // // Cleanup interval on unmount
-    // return () => clearInterval(intervalId);
   }, []);
 
   const markAsRead = async (id: string) => {
@@ -140,88 +127,76 @@ export function NotificationDialog() {
     }
   };
 
-  const unreadCount = notifications.filter((n) => !n.isRead).length;
-
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5" />
-          {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center">
-              {unreadCount}
-            </span>
-          )}
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent align="end" className="w-[380px] p-0" sideOffset={5}>
-        <div className="flex flex-col">
-          <div className="flex items-center justify-between p-4">
-            <h4 className="font-semibold">Notifications</h4>
-            <div className="flex gap-2">
+    <div className="container mx-auto  max-w-3xl py-6 space-y-6">
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <CardTitle className="text-2xl font-bold">Notifications</CardTitle>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={fetchNotifications}
+              disabled={isLoading}
+              className="h-8 w-8 p-0"
+            >
+              <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+              <span className="sr-only">Refresh</span>
+            </Button>
+            {notifications.length > 0 && (
               <Button
-                variant="outline"
+                variant="destructive"
                 size="sm"
-                onClick={fetchNotifications}
-                disabled={isLoading}
+                onClick={deleteAllNotifications}
                 className="h-8 w-8 p-0"
               >
-                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
-                <span className="sr-only">Refresh</span>
+                <Trash2 className="h-4 w-4" />
+                <span className="sr-only">Delete All</span>
               </Button>
-              {notifications.length > 0 && (
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={deleteAllNotifications}
-                  className="h-8 w-8 p-0"
-                >
-                  <Trash2 className="h-4 w-4" />
-                  <span className="sr-only">Delete All</span>
-                </Button>
-              )}
-            </div>
+            )}
           </div>
-
-          <ScrollArea className="h-[300px] px-4">
+        </CardHeader>
+        <CardContent>
+          <div className="divide-y flex flex-col divide-border gap-2">
             {notifications.length === 0 ? (
-              <div className="text-center text-muted-foreground py-4">
+              <div className="text-center text-muted-foreground py-8">
                 No notifications
               </div>
             ) : (
-              <div className="space-y-2">
-                {notifications
-                  .sort((a, b) => {
-                    // First sort by read status (unread first)
-                    if (a.isRead !== b.isRead) {
-                      return a.isRead ? 1 : -1;
-                    }
-                    // Then sort by date within each group (newest first)
+              notifications
+                .sort((a, b) => {
+                  // First sort by read status (unread first)
+                  if (a.isRead !== b.isRead) {
+                    return a.isRead ? 1 : -1;
+                  }
+                  // Then sort by date within each group (newest first)
                     return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                   })
                   .map((notification) => (
-                  <div
+                    <div
                     key={notification.id}
-                    className={`p-3 rounded-lg border ${
+                    className={`py-2 rounded-md ${
                       notification.isRead ? 'bg-background' : 'bg-muted'
                     }`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h5 className="font-medium text-sm mb-1">{notification.title}</h5>
-                        <p className="text-sm text-muted-foreground">
+                    >
+                    <div className="flex justify-between items-start gap-4 p-2 ">
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-medium mb-1 truncate">
+                          {notification.title}
+                        </h3>
+                        <p className="text-sm text-muted-foreground break-words">
                           {notification.message}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                           {new Date(notification.createdAt).toLocaleString()}
                         </p>
                       </div>
-                      <div className="flex gap-1 ml-2 shrink-0">
+                      <div className=" flex gap-1 shrink-0">
                         {!notification.isRead && (
                           <Button
                             variant="ghost"
-                            size="icon"
-                            className="h-6 w-6"
+                            size="sm"
+                            className="h-8 w-8 p-0"
                             onClick={() => markAsRead(notification.id)}
                           >
                             <Check className="h-4 w-4" />
@@ -230,8 +205,8 @@ export function NotificationDialog() {
                         )}
                         <Button
                           variant="ghost"
-                          size="icon"
-                          className="h-6 w-6 text-destructive"
+                          size="sm"
+                          className="h-8 w-8 p-0 text-destructive"
                           onClick={() => deleteNotification(notification.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -240,26 +215,11 @@ export function NotificationDialog() {
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
+                ))
             )}
-          </ScrollArea>
-
-          {notifications.length > 0 && (
-            <div className="border-t p-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-sm text-muted-foreground"
-                asChild
-              >
-                <Link href="/settings/notifications">
-                  View all notifications
-                </Link>
-              </Button>
-            </div>
-          )}
-        </div>
-      </PopoverContent>
-    </Popover>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

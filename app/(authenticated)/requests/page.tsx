@@ -62,6 +62,7 @@ interface SalesRequest {
 export default function RequestsPage() {
   const { user } = useUser();
   const [salesRequests, setSalesRequests] = useState<SalesRequest[]>([]);
+  const [loadingStates, setLoadingStates] = useState<{[key: string]: {approving: boolean, rejecting: boolean}}>({});
   const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -99,6 +100,14 @@ export default function RequestsPage() {
     requestId: string,
     newStatus: 'Approved' | 'Rejected'
   ) => {
+    // Set the appropriate loading state
+    setLoadingStates(prev => ({
+      ...prev,
+      [requestId]: {
+        approving: newStatus === 'Approved' ? true : false,
+        rejecting: newStatus === 'Rejected' ? true : false
+      }
+    }));
     try {
       const response = await fetch(`/api/sales-requests/${requestId}`, {
         method: 'PUT',
@@ -116,8 +125,7 @@ export default function RequestsPage() {
         title: 'Success',
         description: `Request ${newStatus.toLowerCase()} successfully`,
       });
-
-      // Refresh the requests list
+await fetchSalesRequests();
       fetchSalesRequests();
     } catch (error) {
       toast({
@@ -125,6 +133,12 @@ export default function RequestsPage() {
         description: 'Failed to update request status',
         variant: 'destructive',
       });
+    } finally {
+      // Reset the loading state
+      setLoadingStates(prev => ({
+        ...prev,
+        [requestId]: { approving: false, rejecting: false }
+      }));
     }
   };
 
@@ -413,18 +427,28 @@ export default function RequestsPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-green-600 hover:text-green-700"
+                        className="text-green-600 hover:text-green-700 disabled:opacity-50"
                         onClick={() => handleStatusUpdate(request.id, 'Approved')}
+                        disabled={loadingStates[request.id]?.approving || loadingStates[request.id]?.rejecting}
                       >
-                        <CheckCircle className="h-4 w-4" />
+                        {loadingStates[request.id]?.approving ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4" />
+                        )}
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-red-600 hover:text-red-700"
+                        className="text-red-600 hover:text-red-700 disabled:opacity-50"
                         onClick={() => handleStatusUpdate(request.id, 'Rejected')}
+                        disabled={loadingStates[request.id]?.approving || loadingStates[request.id]?.rejecting}
                       >
-                        <XCircle className="h-4 w-4" />
+                        {loadingStates[request.id]?.rejecting ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <XCircle className="h-4 w-4" />
+                        )}
                       </Button>
                     </>
                   )}
@@ -498,22 +522,28 @@ export default function RequestsPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-green-600 hover:text-green-700"
-                                onClick={() =>
-                                  handleStatusUpdate(request.id, 'Approved')
-                                }
+                                className="text-green-600 hover:text-green-700 disabled:opacity-50"
+                                onClick={() => handleStatusUpdate(request.id, 'Approved')}
+                                disabled={loadingStates[request.id]?.approving || loadingStates[request.id]?.rejecting}
                               >
-                                <CheckCircle className="h-4 w-4" />
+                                {loadingStates[request.id]?.approving ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle className="h-4 w-4" />
+                                )}
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-red-600 hover:text-red-700"
-                                onClick={() =>
-                                  handleStatusUpdate(request.id, 'Rejected')
-                                }
+                                className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                                onClick={() => handleStatusUpdate(request.id, 'Rejected')}
+                                disabled={loadingStates[request.id]?.approving || loadingStates[request.id]?.rejecting}
                               >
-                                <XCircle className="h-4 w-4" />
+                                {loadingStates[request.id]?.rejecting ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <XCircle className="h-4 w-4" />
+                                )}
                               </Button>
                             </>
                           )}
