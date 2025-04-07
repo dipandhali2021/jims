@@ -1,108 +1,113 @@
-# TodoMaster - Role-Based Auth Todo App
+# Jewelry Shop Inventory Management System
 
-TodoMaster is a powerful task management application built with Next.js, featuring role-based authentication using Clerk and a PostgreSQL database with Neon.
+A comprehensive jewelry shop management system built with Next.js, featuring role-based authentication, inventory management, and sales request workflows.
+
+## Implemented Features
+
+### 1. User Roles & Permissions
+The system implements role-based access control (RBAC) with two user types:
+- **Admin (Owner)**: Full control over inventory and sales approval
+- **Shopkeeper (Worker)**: Can browse products and create sales requests
+
+### 2. Product Management
+Products are managed with jewelry-specific attributes:
+- SKU tracking
+- Detailed product information (name, description, category)
+- Material specification
+- Price and stock management
+- Image support
+- Automated inventory tracking
+
+### 3. Sales Request Workflow
+Streamlined process for handling sales:
+- Shopkeepers can create single or bulk sales requests
+- Customer information tracking
+- Real-time stock validation
+- Automated total value calculation
+- Status tracking (Pending, Approved, Rejected)
+- Unique request ID generation (Format: SR-YYYY-XXXX)
+
+### 4. Notification System
+Real-time notifications for:
+- Sales request status updates
+- New request notifications
+- Unread notification tracking
+- Interactive notification interface
+
+## System Workflows
+
+### Sales Request Workflow
+```mermaid
+flowchart TD
+    A[Shopkeeper] -->|Creates| B[Sales Request]
+    B -->|Notifies| C[Admin]
+    C -->|Reviews| D{Decision}
+    D -->|Approve| E[Update Inventory]
+    E -->|Notify| A
+    D -->|Reject| F[Send Feedback]
+    F -->|Notify| A
+    style A fill:#f9f,stroke:#333
+    style C fill:#bbf,stroke:#333
+    style D fill:#dfd,stroke:#333
+```
+
+### User Role Interaction
+```mermaid
+flowchart LR
+    A[Admin] -->|Manages| B[Products]
+    A -->|Approves| C[Sales Requests]
+    D[Shopkeeper] -->|Views| B
+    D -->|Creates| C
+    B -->|Stock Updates| E[Notifications]
+    C -->|Status Changes| E
+    E -->|Alerts| A
+    E -->|Alerts| D
+    style A fill:#bbf,stroke:#333
+    style D fill:#f9f,stroke:#333
+    style E fill:#dfd,stroke:#333
+```
 
 ## Getting Started
 
 ### Prerequisites
-
 - Node.js (v14 or later)
-- npm (v6 or later)
-- A Clerk account (for authentication)
-- A Neon account (for PostgreSQL database)
+- PostgreSQL database
+- NPM or Yarn
 
 ### Installation
 
 1. Clone the repository:
-
-   ```
-   git clone https://github.com/aryan877/todo-master.git
-   cd role-based-auth
-   ```
+```bash
+git clone [repository-url]
+cd jewelry-management-system
+```
 
 2. Install dependencies:
-
-   ```
-   npm install
-   ```
+```bash
+npm install
+```
 
 3. Set up environment variables:
-   Create a `.env.local` file in the root directory and add the following variables:
+Create a `.env.local` file with required configuration.
 
-   ```
-   # Clerk
-   NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
-   CLERK_SECRET_KEY=your_clerk_secret_key
+4. Initialize the database:
+```bash
+npx prisma db push
+npx prisma generate
+```
 
-   # Neon Database
-   DATABASE_URL=your_neon_database_url
+5. Start the development server:
+```bash
+npm run dev
+```
 
-   # Webhook Secret (for Clerk)
-   WEBHOOK_SECRET=your_webhook_secret
-   ```
+## Tech Stack
 
-4. Set up the database:
-
-   ```
-   npx prisma db push
-   ```
-
-5. Generate Prisma client:
-   ```
-   npx prisma generate
-   ```
-
-### Running the Application
-
-To run the development server:
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Features
-
-- User authentication with Clerk
-- Role-based access control (Admin and User roles)
-- Todo management (Create, Read, Update, Delete)
-- Subscription-based todo limits
-- Admin dashboard for user management
-
-## Webhook Setup
-
-This application uses a Clerk webhook to synchronize user data with the database. Specifically, it listens for the `user.created` event to create a corresponding user record in the database.
-
-To set up the webhook:
-
-1. Go to the Clerk Dashboard.
-2. Navigate to the "Webhooks" section.
-3. Click on "Add Endpoint".
-4. Set the Endpoint URL to `https://your-app-url.com/api/webhook/register` (replace with your actual URL).
-5. Under "Events", select "user.created".
-6. Save the endpoint.
-7. Copy the "Signing Secret" and add it to your `.env.local` file as `WEBHOOK_SECRET`.
-
-The webhook handler is implemented in `app/api/webhook/register/route.ts`. It verifies the webhook signature and creates a new user record in the database when a user is created in Clerk.
-
-## @Codebase
-
-### Setting up an Admin User
-
-To test the admin functionality, you need to manually set the user's role to "admin" in Clerk. Here's how to do it:
-
-1. Log in to your Clerk Dashboard.
-2. Go to the "Users" section.
-3. Find the user you want to make an admin.
-4. Click on the user to open their details.
-5. Scroll down to the "Public metadata" section.
-6. Add a new key-value pair:
-   - Key: `role`
-   - Value: `admin`
-7. Save the changes.
-
-Now, when this user logs in, they will have admin privileges in the application.
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+- **Frontend**: Next.js with TypeScript
+- **Database**: PostgreSQL with Prisma ORM
+- **UI Components**: Custom components with Tailwind CSS
+- **State Management**: React Hooks
+- **API**: Next.js API routes
 
 ## License
 
