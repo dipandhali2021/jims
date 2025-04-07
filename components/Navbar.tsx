@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from './ui/input';
 import { useUser, useClerk } from '@clerk/nextjs';
-import { Bell, Search, LogOut, Menu } from 'lucide-react';
+import { Search, LogOut, Menu } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,15 +14,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-// import { MobileSidebar } from './Sidebar';
-
+import { NotificationDialog } from './NotificationDialog';
 
 interface NavbarProps {
   isMobileOpen: boolean;
   toggleMobileMenu: () => void;
 }
 
-export default function Navbar({ isMobileOpen, toggleMobileMenu }: NavbarProps) {
+export default function Navbar({
+  isMobileOpen,
+  toggleMobileMenu,
+}: NavbarProps) {
   const { user } = useUser();
   const { signOut } = useClerk();
 
@@ -35,19 +37,14 @@ export default function Navbar({ isMobileOpen, toggleMobileMenu }: NavbarProps) 
           size="icon"
           className="md:hidden"
           onClick={toggleMobileMenu}
-          aria-label={isMobileOpen ? "Close menu" : "Open menu"}
+          aria-label={isMobileOpen ? 'Close menu' : 'Open menu'}
         >
           <Menu className="h-5 w-5" />
         </Button>
-        
-        <div className="flex items-center flex-1 justify-end space-x-4">
-          
 
+        <div className="flex items-center flex-1 justify-end space-x-4">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full" />
-            </Button>
+            <NotificationDialog />
 
             {user && (
               <DropdownMenu>
@@ -86,7 +83,6 @@ export default function Navbar({ isMobileOpen, toggleMobileMenu }: NavbarProps) 
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-
           </div>
         </div>
       </div>

@@ -22,7 +22,7 @@ export async function PUT(
       );
     }
 
-    // Get the sales request with its items
+    // Get the sales request with its items and user
     const salesRequest = await prisma.salesRequest.findUnique({
       where: { id },
       include: {
@@ -30,7 +30,8 @@ export async function PUT(
           include: {
             product: true
           }
-        }
+        },
+        user: true
       }
     });
 
@@ -65,6 +66,16 @@ export async function PUT(
             product: true
           }
         }
+      }
+    });
+
+    // Create notification for the shopkeeper
+    await prisma.notification.create({
+      data: {
+        title: `Sales Request ${status}`,
+        message: `Your sales request (${salesRequest.requestId}) has been ${status.toLowerCase()}. Total value: $${salesRequest.totalValue.toFixed(2)}`,
+        type: 'status_update',
+        userId: salesRequest.userId,
       }
     });
 

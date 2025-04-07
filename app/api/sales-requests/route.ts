@@ -1,12 +1,32 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
+import { use } from 'react';
 
 // Helper function to generate request ID
 function generateRequestId() {
   const year = new Date().getFullYear();
   const random = Math.floor(1000 + Math.random() * 9000);
   return `SR-${year}-${random}`;
+}
+
+// Helper function to find admin users
+async function findAdminUsers() {
+  try {
+    const users = await clerkClient.users.getUserList({
+      limit: 100,
+    });
+
+    console.log('Admin users found:', users?.data?.filter(user => user.publicMetadata && typeof user.publicMetadata === 'object' && user.publicMetadata.role === 'admin').map(user => user.id));
+    return users?.data?.filter(user =>
+      user.publicMetadata &&
+      typeof user.publicMetadata === 'object' &&
+      user.publicMetadata.role === 'admin'
+    ).map(user => user.id);
+  } catch (error) {
+    console.error('Error finding admin users:', error);
+    return [];
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -73,9 +93,25 @@ export async function POST(req: NextRequest) {
           include: {
             product: true
           }
-        }
+        },
+        user: true
       }
     });
+
+    // Find admin users and create notifications for them
+    const adminUserIds = await findAdminUsers();
+    
+    if (adminUserIds.length > 0) {
+      // Create notifications for all admin users
+      await prisma.notification.createMany({
+        data: adminUserIds.map(adminId => ({
+          title: 'New Sales Request',
+          message: `New sales request (${salesRequest.requestId}) created by ${salesRequest.user.firstName} ${salesRequest.user.lastName} for customer ${customer}. Total value: $${totalValue.toFixed(2)}`,
+          type: 'sales_request',
+          userId: adminId,
+        }))
+      });
+    }
 
     return NextResponse.json(salesRequest, { status: 201 });
   } catch (error) {
