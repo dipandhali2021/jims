@@ -2,12 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/hooks/use-toast';
@@ -23,7 +21,7 @@ interface Notification {
 }
 
 export function NotificationDialog() {
-  const [isOpen, setIsOpen] = useState(false);
+  const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
@@ -49,15 +47,15 @@ export function NotificationDialog() {
   };
 
   useEffect(() => {
-    // Fetch notifications when component mounts
+    // Initial fetch when component mounts
     fetchNotifications();
-
-    // Set up periodic refresh every 30 seconds
-    const intervalId = setInterval(fetchNotifications, 60000);
-
-    // Cleanup interval on component unmount
-    return () => clearInterval(intervalId);
-  }, []); // Empty dependency array means this runs once on mount
+    
+    // // Set up periodic refresh every 30 seconds
+    // const intervalId = setInterval(fetchNotifications, 30000);
+    
+    // // Cleanup interval on unmount
+    // return () => clearInterval(intervalId);
+  }, []);
 
   const markAsRead = async (id: string) => {
     try {
@@ -144,8 +142,8 @@ export function NotificationDialog() {
   const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
@@ -154,90 +152,99 @@ export function NotificationDialog() {
             </span>
           )}
         </Button>
-      </DialogTrigger>
-      <DialogContent className="bg-white sm:max-w-[425px] overflow-y-auto">
-        <DialogHeader>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-[380px] p-4" sideOffset={5}>
+        <div className="flex flex-col gap-4">
           <div className="flex items-center justify-between">
-            <div className="flex w-full gap-2 flex-col">
-              <DialogTitle>Notifications</DialogTitle>
-              <div className='flex gap-2 items-center justify-between'>
+            <h4 className="font-semibold">Notifications</h4>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchNotifications}
+                disabled={isLoading}
+                className="h-8 w-8 p-0"
+              >
+                <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
+                <span className="sr-only">Refresh</span>
+              </Button>
+              {notifications.length > 0 && (
                 <Button
-                  variant="outline"
+                  variant="destructive"
                   size="sm"
-                  onClick={fetchNotifications}
-                  disabled={isLoading}
-                  className="h-8 px-2"
+                  onClick={deleteAllNotifications}
+                  className="h-8 w-8 p-0"
                 >
-                  <RefreshCw
-                    className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
-                  />
-                  <span className="ml-1">Refresh</span>
+                  <Trash2 className="h-4 w-4" />
+                  <span className="sr-only">Delete All</span>
                 </Button>
-                {notifications.length > 0 && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={deleteAllNotifications}
-                    className="h-8"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    Delete All
-                  </Button>
-                )}
-              </div>
+              )}
             </div>
           </div>
-        </DialogHeader>
 
-        <ScrollArea className="h-[400px] ">
-          {notifications.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              No notifications
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {notifications.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={`w-full p-4 rounded-lg border ${
-                    notification.isRead ? 'bg-background' : 'bg-muted'
-                  }`}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-medium">{notification.title}</h4>
-                    <div className="flex gap-2">
-                      {!notification.isRead && (
+          <ScrollArea className="h-[300px]">
+            {notifications.length === 0 ? (
+              <div className="text-center text-muted-foreground py-4">
+                No notifications
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {notifications
+                  .sort((a, b) => {
+                    // First sort by read status (unread first)
+                    if (a.isRead !== b.isRead) {
+                      return a.isRead ? 1 : -1;
+                    }
+                    // Then sort by date within each group (newest first)
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                  })
+                  .map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={`p-3 rounded-lg border ${
+                      notification.isRead ? 'bg-background' : 'bg-muted'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <h5 className="font-medium text-sm mb-1">{notification.title}</h5>
+                        <p className="text-sm text-muted-foreground">
+                          {notification.message}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(notification.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="flex gap-1 ml-2 shrink-0">
+                        {!notification.isRead && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => markAsRead(notification.id)}
+                          >
+                            <Check className="h-4 w-4" />
+                            <span className="sr-only">Mark as read</span>
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-6 w-6"
-                          onClick={() => markAsRead(notification.id)}
+                          className="h-6 w-6 text-destructive"
+                          onClick={() => deleteNotification(notification.id)}
                         >
-                          <Check className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete</span>
                         </Button>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 text-destructive"
-                        onClick={() => deleteNotification(notification.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      </div>
                     </div>
                   </div>
-                  <p className="text-sm text-muted-foreground">
-                    {notification.message}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {new Date(notification.createdAt).toLocaleString()}
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </ScrollArea>
-      </DialogContent>
-    </Dialog>
+                ))}
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
