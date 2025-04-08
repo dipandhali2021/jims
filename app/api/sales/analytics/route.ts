@@ -120,6 +120,7 @@ function generateTrendDataPoints(timeframe: string | null, dateRange: any) {
       return Array.from({ length: 24 }, (_, i) => ({
         name: `${i}:00`,
         timestamp: new Date(start).setHours(i, 0, 0, 0),
+        value: 0
       }));
     
     case 'Week':
@@ -127,6 +128,7 @@ function generateTrendDataPoints(timeframe: string | null, dateRange: any) {
       return eachDayOfInterval({ start, end }).map(date => ({
         name: format(date, 'EEE'),
         timestamp: date.getTime(),
+        value: 0
       }));
     
     case 'Month':
@@ -139,6 +141,7 @@ function generateTrendDataPoints(timeframe: string | null, dateRange: any) {
         months.push({
           name: format(date, 'MMM'),  // Shows as Jan, Feb, Mar, etc.
           timestamp: date.getTime(),
+          value: 0
         });
       }
       return months;
@@ -152,6 +155,7 @@ function generateTrendDataPoints(timeframe: string | null, dateRange: any) {
           years.push({
             name: year.toString(),
             timestamp: new Date(year, 0, 1).getTime(),
+            value: 0
           });
         }
       }
