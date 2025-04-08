@@ -1,6 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
+import { SalesItem } from '@prisma/client';
+
+// Helper to ensure user exists in database
+async function ensureUserExists(userId: string) {
+  let user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    const clerkUser = await clerkClient.users.getUser(userId);
+    user = await prisma.user.create({
+      data: {
+        id: userId,
+        email: clerkUser.emailAddresses[0].emailAddress,
+        firstName: clerkUser.firstName || '',
+        lastName: clerkUser.lastName || '',
+        role: clerkUser.publicMetadata?.role as string || 'user'
+      }
+    });
+  }
+  return user;
+}
 
 export async function PUT(
   req: NextRequest,
@@ -56,10 +75,44 @@ export async function PUT(
       }
     }
 
+    // Create transaction record if request is approved
+    if (status === 'Approved') {
+      // Ensure user exists in database
+      await ensureUserExists(salesRequest.userId);
+
+      // Format items for transaction record with full product details
+      const transactionItems = salesRequest.items.map(item => ({
+        productId: item.productId,
+        productName: item.product.name,
+        category: item.product.category,
+        quantity: item.quantity,
+        price: item.price,
+        total: item.price * item.quantity,
+        material: item.product.material
+      }));
+
+      // Create transaction record
+      await prisma.transaction.create({
+        data: {
+          orderId: salesRequest.requestId,
+          customer: salesRequest.customer,
+          totalAmount: salesRequest.totalValue,
+          items: transactionItems,
+          userId: salesRequest.userId,
+        }
+      });
+    }
+
     // Update sales request status
     const updatedRequest = await prisma.salesRequest.update({
       where: { id },
-      data: { status },
+      data: {
+        status,
+        // Update timestamp for approved requests
+        ...(status === 'Approved' ? {
+          requestDate: new Date()
+        } : {})
+      },
       include: {
         items: {
           include: {

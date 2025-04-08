@@ -20,7 +20,8 @@ model User {
   todos             Todo[]
   products          Product[]
   salesRequests     SalesRequest[]
-  notifications     Notification[]  // Add this line
+  transactions      Transaction[]
+  notifications     Notification[]
 }
 
 model Todo {
@@ -84,4 +85,41 @@ model Notification {
   userId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Model for storing completed transactions
+model Transaction {
+  id          String    @id @default(cuid())
+  orderId     String    @unique // Will use the SalesRequest's requestId
+  customer    String
+  totalAmount Float
+  items       Json      // Store array of items with product details
+  status      String    @default("Completed")
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([createdAt])
+  @@index([userId])
+}
+
+// New model for sales analytics
+model SalesAnalytics {
+  id              String   @id @default(cuid())
+  date            DateTime
+  totalRevenue    Float
+  totalOrders     Int
+  avgOrderValue   Float
+  productId       String
+  productName     String
+  category        String
+  quantity        Int
+  revenue         Float
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([date])
+  @@index([category])
+  @@index([productId])
 }

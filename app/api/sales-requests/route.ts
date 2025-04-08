@@ -36,6 +36,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Get user details from Clerk
+    const clerkUser = await clerkClient.users.getUser(userId);
+    if (!clerkUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Ensure user exists in our database
+    let user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      // Create user if they don't exist
+      user = await prisma.user.create({
+        data: {
+          id: userId,
+          email: clerkUser.emailAddresses[0].emailAddress,
+          firstName: clerkUser.firstName || '',
+          lastName: clerkUser.lastName || '',
+          role: clerkUser.publicMetadata?.role as string || 'user'
+        }
+      });
+    }
+
     const { customer, items } = await req.json();
 
     if (!customer || !items || !Array.isArray(items) || items.length === 0) {
