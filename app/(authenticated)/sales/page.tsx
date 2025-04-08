@@ -298,33 +298,41 @@ export default function SalesPage() {
           
           {/* Mobile date filter using Sheet for small screens */}
           {isMobile ? (
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" className="w-full md:w-auto flex items-center justify-between">
-                  <span>
-                    {date?.from ? new Date(date.from).toLocaleDateString() : 'Start date'} 
-                    {' - '}
-                    {date?.to ? new Date(date.to).toLocaleDateString() : 'End date'}
-                  </span>
-                  <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent>
-                <SheetHeader>
-                  <SheetTitle>Select Date Range</SheetTitle>
-                </SheetHeader>
-                <div className="py-4">
-                  <DateRangePicker
-                    date={date}
-                    onDateChange={(newDate) => {
-                      setDate(newDate);
-                      setTimeframe('Custom');
-                    }}
-                    className="w-full"
-                  />
-                </div>
-              </SheetContent>
-            </Sheet>
+            // <Sheet>
+            //   <SheetTrigger asChild>
+            //     <Button variant="outline" className="w-full md:w-auto flex items-center justify-between">
+            //       <span>
+            //         {date?.from ? new Date(date.from).toLocaleDateString() : 'Start date'} 
+            //         {' - '}
+            //         {date?.to ? new Date(date.to).toLocaleDateString() : 'End date'}
+            //       </span>
+            //       <ChevronDown className="h-4 w-4 ml-2" />
+            //     </Button>
+            //   </SheetTrigger>
+            //   <SheetContent className='bg-white overflow-y-auto ' >
+            //     <SheetHeader>
+            //       <SheetTitle>Select Date Range</SheetTitle>
+            //     </SheetHeader>
+            //     <div className="py-4">
+            //       <DateRangePicker
+            //         date={date}
+            //         onDateChange={(newDate) => {
+            //           setDate(newDate);
+            //           setTimeframe('Custom');
+            //         }}
+            //         className="w-full"
+            //       />
+            //     </div>
+            //   </SheetContent>
+            // </Sheet>
+            <DateRangePicker
+              date={date}
+              onDateChange={(newDate) => {
+                setDate(newDate);
+                setTimeframe('Custom');
+              }}
+              className="w-full md:w-auto"
+            />
           ) : (
             <DateRangePicker
               date={date}
