@@ -4,11 +4,13 @@ import { ReactNode, useState, useEffect } from "react"
 import Navbar from "@/components/Navbar"
 import { DashboardSidebar } from "@/components/Sidebar"
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar"
+import { useClerk } from "@clerk/nextjs"
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   // You can fetch the user's role from your auth provider
   // For now, we'll assume the user is an admin
-  const isAdmin = true;
+  const { user } = useClerk();
+  const isAdmin = user?.publicMetadata?.role === 'admin';
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const toggleMobileMenu = () => {

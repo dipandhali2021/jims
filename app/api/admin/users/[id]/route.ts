@@ -36,22 +36,46 @@ export async function DELETE(
     if (dbUser) {
       // Delete all associated data from Postgres in correct order
       await prisma.$transaction(async (tx) => {
-        // First delete sales items that reference products
+        // First delete all sales items that reference either user's products or sales requests
         await tx.salesItem.deleteMany({
           where: {
-            product: {
-              userId: targetUserId
-            }
+            OR: [
+              {
+                product: {
+                  userId: targetUserId
+                }
+              },
+              {
+                salesRequest: {
+                  userId: targetUserId
+                }
+              }
+            ]
           }
         });
 
-        // Then delete sales requests
+        // Delete sales requests
         await tx.salesRequest.deleteMany({
           where: { userId: targetUserId }
         });
 
-        // Now safe to delete products
+        // Delete products
         await tx.product.deleteMany({
+          where: { userId: targetUserId }
+        });
+
+        // Delete todos
+        await tx.todo.deleteMany({
+          where: { userId: targetUserId }
+        });
+
+        // Delete transactions
+        await tx.transaction.deleteMany({
+          where: { userId: targetUserId }
+        });
+
+        // Delete notifications
+        await tx.notification.deleteMany({
           where: { userId: targetUserId }
         });
 

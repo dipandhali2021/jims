@@ -22,7 +22,7 @@ export async function PUT(
     const targetUserId = params.id;
 
     // Validate role
-    if (!['user', 'shopkeeper', 'admin'].includes(role)) {
+    if (!['user', 'admin'].includes(role)) {
       return NextResponse.json(
         { error: 'Invalid role specified' },
         { status: 400 }

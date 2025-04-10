@@ -56,6 +56,24 @@ export default function SignUp() {
     }
   }
 
+  async function handleFaceAuthSignUp() {
+    try {
+      setIsLoading(true);
+      setError('');
+
+      await signUp?.authenticateWithRedirect({
+        strategy: 'oauth_custom_face_recognition_auth',
+        redirectUrl: '/sso-callback',
+        redirectUrlComplete: '/dashboard',
+      });
+    } catch (err: any) {
+      console.error('Error signing up with Face Recognition:', err);
+      setError('Failed to sign up with Face Recognition. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!isLoaded) return;
@@ -144,6 +162,26 @@ export default function SignUp() {
                   />
                 )}
                 Continue with Google
+              </Button>
+
+              <Button
+                onClick={handleFaceAuthSignUp}
+                className="w-full mb-4 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12Z" stroke="currentColor" strokeWidth="2"/>
+                    <path d="M3 12H5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M19 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M12 3V5" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M12 19V21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                  </svg>
+                )}
+                Continue with Face Recognition
               </Button>
 
               <div className="relative my-4">

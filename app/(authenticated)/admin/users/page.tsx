@@ -161,8 +161,6 @@ export default function UsersPage() {
     switch (role) {
       case 'admin':
         return <ShieldAlert className="h-4 w-4 text-red-500" />;
-      case 'shopkeeper':
-        return <Shield className="h-4 w-4 text-blue-500" />;
       default:
         return <User className="h-4 w-4 text-gray-500" />;
     }
@@ -172,8 +170,6 @@ export default function UsersPage() {
     switch (role) {
       case 'admin':
         return 'bg-red-100 text-red-800';
-      case 'shopkeeper':
-        return 'bg-blue-100 text-blue-800';
       default:
         return 'bg-gray-100 text-gray-800';
     }
@@ -393,7 +389,6 @@ export default function UsersPage() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="user">User</SelectItem>
-                            <SelectItem value="shopkeeper">Shopkeeper</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>
                           </SelectContent>
                         </Select>
@@ -477,7 +472,6 @@ export default function UsersPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="user">User</SelectItem>
-                        <SelectItem value="shopkeeper">Shopkeeper</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
                     </Select>

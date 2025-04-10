@@ -25,8 +25,8 @@ export default authMiddleware({
           return NextResponse.redirect(new URL('/admin/users', req.url));
         } 
 
-        // Shopkeeper role redirection logic
-        if (role === 'shopkeeper' && req.nextUrl.pathname === '/dashboard') {
+        // user role redirection logic
+        if (role === 'user' && req.nextUrl.pathname === '/dashboard') {
           return NextResponse.redirect(new URL('/dashboard', req.url));
         }
 
