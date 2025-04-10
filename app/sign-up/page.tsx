@@ -45,7 +45,7 @@ export default function SignUp() {
 
       await signUp?.authenticateWithRedirect({
         strategy: 'oauth_google',
-        redirectUrl: '/sso-callback',
+        redirectUrl: `${window.location.origin}/sso-callback`,
         redirectUrlComplete: '/dashboard',
       });
     } catch (err: any) {
@@ -63,7 +63,7 @@ export default function SignUp() {
 
       await signUp?.authenticateWithRedirect({
         strategy: 'oauth_custom_face_recognition_auth',
-        redirectUrl: '/sso-callback',
+        redirectUrl: `${window.location.origin}/sso-callback`,
         redirectUrlComplete: '/dashboard',
       });
     } catch (err: any) {

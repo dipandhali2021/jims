@@ -12,10 +12,19 @@ export default function SSOCallback() {
   useEffect(() => {
     async function handleCallback() {
       try {
-        await handleRedirectCallback({
+        // Force the redirect to dashboard after successful authentication
+        const redirectResult = await handleRedirectCallback({
           afterSignInUrl: '/dashboard',
           afterSignUpUrl: '/dashboard',
         });
+        
+        // Log the redirect result for debugging
+        console.log('SSO Callback redirect result:', redirectResult);
+        
+        // Ensure we redirect to dashboard if the callback doesn't do it automatically
+        if (!redirectResult) {
+          router.push('/dashboard');
+        }
       } catch (error) {
         console.error('Error handling SSO callback:', error);
         router.push('/error');
