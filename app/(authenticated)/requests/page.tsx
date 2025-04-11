@@ -76,6 +76,8 @@ export default function RequestsPage() {
   const [selectedRequest, setSelectedRequest] = useState<SalesRequest | null>(null);
   const [showDetails, setShowDetails] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
   const { toast } = useToast();
 
   const fetchSalesRequests = useCallback(async () => {
@@ -253,11 +255,17 @@ await fetchSalesRequests();
     );
   }
 
+  // Calculate paginated data based on current page
+  const paginatedRequests = filteredRequests.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="p-6">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2">Sales Requests</h1>
-        <p className="text-muted-foreground">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">Sales Requests</h1>
+        <p className="text-sm sm:text-base text-muted-foreground">
           View and manage pending sales requests from customers
         </p>
       </div>
@@ -330,10 +338,10 @@ await fetchSalesRequests();
       </div>
 
       {/* Filters and Actions */}
-      <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-        <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4 sm:mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
           <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>
@@ -344,18 +352,18 @@ await fetchSalesRequests();
             </SelectContent>
           </Select>
 
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
               placeholder="Search requests..."
-              className="pl-10 w-full sm:w-[300px]"
+              className="pl-10 w-full sm:w-[250px] md:w-[300px]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex justify-end gap-2">
           {/* View Toggle Buttons */}
           <div className="border rounded-md flex">
             <Button
@@ -363,40 +371,43 @@ await fetchSalesRequests();
               size="sm"
               className={`rounded-r-none ${viewMode === 'grid' ? 'bg-gray-100' : ''}`}
               onClick={() => setViewMode('grid')}
+              title="Grid View"
             >
               <LayoutGrid className="h-4 w-4" />
+              <span className="sr-only">Grid View</span>
             </Button>
             <Button
               variant="ghost"
               size="sm"
               className={`rounded-l-none ${viewMode === 'list' ? 'bg-gray-100' : ''}`}
               onClick={() => setViewMode('list')}
+              title="List View"
             >
               <List className="h-4 w-4" />
+              <span className="sr-only">List View</span>
             </Button>
           </div>
-          
         </div>
       </div>
 
       {/* Grid View */}
       {viewMode === 'grid' && (
-        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredRequests.map((request) => (
-            <Card key={request.id} className="overflow-hidden">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="font-semibold">{request.requestId}</h3>
-                    <p className="text-sm text-gray-600">{request.customer}</p>
+        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+          {paginatedRequests.map((request) => (
+            <Card key={request.id} className="overflow-hidden h-full flex flex-col">
+              <CardContent className="p-3 sm:p-4 flex flex-col h-full">
+                <div className="flex justify-between items-start mb-3 sm:mb-4">
+                  <div className="overflow-hidden">
+                    <h3 className="font-semibold text-sm sm:text-base break-words">{request.requestId}</h3>
+                    <p className="text-xs sm:text-sm text-gray-600 break-words">{request.customer}</p>
                     {user?.publicMetadata?.role === 'admin' && request.user && (
-                      <p className="text-xs mt-1 text-blue-600">
+                      <p className="text-xs mt-1 text-blue-600 break-words">
                         Sent by: {request.user.firstName} {request.user.lastName}
                       </p>
                     )}
                   </div>
                   <span
-                    className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
+                    className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ml-1 flex-shrink-0 ${getStatusColor(
                       request.status
                     )}`}
                   >
@@ -404,9 +415,9 @@ await fetchSalesRequests();
                   </span>
                 </div>
                 
-                <div className="text-sm mb-4">
+                <div className="text-xs sm:text-sm mb-3 sm:mb-4 flex-grow">
                   <p className="text-gray-500">Items:</p>
-                  <p className="truncate">
+                  <p className="break-words">
                     {request.items
                       .map((item) => `${item.product.name} (${item.quantity})`)
                       .join(', ')}
@@ -416,54 +427,58 @@ await fetchSalesRequests();
                   </p>
                 </div>
                 
-                <div className="flex justify-between text-sm mb-4">
+                <div className="flex justify-between text-xs sm:text-sm mb-2">
                   <span className="text-gray-500">Total Value:</span>
                   <span className="font-medium">₹{request.totalValue.toLocaleString()}</span>
                 </div>
                 
-                <div className="flex justify-between text-sm mb-4">
+                <div className="flex justify-between text-xs sm:text-sm mb-3 sm:mb-4">
                   <span className="text-gray-500">Date:</span>
                   <span>{new Date(request.requestDate).toLocaleDateString()}</span>
                 </div>
                 
-                <div className="flex justify-evenly gap-1 w-full mt-4 pt-4 border-t">
+                <div className="flex flex-wrap gap-1 w-full mt-auto pt-3 border-t">
                   <Button
                     variant="outline"
                     size="sm"
+                    className="flex-1 min-w-0 h-8 text-center justify-center"
                     onClick={() => {
                       setSelectedRequest(request);
                       setShowDetails(true);
                     }}
                   >
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0 w-full" />
+                    {/* <span className="text-xs sm:text-sm truncate">Details</span> */}
                   </Button>
                   {request.status === 'Pending' && user?.publicMetadata?.role === 'admin' && (
                     <>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-green-600 hover:text-green-700 disabled:opacity-50"
+                        className="flex-1 min-w-0 h-8 text-center justify-center text-green-600 hover:text-green-700 disabled:opacity-50"
                         onClick={() => handleStatusUpdate(request.id, 'Approved')}
                         disabled={loadingStates[request.id]?.approving || loadingStates[request.id]?.rejecting}
                       >
                         {loadingStates[request.id]?.approving ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 animate-spin" />
                         ) : (
-                          <CheckCircle className="h-4 w-4" />
+                          <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
                         )}
+                        {/* <span className="text-xs sm:text-sm truncate">Approve</span> */}
                       </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                        className="flex-1 min-w-0 h-8 text-center justify-center text-red-600 hover:text-red-700 disabled:opacity-50"
                         onClick={() => handleStatusUpdate(request.id, 'Rejected')}
                         disabled={loadingStates[request.id]?.approving || loadingStates[request.id]?.rejecting}
                       >
                         {loadingStates[request.id]?.rejecting ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0 animate-spin" />
                         ) : (
-                          <XCircle className="h-4 w-4" />
+                          <XCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
                         )}
+                        {/* <span className="text-xs sm:text-sm truncate">Reject</span> */}
                       </Button>
                     </>
                   )}
@@ -474,7 +489,7 @@ await fetchSalesRequests();
         </div>
       )}
 
-      {/* List View (Original Table) */}
+      {/* List View (Responsive Table) */}
       {viewMode === 'list' && (
         <Card>
           <CardContent className="p-0">
@@ -482,91 +497,97 @@ await fetchSalesRequests();
               <table className="w-full">
                 <thead>
                   <tr className="border-b">
-                    <th className="text-left p-4">REQUEST ID</th>
-                    <th className="text-left p-4">CUSTOMER</th>
+                    <th className="text-left p-3 sm:p-4 text-xs sm:text-sm">REQUEST ID</th>
+                    <th className="text-left p-3 sm:p-4 text-xs sm:text-sm">CUSTOMER</th>
                     {user?.publicMetadata?.role === 'admin' && (
-                      <th className="text-left p-4">SHOPKEEPER</th>
+                      <th className="text-left p-3 sm:p-4 text-xs sm:text-sm hidden md:table-cell">SHOPKEEPER</th>
                     )}
-                    <th className="text-left p-4">ITEMS</th>
-                    <th className="text-left p-4">TOTAL QTY</th>
-                    <th className="text-left p-4">TOTAL VALUE</th>
-                    <th className="text-left p-4">REQUEST DATE</th>
-                    <th className="text-left p-4">STATUS</th>
-                    <th className="text-left p-4">ACTIONS</th>
+                    <th className="text-left p-3 sm:p-4 text-xs sm:text-sm hidden sm:table-cell">ITEMS</th>
+                    <th className="text-left p-3 sm:p-4 text-xs sm:text-sm hidden md:table-cell">TOTAL QTY</th>
+                    <th className="text-left p-3 sm:p-4 text-xs sm:text-sm">TOTAL VALUE</th>
+                    <th className="text-left p-3 sm:p-4 text-xs sm:text-sm hidden lg:table-cell">REQUEST DATE</th>
+                    <th className="text-left p-3 sm:p-4 text-xs sm:text-sm">STATUS</th>
+                    <th className="text-left p-3 sm:p-4 text-xs sm:text-sm">ACTIONS</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredRequests.map((request) => (
-                    <tr key={request.id} className="border-b">
-                      <td className="p-4 font-medium">{request.requestId}</td>
-                      <td className="p-4">{request.customer}</td>
+                  {paginatedRequests.map((request) => (
+                    <tr key={request.id} className="border-b hover:bg-muted/50">
+                      <td className="p-3 sm:p-4 font-medium text-xs sm:text-sm">{request.requestId}</td>
+                      <td className="p-3 sm:p-4 text-xs sm:text-sm max-w-[100px] truncate">{request.customer}</td>
                       {user?.publicMetadata?.role === 'admin' && (
-                        <td className="p-4">
+                        <td className="p-3 sm:p-4 text-xs sm:text-sm hidden md:table-cell">
                           {request.user ? `${request.user.firstName} ${request.user.lastName}` : 'Unknown'}
                         </td>
                       )}
-                      <td className="p-4">
-                        {request.items
-                          .map((item) => `${item.product.name} (${item.quantity})`)
-                          .join(', ')}
+                      <td className="p-3 sm:p-4 text-xs sm:text-sm hidden sm:table-cell">
+                        <span className="max-w-[150px] md:max-w-[200px] truncate inline-block">
+                          {request.items
+                            .map((item) => `${item.product.name} (${item.quantity})`)
+                            .join(', ')}
+                        </span>
                       </td>
-                      <td className="p-4">
+                      <td className="p-3 sm:p-4 text-xs sm:text-sm hidden md:table-cell">
                         {request.items.reduce((sum, item) => sum + item.quantity, 0)}
                       </td>
-                      <td className="p-4">
-                      ₹{request.totalValue.toLocaleString()}
+                      <td className="p-3 sm:p-4 text-xs sm:text-sm font-medium">
+                        ₹{request.totalValue.toLocaleString()}
                       </td>
-                      <td className="p-4">
-                        {new Date(request.requestDate).toLocaleDateString()}
-                      </td>
-                      <td className="p-4">
+                      <td className="p-3 sm:p-4 text-xs sm:text-sm">
                         <span
-                          className={`px-2 py-1 rounded-full text-sm ${getStatusColor(
+                          className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ${getStatusColor(
                             request.status
                           )}`}
                         >
                           {request.status}
                         </span>
                       </td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2">
+                      <td className="p-3 sm:p-4">
+                        <div className="flex items-center gap-1 sm:gap-2">
                           <Button
                             variant="outline"
                             size="sm"
+                            className="h-8 w-8 p-0"
+                            title="View Details"
                             onClick={() => {
                               setSelectedRequest(request);
                               setShowDetails(true);
                             }}
                           >
-                            <Eye className="h-4 w-4" />
+                            <Eye className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="sr-only">View</span>
                           </Button>
                           {request.status === 'Pending' && user?.publicMetadata?.role === 'admin' && (
                             <>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-green-600 hover:text-green-700 disabled:opacity-50"
+                                className="text-green-600 hover:text-green-700 disabled:opacity-50 h-8 w-8 p-0"
+                                title="Approve Request"
                                 onClick={() => handleStatusUpdate(request.id, 'Approved')}
                                 disabled={loadingStates[request.id]?.approving || loadingStates[request.id]?.rejecting}
                               >
                                 {loadingStates[request.id]?.approving ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                                 ) : (
-                                  <CheckCircle className="h-4 w-4" />
+                                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4" />
                                 )}
+                                <span className="sr-only">Approve</span>
                               </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="text-red-600 hover:text-red-700 disabled:opacity-50"
+                                className="text-red-600 hover:text-red-700 disabled:opacity-50 h-8 w-8 p-0"
+                                title="Reject Request"
                                 onClick={() => handleStatusUpdate(request.id, 'Rejected')}
                                 disabled={loadingStates[request.id]?.approving || loadingStates[request.id]?.rejecting}
                               >
                                 {loadingStates[request.id]?.rejecting ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin" />
                                 ) : (
-                                  <XCircle className="h-4 w-4" />
+                                  <XCircle className="h-3 w-3 sm:h-4 sm:w-4" />
                                 )}
+                                <span className="sr-only">Reject</span>
                               </Button>
                             </>
                           )}
@@ -581,9 +602,102 @@ await fetchSalesRequests();
         </Card>
       )}
 
+      {/* Pagination */}
+      {filteredRequests.length > 0 ? (
+        <div className="flex justify-center mt-4 sm:mt-6">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:flex"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="sm:hidden w-8 h-8 p-0"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="sr-only">Previous</span>
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(3, Math.ceil(filteredRequests.length / itemsPerPage)) }, (_, i) => {
+                // Show at most 3 page numbers
+                const pageNum = i + 1;
+                const isActive = pageNum === currentPage;
+                
+                if (pageNum <= 3) {
+                  return (
+                    <Button
+                      key={i}
+                      variant={isActive ? "default" : "outline"}
+                      size="sm"
+                      className="w-8 h-8 p-0"
+                      onClick={() => setCurrentPage(pageNum)}
+                      disabled={isActive}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                }
+                return null;
+              })}
+              
+              {Math.ceil(filteredRequests.length / itemsPerPage) > 3 && (
+                <span className="mx-1">...</span>
+              )}
+              
+              {Math.ceil(filteredRequests.length / itemsPerPage) > 3 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-8 h-8 p-0"
+                  onClick={() => setCurrentPage(Math.ceil(filteredRequests.length / itemsPerPage))}
+                  disabled={currentPage === Math.ceil(filteredRequests.length / itemsPerPage)}
+                >
+                  {Math.ceil(filteredRequests.length / itemsPerPage)}
+                </Button>
+              )}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:flex"
+              disabled={currentPage >= Math.ceil(filteredRequests.length / itemsPerPage)}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredRequests.length / itemsPerPage)))}
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="sm:hidden w-8 h-8 p-0"
+              disabled={currentPage >= Math.ceil(filteredRequests.length / itemsPerPage)}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, Math.ceil(filteredRequests.length / itemsPerPage)))}
+            >
+              <ChevronRight className="h-4 w-4" />
+              <span className="sr-only">Next</span>
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center p-6 bg-muted/20 rounded-md mt-4 sm:mt-6">
+          <p className="text-sm sm:text-base text-muted-foreground">No sales requests found matching your filters</p>
+        </div>
+      )}
+
       {/* Details Dialog */}
       <Dialog open={showDetails} onOpenChange={setShowDetails}>
-        <DialogContent className="sm:max-w-[600px] bg-white border-0 shadow-xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-w-[90vw] bg-white p-4 sm:p-6 border-0 shadow-xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-semibold text-gray-800">
               Request Details
@@ -591,54 +705,126 @@ await fetchSalesRequests();
           </DialogHeader>
           {selectedRequest && (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <p className="text-sm text-gray-500">Request ID</p>
-                  <p className="font-medium text-gray-800">
+                  <p className="text-xs sm:text-sm text-gray-500">Request ID</p>
+                  <p className="font-medium text-sm sm:text-base text-gray-800">
                     {selectedRequest.requestId}
                   </p>
                 </div>
                 <div>
-                  <p className="text-sm text-gray-500">Customer</p>
-                  <p className="font-medium text-gray-800">
+                  <p className="text-xs sm:text-sm text-gray-500">Customer</p>
+                  <p className="font-medium text-sm sm:text-base text-gray-800">
                     {selectedRequest.customer}
                   </p>
                 </div>
+                {selectedRequest.user && (
+                  <div>
+                    <p className="text-xs sm:text-sm text-gray-500">Shopkeeper</p>
+                    <p className="font-medium text-sm sm:text-base text-gray-800">
+                      {selectedRequest.user.firstName} {selectedRequest.user.lastName}
+                    </p>
+                    <p className="text-xs text-gray-500">{selectedRequest.user.email}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-xs sm:text-sm text-gray-500">Status</p>
+                  <span
+                    className={`px-2 py-1 mt-1 inline-block rounded-full text-xs whitespace-nowrap ${getStatusColor(
+                      selectedRequest.status
+                    )}`}
+                  >
+                    {selectedRequest.status}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-xs sm:text-sm text-gray-500">Date</p>
+                  <p className="font-medium text-sm sm:text-base text-gray-800">
+                    {new Date(selectedRequest.requestDate).toLocaleDateString()}
+                  </p>
+                </div>
               </div>
+              
               <div>
-                <p className="text-sm text-gray-500 mb-2">Items</p>
+                <p className="text-xs sm:text-sm text-gray-500 mb-2">Items</p>
                 <div className="space-y-2">
                   {selectedRequest.items.map((item) => (
                     <div
                       key={item.id}
-                      className="flex justify-between p-2 bg-gray-50 border border-gray-200 rounded"
+                      className="p-2 sm:p-3 bg-gray-50 border border-gray-200 rounded"
                     >
-                      <div>
-                        <p className="font-medium text-gray-800">
+                      <div className="mb-2">
+                        <p className="font-medium text-sm sm:text-base text-gray-800">
                           {item.product.name}
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-xs sm:text-sm text-gray-500">
                           Product ID: {item.product.sku}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <p className="font-medium text-gray-800">
-                        ₹{item.price.toLocaleString()}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          Qty: {item.quantity}
-                        </p>
+                      <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-200/70">
+                        <div>
+                          <p className="text-xs sm:text-sm text-gray-500">Unit Price:</p>
+                          <p className="font-medium text-sm sm:text-base text-gray-800">
+                            ₹{item.price.toLocaleString()}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs sm:text-sm text-gray-500">Quantity:</p>
+                          <p className="font-medium text-sm sm:text-base text-gray-800">
+                            {item.quantity}
+                          </p>
+                        </div>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
+              
               <div className="flex justify-between pt-4 border-t border-gray-200">
-                <p className="font-medium text-gray-800">Total Value:</p>
-                <p className="font-bold text-gray-900">
-                ₹{selectedRequest.totalValue.toLocaleString()}
+                <p className="font-medium text-sm sm:text-base text-gray-800">Total Value:</p>
+                <p className="font-bold text-sm sm:text-base text-gray-900">
+                  ₹{selectedRequest.totalValue.toLocaleString()}
                 </p>
               </div>
+
+              {selectedRequest.status === 'Pending' && user?.publicMetadata?.role === 'admin' && (
+                <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-green-600 hover:text-green-700 disabled:opacity-50"
+                    onClick={() => {
+                      handleStatusUpdate(selectedRequest.id, 'Approved');
+                      setShowDetails(false);
+                    }}
+                    disabled={loadingStates[selectedRequest.id]?.approving || loadingStates[selectedRequest.id]?.rejecting}
+                  >
+                    {loadingStates[selectedRequest.id]?.approving ? (
+                      <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 mr-1 animate-spin" />
+                    ) : (
+                      <CheckCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
+                    )}
+                    <span>Approve Request</span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 text-red-600 hover:text-red-700 disabled:opacity-50"
+                    onClick={() => {
+                      handleStatusUpdate(selectedRequest.id, 'Rejected');
+                      setShowDetails(false);
+                    }}
+                    disabled={loadingStates[selectedRequest.id]?.approving || loadingStates[selectedRequest.id]?.rejecting}
+                  >
+                    {loadingStates[selectedRequest.id]?.rejecting ? (
+                      <Loader2 className="h-4 w-4 sm:h-5 sm:w-5 mr-1 animate-spin" />
+                    ) : (
+                      <XCircle className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
+                    )}
+                    <span>Reject Request</span>
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>
