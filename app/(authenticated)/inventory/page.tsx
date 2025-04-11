@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,6 +12,8 @@ import { EditProductDialog } from '@/components/products/EditProductDialog';
 import { DeleteProductDialog } from '@/components/products/DeleteProductDialog';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Product, useProducts } from '@/hooks/use-products';
+import { useToast } from '@/hooks/use-toast';
+import { LowStockThresholdSetting } from '@/components/admin/LowStockThresholdSetting';
 
 import {
   LayoutGrid,
@@ -64,17 +66,48 @@ const getMaterialsAndCounts = (products: Product[]) => {
 export default function InventoryPage() {
   const { user } = useUser();
   const { products, isLoading, error, refreshProducts } = useProducts();
+  const { toast } = useToast();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [showFilters, setShowFilters] = useState(false);
+  const [lowStockThreshold, setLowStockThreshold] = useState(10);
   const [filters, setFilters] = useState({
     categories: new Set<string>(),
     materials: new Set<string>(),
     inStockOnly: false,
     showLowStock: false,
   });
+
+  // Fetch the current threshold value
+  const fetchLowStockThreshold = async () => {
+    try {
+      const response = await fetch('/api/settings/low-stock-threshold');
+      if (response.ok) {
+        const data = await response.json();
+        setLowStockThreshold(data.threshold);
+      }
+    } catch (error) {
+      console.error('Error fetching low stock threshold:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch low stock threshold',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  // Fetch the threshold on initial load
+  useEffect(() => {
+    fetchLowStockThreshold();
+  }, []);
+
+  // Function to update threshold and refresh products
+  const handleThresholdUpdated = async () => {
+    await fetchLowStockThreshold();
+    refreshProducts();
+  };
 
   const toggleFilter = (type: 'categories' | 'materials', value: string) => {
     setFilters((prev) => {
@@ -111,7 +144,7 @@ export default function InventoryPage() {
   const filteredProducts = products
     .map((product) => ({
       ...product,
-      lowStock: product.stock < 10,
+      lowStock: product.stock < (product.lowStockThreshold || 10),
     }))
     .filter((product) => {
       const matchesSearch =
@@ -160,7 +193,13 @@ export default function InventoryPage() {
             <List className="h-4 w-4" />
           </Button>
           {user?.publicMetadata?.role === 'admin' && (
-            <AddProductDialog onProductAdded={refreshProducts} />
+            <>
+              <LowStockThresholdSetting 
+                currentThreshold={lowStockThreshold}
+                onThresholdUpdated={handleThresholdUpdated}
+              />
+              <AddProductDialog onProductAdded={refreshProducts} />
+            </>
           )}
         </div>
       </div>
@@ -398,7 +437,7 @@ export default function InventoryPage() {
                         </span>
                         <span
                           className={`text-sm ${
-                            product.stock < 10
+                            product.stock < (product.lowStockThreshold || 10)
                               ? 'text-red-500'
                               : 'text-green-500'
                           }`}
@@ -473,7 +512,7 @@ export default function InventoryPage() {
                         <td className="p-4">
                           <span
                             className={`${
-                              product.stock < 10
+                              product.stock < (product.lowStockThreshold || 10)
                                 ? 'text-red-500'
                                 : 'text-green-500'
                             }`}

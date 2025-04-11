@@ -220,7 +220,7 @@ export function CreateBulkSalesRequestDialog({
                           <span className="text-sm font-medium">
                           ₹{product.price.toLocaleString()}
                           </span>
-                          <span className={`text-sm ${product.stock < 10 ? 'text-red-500' : 'text-green-500'}`}>
+                          <span className={`text-sm ${product.stock < (product.lowStockThreshold || 10) ? 'text-red-500' : 'text-green-500'}`}>
                             Stock: {product.stock}
                           </span>
                         </div>

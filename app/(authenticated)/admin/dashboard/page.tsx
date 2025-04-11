@@ -45,6 +45,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
+import { useLowStockThreshold } from '@/hooks/use-low-stock-threshold';
+import { LowStockThresholdSetting } from '@/components/admin/LowStockThresholdSetting';
 import {
   Sheet,
   SheetContent,
@@ -114,6 +116,7 @@ export default function AdminDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const { toast } = useToast();
+  const { threshold, isLoading: isThresholdLoading, refreshThreshold } = useLowStockThreshold();
 
   // Check for mobile viewport
   useEffect(() => {
@@ -525,6 +528,14 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Admin Settings */}
+      <div className="mb-4 md:mb-6">
+        <LowStockThresholdSetting 
+          currentThreshold={threshold} 
+          onThresholdUpdated={refreshThreshold} 
+        />
       </div>
 
       {/* Recent Transactions */}

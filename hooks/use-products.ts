@@ -9,6 +9,7 @@ export interface Product {
   material: string;
   price: number;
   stock: number;
+  lowStockThreshold: number;
   imageUrl: string;
   userId: string;
   createdAt: string;
