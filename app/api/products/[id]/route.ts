@@ -66,9 +66,9 @@ export async function PUT(
       });
 
       if (skuExists) {
-        console.error('Pruduct ID already exists:', sku);
+        console.error('Product ID already exists:', sku);
         return NextResponse.json(
-          { error: 'Pruduct ID already exists' },
+          { error: 'Product ID already exists' },
           { status: 409 }
         );
       }

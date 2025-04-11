@@ -180,10 +180,10 @@ export function EditProductDialog({
     }
 
     if (!formData.sku.trim()) {
-      setError('Pruduct ID is required');
+      setError('Product ID is required');
       toast({
         title: 'Error',
-        description: 'Pruduct ID is required',
+        description: 'Product ID is required',
         variant: 'destructive',
       });
       return;
@@ -363,7 +363,7 @@ export function EditProductDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="sku" className="font-medium">
-              Pruduct ID *
+              Product ID *
               </Label>
               <Input
                 id="sku"

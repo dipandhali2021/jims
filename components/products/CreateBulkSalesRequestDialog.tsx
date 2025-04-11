@@ -193,7 +193,7 @@ export function CreateBulkSalesRequestDialog({
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     value={searchTerm}
-                    placeholder="Search by name or Pruduct ID..."
+                    placeholder="Search by name or Product ID..."
                     className="w-full pl-10 bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -214,7 +214,7 @@ export function CreateBulkSalesRequestDialog({
                       <div className="flex-1">
                         <div className="font-medium">{product.name}</div>
                         <div className="text-sm text-gray-500">
-                        Pruduct ID: {product.sku}
+                        Product ID: {product.sku}
                         </div>
                         <div className="flex justify-between items-center mt-1">
                           <span className="text-sm font-medium">
@@ -254,7 +254,7 @@ export function CreateBulkSalesRequestDialog({
                       <div className="flex-1 space-y-2">
                         <div>
                           <h4 className="font-medium">{product.name}</h4>
-                          <div className="text-sm text-gray-500">Pruduct ID: {product.sku}</div>
+                          <div className="text-sm text-gray-500">Product ID: {product.sku}</div>
                           <div className="text-sm font-medium">
                           ₹{product.price.toLocaleString()} per unit
                           </div>

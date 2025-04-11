@@ -58,6 +58,52 @@ export function NotificationDialog() {
     // return () => clearInterval(intervalId);
   }, []);
 
+  // Helper function to get notification background color based on type
+  const getNotificationBgColor = (type: string, isRead: boolean, message?: string) => {
+    if (isRead) return 'bg-background';
+    
+    switch (type) {
+      case 'sales_request':
+        return 'bg-amber-50';
+      case 'request_approved':
+        return 'bg-green-50';
+      case 'request_rejected':
+        return 'bg-red-50';
+      case 'status_update':
+        // For status updates, check the message content
+        if (message?.toLowerCase().includes('approved')) {
+          return 'bg-green-50';
+        } else if (message?.toLowerCase().includes('rejected')) {
+          return 'bg-red-50';
+        }
+        return 'bg-muted';
+      default:
+        return 'bg-muted';
+    }
+  };
+
+  // Helper function to get notification border color based on type
+  const getNotificationBorderColor = (type: string, message?: string) => {
+    switch (type) {
+      case 'sales_request':
+        return 'border-amber-200';
+      case 'request_approved':
+        return 'border-green-200';
+      case 'request_rejected':
+        return 'border-red-200';
+      case 'status_update':
+        // For status updates, check the message content
+        if (message?.toLowerCase().includes('approved')) {
+          return 'border-green-200';
+        } else if (message?.toLowerCase().includes('rejected')) {
+          return 'border-red-200';
+        }
+        return 'border-gray-200';
+      default:
+        return 'border-gray-200';
+    }
+  };
+
   const markAsRead = async (id: string) => {
     try {
       const response = await fetch('/api/notifications', {
@@ -202,9 +248,7 @@ export function NotificationDialog() {
                   .map((notification) => (
                   <div
                     key={notification.id}
-                    className={`p-3 rounded-lg border ${
-                      notification.isRead ? 'bg-background' : 'bg-muted'
-                    }`}
+                    className={`p-3 rounded-lg border ${getNotificationBgColor(notification.type, notification.isRead, notification.message)} ${getNotificationBorderColor(notification.type, notification.message)}`}
                   >
                     <div className="flex justify-between items-start">
                       <div className="flex-1">

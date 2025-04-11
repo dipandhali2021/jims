@@ -146,7 +146,7 @@ export function CreateSalesRequestDialog({
             <Label className="text-sm font-medium text-gray-700">Product Details</Label>
             <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
               <p className="font-medium text-gray-800">{product.name}</p>
-              <p className="text-sm text-gray-500">Pruduct ID: {product.sku}</p>
+              <p className="text-sm text-gray-500">Product ID: {product.sku}</p>
               <p className="text-sm font-medium mt-2 text-gray-800">
                 Total: ₹{(product.price * quantity).toFixed(2)}
               </p>
