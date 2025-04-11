@@ -66,7 +66,7 @@ export function ProductPreviewDialog({ product }: ProductPreviewDialogProps) {
           <div className="p-6 flex flex-col">
             <DialogHeader className="mb-4">
               <DialogTitle className="text-xl font-bold">{product.name}</DialogTitle>
-              <p className="text-sm text-gray-500">SKU: {product.sku}</p>
+              <p className="text-sm text-gray-500">Pruduct ID: {product.sku}</p>
             </DialogHeader>
             
             <div className="space-y-4 flex-grow">

@@ -108,9 +108,9 @@ export async function POST(req: NextRequest) {
     });
 
     if (existingProduct) {
-      console.error('SKU already exists:', sku);
+      console.error('Pruduct ID already exists:', sku);
       return NextResponse.json(
-        { error: 'SKU already exists' },
+        { error: 'Pruduct ID already exists' },
         { status: 409 }
       );
     }

@@ -339,7 +339,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price" className="font-medium">Price ($) *</Label>
+              <Label htmlFor="price" className="font-medium">Price (₹) *</Label>
               <Input
                 id="price"
                 type="number"

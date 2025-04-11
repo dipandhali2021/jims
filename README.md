@@ -11,7 +11,7 @@ The system implements role-based access control (RBAC) with two user types:
 
 ### 2. Product Management
 Products are managed with jewelry-specific attributes:
-- SKU tracking
+- Product ID tracking
 - Detailed product information (name, description, category)
 - Material specification
 - Price and stock management

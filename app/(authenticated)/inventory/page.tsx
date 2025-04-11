@@ -172,7 +172,7 @@ export default function InventoryPage() {
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
-                placeholder="Search products, SKUs..."
+                placeholder="Search products, IDs..."
                 className="pl-10"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
@@ -290,8 +290,8 @@ export default function InventoryPage() {
                         onValueChange={setPriceRange}
                       />
                       <div className="flex justify-between text-sm">
-                        <span>${priceRange[0]}</span>
-                        <span>${priceRange[1]}+</span>
+                        <span>₹{priceRange[0]}</span>
+                        <span>₹{priceRange[1]}+</span>
                       </div>
                     </div>
                   </div>
@@ -394,7 +394,7 @@ export default function InventoryPage() {
                       </div>
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-lg font-bold">
-                          ${product.price.toLocaleString()}
+                        ₹{product.price.toLocaleString()}
                         </span>
                         <span
                           className={`text-sm ${
@@ -440,7 +440,7 @@ export default function InventoryPage() {
                         <input type="checkbox" className="rounded" />
                       </th>
                       <th className="text-left p-4">Product</th>
-                      <th className="text-left p-4">SKU</th>
+                      <th className="text-left p-4">Product ID</th>
                       <th className="text-left p-4">Category</th>
                       <th className="text-left p-4">Material</th>
                       <th className="text-left p-4">Price</th>
@@ -468,7 +468,7 @@ export default function InventoryPage() {
                         <td className="p-4">{product.category}</td>
                         <td className="p-4">{product.material}</td>
                         <td className="p-4">
-                          ${product.price.toLocaleString()}
+                        ₹{product.price.toLocaleString()}
                         </td>
                         <td className="p-4">
                           <span

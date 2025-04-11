@@ -126,7 +126,7 @@ export async function PUT(
     await prisma.notification.create({
       data: {
         title: `Sales Request ${status}`,
-        message: `Your sales request (${salesRequest.requestId}) has been ${status.toLowerCase()}. Total value: $${salesRequest.totalValue.toFixed(2)}`,
+        message: `Your sales request (${salesRequest.requestId}) has been ${status.toLowerCase()}. Total value: ₹${salesRequest.totalValue.toFixed(2)}`,
         type: 'status_update',
         userId: salesRequest.userId,
       }

@@ -193,7 +193,7 @@ export function CreateBulkSalesRequestDialog({
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     value={searchTerm}
-                    placeholder="Search by name or SKU..."
+                    placeholder="Search by name or Pruduct ID..."
                     className="w-full pl-10 bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
@@ -214,11 +214,11 @@ export function CreateBulkSalesRequestDialog({
                       <div className="flex-1">
                         <div className="font-medium">{product.name}</div>
                         <div className="text-sm text-gray-500">
-                          SKU: {product.sku}
+                        Pruduct ID: {product.sku}
                         </div>
                         <div className="flex justify-between items-center mt-1">
                           <span className="text-sm font-medium">
-                            ${product.price.toLocaleString()}
+                          ₹{product.price.toLocaleString()}
                           </span>
                           <span className={`text-sm ${product.stock < 10 ? 'text-red-500' : 'text-green-500'}`}>
                             Stock: {product.stock}
@@ -254,9 +254,9 @@ export function CreateBulkSalesRequestDialog({
                       <div className="flex-1 space-y-2">
                         <div>
                           <h4 className="font-medium">{product.name}</h4>
-                          <div className="text-sm text-gray-500">SKU: {product.sku}</div>
+                          <div className="text-sm text-gray-500">Pruduct ID: {product.sku}</div>
                           <div className="text-sm font-medium">
-                            ${product.price.toLocaleString()} per unit
+                          ₹{product.price.toLocaleString()} per unit
                           </div>
                         </div>
                         
@@ -298,7 +298,7 @@ export function CreateBulkSalesRequestDialog({
                           </Button>
                         </div>
                         <div className="text-right text-sm font-medium">
-                          Total: ${(product.price * quantity).toFixed(2)}
+                          Total: ₹{(product.price * quantity).toFixed(2)}
                         </div>
                       </div>
                     </div>
@@ -310,7 +310,7 @@ export function CreateBulkSalesRequestDialog({
                 <div className="bg-gray-500 text-white p-4 rounded-lg">
                   <div className="text-lg">Order Summary</div>
                   <div className="text-2xl">
-                    Total: ${calculateTotal().toFixed(2)}
+                    Total: ₹{calculateTotal().toFixed(2)}
                   </div>
                 </div>
               ) : (

@@ -365,21 +365,21 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
         <StatCard
           title="Total Revenue"
-          value={`$${analytics.metrics.totalRevenue.toLocaleString()}`}
+          value={`₹${analytics.metrics.totalRevenue.toLocaleString()}`}
           percentage={analytics.metrics.previousPeriodComparison.revenue}
           icon={<DollarSign className="h-4 w-4 md:h-6 md:w-6 text-yellow-600" />}
           color="yellow"
         />
         <StatCard
           title="Today's Sales"
-          value={`$${analytics.metrics.totalRevenue.toLocaleString()}`}
+          value={`₹${analytics.metrics.totalRevenue.toLocaleString()}`}
           percentage={analytics.metrics.previousPeriodComparison.sales}
           icon={<ShoppingBag className="h-4 w-4 md:h-6 md:w-6 text-blue-600" />}
           color="blue"
         />
         <StatCard
           title="Avg Order Value"
-          value={`$${analytics.metrics.avgOrderValue.toLocaleString()}`}
+          value={`₹${analytics.metrics.avgOrderValue.toLocaleString()}`}
           percentage={-analytics.metrics.previousPeriodComparison.avgOrder}
           icon={<DollarSign className="h-4 w-4 md:h-6 md:w-6 text-green-600" />}
           color="green"
@@ -565,7 +565,7 @@ export default function AdminDashboard() {
                   <div className="text-xs space-y-1">
                     <p><span className="text-muted-foreground">Products:</span> {transaction.products.join(', ')}</p>
                     <p><span className="text-muted-foreground">Date:</span> {transaction.date}</p>
-                    <p><span className="text-muted-foreground">Amount:</span> ${transaction.amount.toLocaleString()}</p>
+                    <p><span className="text-muted-foreground">Amount:</span> ₹{transaction.amount.toLocaleString()}</p>
                   </div>
                 </div>
               ))}
@@ -600,7 +600,7 @@ export default function AdminDashboard() {
                       </td>
                       <td className="p-4">{transaction.date}</td>
                       <td className="p-4">
-                        ${transaction.amount.toLocaleString()}
+                      ₹{transaction.amount.toLocaleString()}
                       </td>
                       <td className="p-4">
                         <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">

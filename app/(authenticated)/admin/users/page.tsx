@@ -294,15 +294,15 @@ export default function UsersPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            variant={viewMode === 'grid' ? 'default' : 'outline'} 
+          <Button
+            variant={viewMode === 'grid' ? 'default' : 'outline'}
             size="icon"
             onClick={() => setViewMode('grid')}
           >
             <LayoutGrid className="h-4 w-4" />
           </Button>
-          <Button 
-            variant={viewMode === 'list' ? 'default' : 'outline'} 
+          <Button
+            variant={viewMode === 'list' ? 'default' : 'outline'}
             size="icon"
             onClick={() => setViewMode('list')}
           >
@@ -369,10 +369,10 @@ export default function UsersPage() {
                               user.publicMetadata.role
                             )}`}
                           >
-                            {user.publicMetadata.role
-                              ? user.publicMetadata.role.charAt(0).toUpperCase() +
-                                user.publicMetadata.role.slice(1)
-                              : 'User'}
+                            {user.publicMetadata.role === 'admin'
+                              ? 'Admin'
+                              : 'Shopkeeper'}
+
                           </span>
                         </div>
                       </td>
@@ -388,7 +388,7 @@ export default function UsersPage() {
                             <SelectValue placeholder="Select role" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="user">Shopkeeper</SelectItem>
                             <SelectItem value="admin">Admin</SelectItem>
                           </SelectContent>
                         </Select>
@@ -442,7 +442,7 @@ export default function UsersPage() {
                       {getUserEmail(user)}
                     </p>
                   </div>
-                  
+
                   <div className="mb-4 flex justify-center">
                     <div className="flex items-center gap-2">
                       {getRoleIcon(user.publicMetadata.role)}
@@ -451,14 +451,13 @@ export default function UsersPage() {
                           user.publicMetadata.role
                         )}`}
                       >
-                        {user.publicMetadata.role
-                          ? user.publicMetadata.role.charAt(0).toUpperCase() +
-                            user.publicMetadata.role.slice(1)
-                          : 'User'}
+                        {user.publicMetadata.role === 'admin'
+                          ? 'Admin'
+                          : 'Shopkeeper' }
                       </span>
                     </div>
                   </div>
-                  
+
                   <div className="mt-4">
                     <Select
                       value={user.publicMetadata.role || 'user'}
@@ -471,7 +470,7 @@ export default function UsersPage() {
                         <SelectValue placeholder="Change role" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="user">User</SelectItem>
+                        <SelectItem value="user">Shopkeeper</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
                       </SelectContent>
                     </Select>

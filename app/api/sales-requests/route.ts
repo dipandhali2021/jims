@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
       await prisma.notification.createMany({
         data: adminUserIds.map(adminId => ({
           title: 'New Sales Request',
-          message: `New sales request (${salesRequest.requestId}) created by ${salesRequest.user.firstName} ${salesRequest.user.lastName} for customer ${customer}. Total value: $${totalValue.toFixed(2)}`,
+          message: `New sales request (${salesRequest.requestId}) created by ${salesRequest.user.firstName} ${salesRequest.user.lastName} for customer ${customer}. Total value: ₹${totalValue.toFixed(2)}`,
           type: 'sales_request',
           userId: adminId,
         }))

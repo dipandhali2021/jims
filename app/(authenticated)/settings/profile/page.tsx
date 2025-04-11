@@ -162,7 +162,7 @@ export default function ProfilePage() {
     }
   };
 
-  
+
 
 
   const handleUpdatePassword = async () => {
@@ -171,33 +171,33 @@ export default function ProfilePage() {
       setPasswordError('New password must be at least 8 characters long');
       return;
     }
-    
+
     if (newPassword !== confirmPassword) {
       setPasswordError('New password and confirmation do not match');
       return;
     }
-    
+
     try {
       setIsUpdatingPassword(true);
       setPasswordError('');
-      
+
       // Use the updatePassword method directly
       await user.updatePassword({
         currentPassword,
         newPassword,
         signOutOfOtherSessions: signOutOthers,
       });
-      
+
       toast({
         title: 'Success',
         description: 'Password updated successfully',
       });
-      
+
       setIsPasswordDialogOpen(false);
     } catch (error: any) {
       console.error('Error updating password:', error);
       setPasswordError(
-        error?.errors?.[0]?.message || 
+        error?.errors?.[0]?.message ||
         'Failed to update password. Make sure your current password is correct.'
       );
       toast({
@@ -215,7 +215,7 @@ export default function ProfilePage() {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-2xl font-bold">Profile Settings</CardTitle>
-            
+
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -243,7 +243,7 @@ export default function ProfilePage() {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => 
+                      onClick={() =>
                         document.getElementById('profile-image')?.click()
                       }
                     >
@@ -310,7 +310,7 @@ export default function ProfilePage() {
             {/* Account Information */}
             <div className="space-y-4 pt-4 border-t">
               <h3 className="font-medium">Account Information</h3>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
                   <div className="flex items-center space-x-2">
@@ -318,8 +318,11 @@ export default function ProfilePage() {
                     <div>
                       <p className="font-medium">Role</p>
                       <p className="text-sm text-muted-foreground capitalize">
-                        {(typeof user.publicMetadata === 'object' && user.publicMetadata ? (user.publicMetadata as { role?: string }).role : undefined) || 'User'}
+                        {typeof user.publicMetadata === 'object' && user.publicMetadata?.role === 'admin'
+                          ? 'Admin'
+                          : 'Shopkeeper'}
                       </p>
+
                     </div>
                   </div>
 
@@ -328,8 +331,8 @@ export default function ProfilePage() {
                     <div>
                       <p className="font-medium">Email Verification</p>
                       <p className="text-sm text-muted-foreground">
-                        {user.primaryEmailAddress?.verification.status === 'verified' 
-                          ? 'Verified' 
+                        {user.primaryEmailAddress?.verification.status === 'verified'
+                          ? 'Verified'
                           : 'Not Verified'}
                       </p>
                     </div>
@@ -418,5 +421,5 @@ export default function ProfilePage() {
 }
 
 function useReverification(arg0: (params: any) => Promise<UserResource>) {
-    throw new Error('Function not implemented.');
+  throw new Error('Function not implemented.');
 }

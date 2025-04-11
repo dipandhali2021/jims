@@ -226,7 +226,6 @@ await fetchSalesRequests();
           </div>
           <div className="flex gap-2">
             <Skeleton className="h-10 w-20" />
-            <Skeleton className="h-10 w-28" />
           </div>
         </div>
 
@@ -362,10 +361,7 @@ await fetchSalesRequests();
               <List className="h-4 w-4" />
             </Button>
           </div>
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export
-          </Button>
+          
         </div>
       </div>
 
@@ -403,7 +399,7 @@ await fetchSalesRequests();
                 
                 <div className="flex justify-between text-sm mb-4">
                   <span className="text-gray-500">Total Value:</span>
-                  <span className="font-medium">${request.totalValue.toLocaleString()}</span>
+                  <span className="font-medium">₹{request.totalValue.toLocaleString()}</span>
                 </div>
                 
                 <div className="flex justify-between text-sm mb-4">
@@ -491,7 +487,7 @@ await fetchSalesRequests();
                         {request.items.reduce((sum, item) => sum + item.quantity, 0)}
                       </td>
                       <td className="p-4">
-                        ${request.totalValue.toLocaleString()}
+                      ₹{request.totalValue.toLocaleString()}
                       </td>
                       <td className="p-4">
                         {new Date(request.requestDate).toLocaleDateString()}
@@ -595,12 +591,12 @@ await fetchSalesRequests();
                           {item.product.name}
                         </p>
                         <p className="text-sm text-gray-500">
-                          SKU: {item.product.sku}
+                          Product ID: {item.product.sku}
                         </p>
                       </div>
                       <div className="text-right">
                         <p className="font-medium text-gray-800">
-                          ${item.price.toLocaleString()}
+                        ₹{item.price.toLocaleString()}
                         </p>
                         <p className="text-sm text-gray-500">
                           Qty: {item.quantity}
@@ -613,7 +609,7 @@ await fetchSalesRequests();
               <div className="flex justify-between pt-4 border-t border-gray-200">
                 <p className="font-medium text-gray-800">Total Value:</p>
                 <p className="font-bold text-gray-900">
-                  ${selectedRequest.totalValue.toLocaleString()}
+                ₹{selectedRequest.totalValue.toLocaleString()}
                 </p>
               </div>
             </div>

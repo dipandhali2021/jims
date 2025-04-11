@@ -25,10 +25,8 @@ export default authMiddleware({
           return NextResponse.redirect(new URL('/admin/users', req.url));
         } 
 
-        // user role redirection logic
-        if (role === 'user' && req.nextUrl.pathname === '/dashboard') {
-          return NextResponse.redirect(new URL('/dashboard', req.url));
-        }
+        // User role redirection logic - removed redundant redirect that was causing infinite loop
+        // No need to redirect if user is already on the dashboard page
 
         // Prevent non-admin users from accessing admin routes
         if (role !== 'admin' && req.nextUrl.pathname.startsWith('/admin')) {

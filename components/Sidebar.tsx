@@ -217,7 +217,7 @@ export function DashboardSidebar({
             <span>Log out</span>
           </Button>
           <div className="mt-4 text-xs text-center text-muted-foreground">
-            <p>© 2024 Jewelry Admin</p>
+            <p>© 2025 Omkar Gold Covering</p>
             <p className="mt-1 text-xs text-muted-foreground/70">All rights reserved</p>
           </div>
         </SidebarFooter>
@@ -374,7 +374,7 @@ export function DashboardSidebar({
             <span>Log out</span>
           </Button>
           <div className="mt-4 text-xs text-center text-muted-foreground">
-            <p>© 2024 Jewelry Admin</p>
+            <p>© 2025 Omkar Gold Covering</p>
             <p className="mt-1 text-xs text-muted-foreground/70">All rights reserved</p>
           </div>
         </div>
