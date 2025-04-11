@@ -18,6 +18,7 @@ const categories = [
   'Bracelets',
   'Watches',
   'Pendants',
+  'Other',
 ];
 
 const materials = [
@@ -46,6 +47,8 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
     description: '',
     category: '',
     material: '',
+    customCategory: '',
+    customMaterial: '',
     price: '',
     stock: '',
   });
@@ -57,6 +60,8 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       description: '',
       category: '',
       material: '',
+      customCategory: '',
+      customMaterial: '',
       price: '',
       stock: '',
     });
@@ -99,12 +104,32 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       });
       return;
     }
+
+    if (formData.category === 'Other' && !formData.customCategory.trim()) {
+      setError("Custom category is required when 'Other' is selected");
+      toast({
+        title: 'Error',
+        description: "Please enter a custom category name",
+        variant: 'destructive',
+      });
+      return;
+    }
     
     if (!formData.material) {
       setError("Material is required");
       toast({
         title: 'Error',
         description: 'Please select a material',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (formData.material === 'Other' && !formData.customMaterial.trim()) {
+      setError("Custom material is required when 'Other' is selected");
+      toast({
+        title: 'Error',
+        description: "Please enter a custom material name",
         variant: 'destructive',
       });
       return;
@@ -138,10 +163,21 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
         method: 'POST'
       };
 
+      // Prepare data with custom category/material if "Other" is selected
+      const finalCategory = formData.category === 'Other' ? formData.customCategory : formData.category;
+      const finalMaterial = formData.material === 'Other' ? formData.customMaterial : formData.material;
+
+      // Clone formData without custom fields
+      const { customCategory, customMaterial, ...dataToSend } = formData;
+      
+      // Override category and material with final values
+      dataToSend.category = finalCategory;
+      dataToSend.material = finalMaterial;
+
       // If there's an image file, use FormData
       if (imageFile) {
         const data = new FormData();
-        Object.entries(formData).forEach(([key, value]) => {
+        Object.entries(dataToSend).forEach(([key, value]) => {
           data.append(key, value);
         });
         data.append('image', imageFile);
@@ -152,7 +188,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
           'Content-Type': 'application/json'
         };
         requestOptions.body = JSON.stringify({
-          ...formData,
+          ...dataToSend,
           imageUrl: DEFAULT_IMAGE_URL
         });
       }
@@ -314,6 +350,18 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
                   ))}
                 </SelectContent>
               </Select>
+              {formData.category === 'Other' && (
+                <div className="mt-2">
+                  <Input
+                    placeholder="Enter custom category"
+                    value={formData.customCategory}
+                    onChange={(e) =>
+                      setFormData({ ...formData, customCategory: e.target.value })
+                    }
+                    className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="material" className="font-medium">Material *</Label>
@@ -334,6 +382,18 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
                   ))}
                 </SelectContent>
               </Select>
+              {formData.material === 'Other' && (
+                <div className="mt-2">
+                  <Input
+                    placeholder="Enter custom material"
+                    value={formData.customMaterial}
+                    onChange={(e) =>
+                      setFormData({ ...formData, customMaterial: e.target.value })
+                    }
+                    className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+              )}
             </div>
           </div>
 

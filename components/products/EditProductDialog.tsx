@@ -30,6 +30,7 @@ const categories = [
   'Bracelets',
   'Watches',
   'Pendants',
+  'Other',
 ];
 
 const materials = [
@@ -61,24 +62,36 @@ export function EditProductDialog({
   const { toast } = useToast();
   const router = useRouter();
 
+  // Determine if product has custom category or material
+  const isCustomCategory = !categories.includes(product.category);
+  const isCustomMaterial = !materials.includes(product.material);
+
   const [formData, setFormData] = useState({
     name: product.name,
     sku: product.sku,
     description: product.description || '',
-    category: product.category,
-    material: product.material,
+    category: isCustomCategory ? 'Other' : product.category,
+    material: isCustomMaterial ? 'Other' : product.material,
+    customCategory: isCustomCategory ? product.category : '',
+    customMaterial: isCustomMaterial ? product.material : '',
     price: product.price.toString(),
     stock: product.stock.toString(),
   });
 
   useEffect(() => {
+    // Determine if product has custom category or material
+    const isCustomCategory = !categories.includes(product.category);
+    const isCustomMaterial = !materials.includes(product.material);
+    
     // Reset form data when product changes
     setFormData({
       name: product.name,
       sku: product.sku,
       description: product.description || '',
-      category: product.category,
-      material: product.material,
+      category: isCustomCategory ? 'Other' : product.category,
+      material: isCustomMaterial ? 'Other' : product.material,
+      customCategory: isCustomCategory ? product.category : '',
+      customMaterial: isCustomMaterial ? product.material : '',
       price: product.price.toString(),
       stock: product.stock.toString(),
     });
@@ -90,12 +103,18 @@ export function EditProductDialog({
   }, [product]);
 
   const resetForm = () => {
+    // Determine if product has custom category or material
+    const isCustomCategory = !categories.includes(product.category);
+    const isCustomMaterial = !materials.includes(product.material);
+    
     setFormData({
       name: product.name,
       sku: product.sku,
       description: product.description || '',
-      category: product.category,
-      material: product.material,
+      category: isCustomCategory ? 'Other' : product.category,
+      material: isCustomMaterial ? 'Other' : product.material,
+      customCategory: isCustomCategory ? product.category : '',
+      customMaterial: isCustomMaterial ? product.material : '',
       price: product.price.toString(),
       stock: product.stock.toString(),
     });
@@ -180,11 +199,31 @@ export function EditProductDialog({
       return;
     }
 
+    if (formData.category === 'Other' && !formData.customCategory.trim()) {
+      setError("Custom category is required when 'Other' is selected");
+      toast({
+        title: 'Error',
+        description: "Please enter a custom category name",
+        variant: 'destructive',
+      });
+      return;
+    }
+
     if (!formData.material) {
       setError('Material is required');
       toast({
         title: 'Error',
         description: 'Please select a material',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (formData.material === 'Other' && !formData.customMaterial.trim()) {
+      setError("Custom material is required when 'Other' is selected");
+      toast({
+        title: 'Error',
+        description: "Please enter a custom material name",
         variant: 'destructive',
       });
       return;
@@ -216,8 +255,19 @@ export function EditProductDialog({
       // Create a new FormData instance
       const data = new FormData();
 
+      // Prepare data with custom category/material if "Other" is selected
+      const finalCategory = formData.category === 'Other' ? formData.customCategory : formData.category;
+      const finalMaterial = formData.material === 'Other' ? formData.customMaterial : formData.material;
+      
+      // Clone formData without custom fields
+      const { customCategory, customMaterial, ...dataToSend } = formData;
+      
+      // Override category and material with final values
+      dataToSend.category = finalCategory;
+      dataToSend.material = finalMaterial;
+
       // Append form data fields
-      Object.entries(formData).forEach(([key, value]) => {
+      Object.entries(dataToSend).forEach(([key, value]) => {
         data.append(key, value);
       });
 
@@ -361,6 +411,18 @@ export function EditProductDialog({
                   ))}
                 </SelectContent>
               </Select>
+              {formData.category === 'Other' && (
+                <div className="mt-2">
+                  <Input
+                    placeholder="Enter custom category"
+                    value={formData.customCategory}
+                    onChange={(e) =>
+                      setFormData({ ...formData, customCategory: e.target.value })
+                    }
+                    className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="material" className="font-medium">
@@ -383,6 +445,18 @@ export function EditProductDialog({
                   ))}
                 </SelectContent>
               </Select>
+              {formData.material === 'Other' && (
+                <div className="mt-2">
+                  <Input
+                    placeholder="Enter custom material"
+                    value={formData.customMaterial}
+                    onChange={(e) =>
+                      setFormData({ ...formData, customMaterial: e.target.value })
+                    }
+                    className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                  />
+                </div>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
