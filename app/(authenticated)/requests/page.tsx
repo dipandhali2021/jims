@@ -23,6 +23,7 @@ import {
   Loader2,
   LayoutGrid,
   List,
+  Trash2,
 } from 'lucide-react';
 import {
   Select,
@@ -77,6 +78,8 @@ export default function RequestsPage() {
   const [showDetails, setShowDetails] = useState(false);
   const [viewMode, setViewMode] = useState<'list' | 'grid'>('grid');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const itemsPerPage = 8;
   const { toast } = useToast();
 
@@ -155,6 +158,37 @@ await fetchSalesRequests();
         ...prev,
         [requestId]: { approving: false, rejecting: false }
       }));
+    }
+  };
+
+  const handleDeleteAllRequests = async () => {
+    setIsDeleting(true);
+    try {
+      const response = await fetch('/api/sales-requests', {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete sales requests');
+      }
+
+      toast({
+        title: 'Success',
+        description: 'All sales requests deleted successfully',
+      });
+
+      // Reset the current page to 1 and refresh the data
+      setCurrentPage(1);
+      await fetchSalesRequests();
+      setShowDeleteConfirmation(false);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete sales requests',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -364,6 +398,20 @@ await fetchSalesRequests();
         </div>
 
         <div className="flex justify-end gap-2">
+          {/* Delete All Button (Admin only) */}
+          {user?.publicMetadata?.role === 'admin' && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={() => setShowDeleteConfirmation(true)}
+              title="Delete All Requests"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="sr-only md:not-sr-only md:ml-2">Delete All</span>
+            </Button>
+          )}
+          
           {/* View Toggle Buttons */}
           <div className="border rounded-md flex">
             <Button
@@ -827,6 +875,49 @@ await fetchSalesRequests();
               )}
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={showDeleteConfirmation} onOpenChange={setShowDeleteConfirmation}>
+        <DialogContent className="sm:max-w-[450px] max-w-[90vw] bg-white p-4 sm:p-6 border-0 shadow-xl">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold text-red-600">
+              Delete All Requests
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-sm text-gray-700 mb-4">
+              Are you sure you want to delete all sales requests? This action cannot be undone.
+            </p>
+            <p className="text-xs text-amber-600 bg-amber-50 p-3 rounded-md">
+              Warning: This will permanently delete all {salesRequests.length} sales requests from the database.
+            </p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
+            <Button
+              variant="outline"
+              size="sm"
+              className="flex-1"
+              onClick={() => setShowDeleteConfirmation(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              className="flex-1"
+              onClick={handleDeleteAllRequests}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-1" />
+              )}
+              <span>Delete All</span>
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

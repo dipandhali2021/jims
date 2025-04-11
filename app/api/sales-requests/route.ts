@@ -181,3 +181,39 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const { userId } = auth();
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Get user details from Clerk
+    const clerkUser = await clerkClient.users.getUser(userId);
+    if (!clerkUser) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    // Check if user is admin
+    const isAdmin = clerkUser.publicMetadata?.role === 'admin';
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+
+    // Delete all sales items first (handle foreign key constraints)
+    await prisma.salesItem.deleteMany({});
+
+    // Then delete all sales requests
+    await prisma.salesRequest.deleteMany({});
+
+    // Return success response
+    return NextResponse.json({ message: 'All sales requests deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting sales requests:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
