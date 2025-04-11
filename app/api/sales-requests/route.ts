@@ -157,6 +157,14 @@ export async function GET(req: NextRequest) {
           include: {
             product: true
           }
+        },
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
         }
       },
       orderBy: {

@@ -57,6 +57,12 @@ interface SalesRequest {
   totalValue: number;
   requestDate: string;
   status: 'Pending' | 'Approved' | 'Rejected';
+  userId: string;
+  user?: {
+    firstName: string;
+    lastName: string;
+    email: string;
+  };
 }
 
 export default function RequestsPage() {
@@ -80,7 +86,15 @@ export default function RequestsPage() {
         throw new Error('Failed to fetch sales requests');
       }
       const data = await response.json();
-      setSalesRequests(data);
+      
+      // If user is not an admin, filter to show only their requests
+      if (user?.publicMetadata?.role !== 'admin') {
+        const filteredData = data.filter((request: SalesRequest) => request.userId === user?.id);
+        setSalesRequests(filteredData);
+      } else {
+        // For admins, show all requests
+        setSalesRequests(data);
+      }
     } catch (error) {
       toast({
         title: 'Error',
@@ -90,7 +104,7 @@ export default function RequestsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [toast, user]);
 
   useEffect(() => {
     fetchSalesRequests();
@@ -375,6 +389,11 @@ await fetchSalesRequests();
                   <div>
                     <h3 className="font-semibold">{request.requestId}</h3>
                     <p className="text-sm text-gray-600">{request.customer}</p>
+                    {user?.publicMetadata?.role === 'admin' && request.user && (
+                      <p className="text-xs mt-1 text-blue-600">
+                        Sent by: {request.user.firstName} {request.user.lastName}
+                      </p>
+                    )}
                   </div>
                   <span
                     className={`px-2 py-1 rounded-full text-xs ${getStatusColor(
@@ -465,6 +484,9 @@ await fetchSalesRequests();
                   <tr className="border-b">
                     <th className="text-left p-4">REQUEST ID</th>
                     <th className="text-left p-4">CUSTOMER</th>
+                    {user?.publicMetadata?.role === 'admin' && (
+                      <th className="text-left p-4">SHOPKEEPER</th>
+                    )}
                     <th className="text-left p-4">ITEMS</th>
                     <th className="text-left p-4">TOTAL QTY</th>
                     <th className="text-left p-4">TOTAL VALUE</th>
@@ -478,6 +500,11 @@ await fetchSalesRequests();
                     <tr key={request.id} className="border-b">
                       <td className="p-4 font-medium">{request.requestId}</td>
                       <td className="p-4">{request.customer}</td>
+                      {user?.publicMetadata?.role === 'admin' && (
+                        <td className="p-4">
+                          {request.user ? `${request.user.firstName} ${request.user.lastName}` : 'Unknown'}
+                        </td>
+                      )}
                       <td className="p-4">
                         {request.items
                           .map((item) => `${item.product.name} (${item.quantity})`)
