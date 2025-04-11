@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DateRange } from 'react-day-picker';
 import { addDays, startOfDay, endOfDay } from 'date-fns';
@@ -114,6 +114,23 @@ export default function AdminDashboard() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isMobile, setIsMobile] = useState(false);
   const { toast } = useToast();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  
+  // Calculate filtered and paginated transactions
+  const filteredTransactions = transactions.filter((transaction) =>
+    searchTerm === '' ||
+    transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    transaction.customer.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+  
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredTransactions.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredTransactions, currentPage, itemsPerPage]);
+  
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
 
   // Check for mobile viewport
   useEffect(() => {
@@ -272,14 +289,7 @@ export default function AdminDashboard() {
             <h3 className="text-lg sm:text-2xl font-bold mt-1 sm:mt-2">
               {value}
             </h3>
-            <p className={`text-xs sm:text-sm ${percentage >= 0 ? 'text-green-600' : 'text-red-600'} flex items-center mt-1`}>
-              {percentage >= 0 ? (
-                <ArrowUpRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-              ) : (
-                <ArrowDownRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-              )}
-              {Math.abs(percentage)}% vs previous
-            </p>
+            
           </div>
           <div className={`bg-${color}-500/10 p-2 sm:p-3 rounded-full`}>
             {icon}
@@ -545,12 +555,7 @@ export default function AdminDashboard() {
           
           {/* Mobile Transaction Cards */}
           <div className="md:hidden space-y-3">
-            {transactions
-              .filter((transaction) =>
-                searchTerm === '' ||
-                transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                transaction.customer.toLowerCase().includes(searchTerm.toLowerCase())
-              )
+            {paginatedTransactions
               .map((transaction) => (
                 <div key={transaction.id} className="border rounded-lg p-3">
                   <div className="flex justify-between items-start mb-2">
@@ -585,12 +590,7 @@ export default function AdminDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {transactions
-                  .filter((transaction) =>
-                    searchTerm === '' ||
-                    transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    transaction.customer.toLowerCase().includes(searchTerm.toLowerCase())
-                  )
+                {paginatedTransactions
                   .map((transaction) => (
                     <tr key={transaction.id} className="border-b hover:bg-muted/50 transition-colors">
                       <td className="p-4 font-medium">{transaction.id}</td>
@@ -615,8 +615,26 @@ export default function AdminDashboard() {
           
           <div className="flex items-center justify-between mt-4 text-xs md:text-sm">
             <p className="text-muted-foreground">
-              Showing 1-{transactions.length} of {transactions.length} transactions
+              Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filteredTransactions.length)} of {filteredTransactions.length} transactions
             </p>
+            <div className="flex items-center space-x-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+              >
+                Next
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>

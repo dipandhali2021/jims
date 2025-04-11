@@ -73,6 +73,8 @@ export default function InventoryPage() {
   const [priceRange, setPriceRange] = useState([0, 10000]);
   const [showFilters, setShowFilters] = useState(false);
   const [lowStockThreshold, setLowStockThreshold] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
   const [filters, setFilters] = useState({
     categories: new Set<string>(),
     materials: new Set<string>(),
@@ -169,6 +171,15 @@ export default function InventoryPage() {
         matchesPrice
       );
     });
+
+  // Calculate paginated results
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredProducts, currentPage, itemsPerPage]);
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   return (
     <div className="p-6">
@@ -403,7 +414,7 @@ export default function InventoryPage() {
                   </Button>
                 </div>
               ) : (
-                filteredProducts.map((product) => (
+                paginatedProducts.map((product) => (
                   <Card key={product.id} className="overflow-hidden">
                     <div
                       className="aspect-square relative cursor-pointer"
@@ -488,7 +499,7 @@ export default function InventoryPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredProducts.map((product) => (
+                    {paginatedProducts.map((product) => (
                       <tr key={product.id} className="border-b">
                         <td className="p-4">
                           <input type="checkbox" className="rounded" />
@@ -551,6 +562,99 @@ export default function InventoryPage() {
           )}
         </div>
       </div>
+      
+      {/* Pagination Controls */}
+      {filteredProducts.length > 0 ? (
+        <div className="flex justify-center mt-6">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:flex"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            >
+              <ChevronDown className="h-4 w-4 mr-1 rotate-90" />
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="sm:hidden w-8 h-8 p-0"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            >
+              <ChevronDown className="h-4 w-4 rotate-90" />
+              <span className="sr-only">Previous</span>
+            </Button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                // Show at most 3 page numbers
+                const pageNum = i + 1;
+                const isActive = pageNum === currentPage;
+                
+                if (pageNum <= 3) {
+                  return (
+                    <Button
+                      key={i}
+                      variant={isActive ? "default" : "outline"}
+                      size="sm"
+                      className="w-8 h-8 p-0"
+                      onClick={() => setCurrentPage(pageNum)}
+                      disabled={isActive}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                }
+                return null;
+              })}
+              
+              {totalPages > 3 && (
+                <span className="mx-1">...</span>
+              )}
+              
+              {totalPages > 3 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-8 h-8 p-0"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                >
+                  {totalPages}
+                </Button>
+              )}
+            </div>
+            
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:flex"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            >
+              Next
+              <ChevronDown className="h-4 w-4 ml-1 -rotate-90" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="sm:hidden w-8 h-8 p-0"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            >
+              <ChevronDown className="h-4 w-4 -rotate-90" />
+              <span className="sr-only">Next</span>
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center p-6 bg-muted/20 rounded-md mt-4 sm:mt-6">
+          <p className="text-sm sm:text-base text-muted-foreground">No products found matching your filters</p>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +25,11 @@ export function LowStockThresholdSetting({
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const { toast } = useToast();
+
+  // Update threshold state when currentThreshold prop changes
+  useEffect(() => {
+    setThreshold(currentThreshold.toString());
+  }, [currentThreshold]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
