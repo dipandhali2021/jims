@@ -230,7 +230,7 @@ export default function InventoryPage() {
             </div>
             <div className="flex gap-2">
             <CreateBulkSalesRequestDialog products={products} onRequestCreated={refreshProducts} />
-            <Button
+            {/* <Button
               variant={showFilters ? 'default' : 'outline'}
               onClick={() => setShowFilters(!showFilters)}
               className="relative"
@@ -246,7 +246,7 @@ export default function InventoryPage() {
                   {getActiveFiltersCount()}
                 </span>
               )}
-            </Button>
+            </Button> */}
             </div>
           </div>
         </div>
@@ -564,7 +564,7 @@ export default function InventoryPage() {
       </div>
       
       {/* Pagination Controls */}
-      {filteredProducts.length > 0 ? (
+      {products.length > 0 ? (
         <div className="flex justify-center mt-6">
           <div className="flex items-center gap-1 sm:gap-2">
             <Button
@@ -652,7 +652,7 @@ export default function InventoryPage() {
         </div>
       ) : (
         <div className="text-center p-6 bg-muted/20 rounded-md mt-4 sm:mt-6">
-          <p className="text-sm sm:text-base text-muted-foreground">No products found matching your filters</p>
+          <p className="text-sm sm:text-base text-muted-foreground">No products found</p>
         </div>
       )}
     </div>
