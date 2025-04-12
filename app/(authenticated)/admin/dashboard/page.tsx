@@ -3,11 +3,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DateRange } from 'react-day-picker';
-import { addDays, startOfDay, endOfDay, format } from 'date-fns';
-import { formatInTimeZone } from 'date-fns-tz';
+import { addDays, startOfDay, endOfDay } from 'date-fns';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toZonedTime, format as formatTZ } from 'date-fns-tz';
 import {
   LineChart,
   Line,
@@ -118,14 +118,6 @@ export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   
-  // Indian timezone constant
-  const TIMEZONE = 'Asia/Kolkata';
-  
-  // Format date in Indian timezone
-  const formatIndianDate = (date: Date, formatStr: string = 'yyyy-MM-dd HH:mm:ss') => {
-    return formatInTimeZone(date, TIMEZONE, formatStr);
-  };
-  
   // Calculate filtered and paginated transactions
   const filteredTransactions = transactions.filter((transaction) =>
     searchTerm === '' ||
@@ -152,7 +144,7 @@ export default function AdminDashboard() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Update date range when timeframe changes with timezone handling
+  // Update date range when timeframe changes
   useEffect(() => {
     if (timeframe !== 'Custom') {
       const now = new Date();
@@ -207,20 +199,54 @@ export default function AdminDashboard() {
       if (!response.ok) throw new Error('Failed to fetch analytics');
       const data = await response.json();
       
-      // Process dates in the analytics data if needed
+      // Convert sales trend data timestamps to IST
+      if (data.salesTrend) {
+        data.salesTrend = data.salesTrend.map((item: any) => {
+          if (item.timestamp) {
+            // Convert timestamp to IST date
+            const utcDate = new Date(item.timestamp);
+            const istDate = toZonedTime(utcDate, 'Asia/Kolkata');
+            return {
+              ...item,
+              // Format if timestamp exists, otherwise keep original name
+              name: item.timestamp ? formatTZ(istDate, 'MMM dd', { timeZone: 'Asia/Kolkata' }) : item.name
+            };
+          }
+          return item;
+        });
+      }
+      
       setAnalytics(data);
 
       const transResponse = await fetch('/api/sales');
       if (!transResponse.ok) throw new Error('Failed to fetch transactions');
-      const transData = await transResponse.json();
+      let transData = await transResponse.json();
       
-      // Format transaction dates in Indian timezone
-      const localizedTransactions = transData.map((transaction: Transaction) => ({
-        ...transaction,
-        date: formatInTimeZone(new Date(transaction.date), TIMEZONE, 'PPP p') // Using a more readable format
-      }));
+      // Convert transaction dates to IST
+      transData = transData.map((transaction: any) => {
+        if (transaction.date) {
+          try {
+            // Handle both date string and timestamp formats
+            const dateValue = transaction.date.includes ? 
+              new Date(transaction.date) : 
+              new Date(parseInt(transaction.date));
+              
+            if (!isNaN(dateValue.getTime())) {
+              const istDate = toZonedTime(dateValue, 'Asia/Kolkata');
+              return {
+                ...transaction,
+                date: formatTZ(istDate, 'MMM dd, yyyy HH:mm', { timeZone: 'Asia/Kolkata' })
+              };
+            }
+          } catch (e) {
+            // If date conversion fails, keep original
+            console.error('Error converting date:', e);
+          }
+        }
+        return transaction;
+      });
       
-      setTransactions(localizedTransactions);
+      setTransactions(transData);
     } catch (error) {
       toast({
         title: 'Error',
