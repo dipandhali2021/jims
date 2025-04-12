@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DateRange } from 'react-day-picker';
 import { addDays, startOfDay, endOfDay, format } from 'date-fns';
-import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
+import { formatInTimeZone } from 'date-fns-tz';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -99,17 +99,15 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [date, setDate] = useState<DateRange | undefined>(() => {
     const now = new Date();
-    // Convert to Indian timezone
-    const indianNow = utcToZonedTime(now, TIMEZONE);
-    const currentDay = indianNow.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const sunday = new Date(indianNow);
-    sunday.setDate(indianNow.getDate() - currentDay);
-    const saturday = new Date(indianNow);
-    saturday.setDate(indianNow.getDate() + (6 - currentDay));
+    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const sunday = new Date(now);
+    sunday.setDate(now.getDate() - currentDay);
+    const saturday = new Date(now);
+    saturday.setDate(now.getDate() + (6 - currentDay));
     
     return {
-      from: startOfDay(utcToZonedTime(sunday, TIMEZONE)),
-      to: endOfDay(utcToZonedTime(saturday, TIMEZONE))
+      from: startOfDay(sunday),
+      to: endOfDay(saturday)
     };
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -123,15 +121,9 @@ export default function AdminDashboard() {
   // Indian timezone constant
   const TIMEZONE = 'Asia/Kolkata';
   
-  // Convert UTC date to Indian timezone
-  const toIndianTime = (date: Date) => {
-    return utcToZonedTime(date, TIMEZONE);
-  };
-  
-  // Format date in Indian timezone - keeping for potential future use
+  // Format date in Indian timezone
   const formatIndianDate = (date: Date, formatStr: string = 'yyyy-MM-dd HH:mm:ss') => {
-    const indianDate = utcToZonedTime(date, TIMEZONE);
-    return format(indianDate, formatStr);
+    return formatInTimeZone(date, TIMEZONE, formatStr);
   };
   
   // Calculate filtered and paginated transactions
@@ -164,37 +156,35 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (timeframe !== 'Custom') {
       const now = new Date();
-      // Convert to Indian timezone first
-      const indianNow = utcToZonedTime(now, TIMEZONE);
       switch (timeframe) {
         case 'Today':
           setDate({
-            from: startOfDay(indianNow),
-            to: endOfDay(indianNow)
+            from: startOfDay(now),
+            to: endOfDay(now)
           });
           break;
         case 'Week':
-          const currentDay = indianNow.getDay();
-          const sunday = new Date(indianNow);
-          sunday.setDate(indianNow.getDate() - currentDay);
-          const saturday = new Date(indianNow);
-          saturday.setDate(indianNow.getDate() + (6 - currentDay));
+          const currentDay = now.getDay();
+          const sunday = new Date(now);
+          sunday.setDate(now.getDate() - currentDay);
+          const saturday = new Date(now);
+          saturday.setDate(now.getDate() + (6 - currentDay));
           
           setDate({
-            from: startOfDay(utcToZonedTime(sunday, TIMEZONE)),
-            to: endOfDay(utcToZonedTime(saturday, TIMEZONE))
+            from: startOfDay(sunday),
+            to: endOfDay(saturday)
           });
           break;
         case 'Month':
           setDate({
-            from: startOfDay(utcToZonedTime(addDays(indianNow, -30), TIMEZONE)),
-            to: endOfDay(indianNow)
+            from: startOfDay(addDays(now, -30)),
+            to: endOfDay(now)
           });
           break;
         case 'Year':
           setDate({
-            from: startOfDay(utcToZonedTime(addDays(indianNow, -365), TIMEZONE)),
-            to: endOfDay(indianNow)
+            from: startOfDay(addDays(now, -365)),
+            to: endOfDay(now)
           });
           break;
       }
@@ -207,13 +197,8 @@ export default function AdminDashboard() {
       const params = new URLSearchParams();
       
       if (timeframe === 'Custom' && date?.from && date?.to) {
-        // Convert to UTC before sending to the API
-        // Note: date.from and date.to are already in Indian timezone from the date picker
-        const utcFrom = zonedTimeToUtc(date.from, TIMEZONE);
-        const utcTo = zonedTimeToUtc(date.to, TIMEZONE);
-        
-        params.append('start', utcFrom.toISOString());
-        params.append('end', utcTo.toISOString());
+        params.append('start', date.from.toISOString());
+        params.append('end', date.to.toISOString());
       } else {
         params.append('timeframe', timeframe);
       }
@@ -229,15 +214,11 @@ export default function AdminDashboard() {
       if (!transResponse.ok) throw new Error('Failed to fetch transactions');
       const transData = await transResponse.json();
       
-      // Convert transaction dates to Indian timezone and format
-      const localizedTransactions = transData.map((transaction: Transaction) => {
-        const utcDate = new Date(transaction.date);
-        const indianDate = utcToZonedTime(utcDate, TIMEZONE);
-        return {
-          ...transaction,
-          date: format(indianDate, 'PPP p') // Using a more readable format
-        };
-      });
+      // Format transaction dates in Indian timezone
+      const localizedTransactions = transData.map((transaction: Transaction) => ({
+        ...transaction,
+        date: formatInTimeZone(new Date(transaction.date), TIMEZONE, 'PPP p') // Using a more readable format
+      }));
       
       setTransactions(localizedTransactions);
     } catch (error) {
