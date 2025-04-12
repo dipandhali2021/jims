@@ -3,7 +3,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DateRange } from 'react-day-picker';
-import { addDays, startOfDay, endOfDay } from 'date-fns';
+import { addDays, startOfDay, endOfDay, format } from 'date-fns';
+import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,8 +46,14 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
-import { useLowStockThreshold } from '@/hooks/use-low-stock-threshold';
-
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 
 const COLORS = ['#4F46E5', '#06B6D4', '#F97316', '#EC4899', '#8B5CF6'];
 
@@ -92,112 +99,41 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('');
   const [date, setDate] = useState<DateRange | undefined>(() => {
     const now = new Date();
-    const currentDay = now.getDay(); // 0 = Sunday, 1 = Monday, etc.
-    const sunday = new Date(now);
-    sunday.setDate(now.getDate() - currentDay);
-    const saturday = new Date(now);
-    saturday.setDate(now.getDate() + (6 - currentDay));
+    // Convert to Indian timezone
+    const indianNow = utcToZonedTime(now, TIMEZONE);
+    const currentDay = indianNow.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    const sunday = new Date(indianNow);
+    sunday.setDate(indianNow.getDate() - currentDay);
+    const saturday = new Date(indianNow);
+    saturday.setDate(indianNow.getDate() + (6 - currentDay));
     
     return {
-      from: startOfDay(sunday),
-      to: endOfDay(saturday)
+      from: startOfDay(utcToZonedTime(sunday, TIMEZONE)),
+      to: endOfDay(utcToZonedTime(saturday, TIMEZONE))
     };
   });
   const [isLoading, setIsLoading] = useState(true);
   const [analytics, setAnalytics] = useState<SalesAnalytics | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [isMobile, setIsMobile] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 4;
   const { toast } = useToast();
-  const { threshold, isLoading: isThresholdLoading, refreshThreshold } = useLowStockThreshold();
-
-  // Check for mobile viewport
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    
-    handleResize(); // Set initial value
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Update date range when timeframe changes
-  useEffect(() => {
-    if (timeframe !== 'Custom') {
-      const now = new Date();
-      switch (timeframe) {
-        case 'Today':
-          setDate({
-            from: startOfDay(now),
-            to: endOfDay(now)
-          });
-          break;
-        case 'Week':
-          const currentDay = now.getDay();
-          const sunday = new Date(now);
-          sunday.setDate(now.getDate() - currentDay);
-          const saturday = new Date(now);
-          saturday.setDate(now.getDate() + (6 - currentDay));
-          
-          setDate({
-            from: startOfDay(sunday),
-            to: endOfDay(saturday)
-          });
-          break;
-        case 'Month':
-          setDate({
-            from: startOfDay(addDays(now, -30)),
-            to: endOfDay(now)
-          });
-          break;
-        case 'Year':
-          setDate({
-            from: startOfDay(addDays(now, -365)),
-            to: endOfDay(now)
-          });
-          break;
-      }
-    }
-  }, [timeframe]);
-
-  const fetchAnalytics = async () => {
-    try {
-      setIsLoading(true);
-      const params = new URLSearchParams();
-      
-      if (timeframe === 'Custom' && date?.from && date?.to) {
-        params.append('start', date.from.toISOString());
-        params.append('end', date.to.toISOString());
-      } else {
-        params.append('timeframe', timeframe);
-      }
-      
-      const response = await fetch(`/api/sales/analytics?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch analytics');
-      const data = await response.json();
-      setAnalytics(data);
-
-      const transResponse = await fetch('/api/sales');
-      if (!transResponse.ok) throw new Error('Failed to fetch transactions');
-      const transData = await transResponse.json();
-      setTransactions(transData);
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch sales data',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 8;
+  
+  // Indian timezone constant
+  const TIMEZONE = 'Asia/Kolkata';
+  
+  // Convert UTC date to Indian timezone
+  const toIndianTime = (date: Date) => {
+    return utcToZonedTime(date, TIMEZONE);
   };
-
-  useEffect(() => {
-    fetchAnalytics();
-  }, [timeframe, date?.from, date?.to]);
-
+  
+  // Format date in Indian timezone - keeping for potential future use
+  const formatIndianDate = (date: Date, formatStr: string = 'yyyy-MM-dd HH:mm:ss') => {
+    const indianDate = utcToZonedTime(date, TIMEZONE);
+    return format(indianDate, formatStr);
+  };
+  
   // Calculate filtered and paginated transactions
   const filteredTransactions = transactions.filter((transaction) =>
     searchTerm === '' ||
@@ -212,6 +148,112 @@ export default function AdminDashboard() {
   
   // Calculate total pages
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+
+  // Check for mobile viewport
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    handleResize(); // Set initial value
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Update date range when timeframe changes with timezone handling
+  useEffect(() => {
+    if (timeframe !== 'Custom') {
+      const now = new Date();
+      // Convert to Indian timezone first
+      const indianNow = utcToZonedTime(now, TIMEZONE);
+      switch (timeframe) {
+        case 'Today':
+          setDate({
+            from: startOfDay(indianNow),
+            to: endOfDay(indianNow)
+          });
+          break;
+        case 'Week':
+          const currentDay = indianNow.getDay();
+          const sunday = new Date(indianNow);
+          sunday.setDate(indianNow.getDate() - currentDay);
+          const saturday = new Date(indianNow);
+          saturday.setDate(indianNow.getDate() + (6 - currentDay));
+          
+          setDate({
+            from: startOfDay(utcToZonedTime(sunday, TIMEZONE)),
+            to: endOfDay(utcToZonedTime(saturday, TIMEZONE))
+          });
+          break;
+        case 'Month':
+          setDate({
+            from: startOfDay(utcToZonedTime(addDays(indianNow, -30), TIMEZONE)),
+            to: endOfDay(indianNow)
+          });
+          break;
+        case 'Year':
+          setDate({
+            from: startOfDay(utcToZonedTime(addDays(indianNow, -365), TIMEZONE)),
+            to: endOfDay(indianNow)
+          });
+          break;
+      }
+    }
+  }, [timeframe]);
+
+  const fetchAnalytics = async () => {
+    try {
+      setIsLoading(true);
+      const params = new URLSearchParams();
+      
+      if (timeframe === 'Custom' && date?.from && date?.to) {
+        // Convert to UTC before sending to the API
+        // Note: date.from and date.to are already in Indian timezone from the date picker
+        const utcFrom = zonedTimeToUtc(date.from, TIMEZONE);
+        const utcTo = zonedTimeToUtc(date.to, TIMEZONE);
+        
+        params.append('start', utcFrom.toISOString());
+        params.append('end', utcTo.toISOString());
+      } else {
+        params.append('timeframe', timeframe);
+      }
+      
+      const response = await fetch(`/api/sales/analytics?${params.toString()}`);
+      if (!response.ok) throw new Error('Failed to fetch analytics');
+      const data = await response.json();
+      
+      // Process dates in the analytics data if needed
+      setAnalytics(data);
+
+      const transResponse = await fetch('/api/sales');
+      if (!transResponse.ok) throw new Error('Failed to fetch transactions');
+      const transData = await transResponse.json();
+      
+      // Convert transaction dates to Indian timezone and format
+      const localizedTransactions = transData.map((transaction: Transaction) => {
+        const utcDate = new Date(transaction.date);
+        const indianDate = utcToZonedTime(utcDate, TIMEZONE);
+        return {
+          ...transaction,
+          date: format(indianDate, 'PPP p') // Using a more readable format
+        };
+      });
+      
+      setTransactions(localizedTransactions);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch sales data',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, [timeframe, date?.from, date?.to]);
 
   if (isLoading || !analytics) {
     return (
@@ -284,7 +326,7 @@ export default function AdminDashboard() {
             <h3 className="text-lg sm:text-2xl font-bold mt-1 sm:mt-2">
               {value}
             </h3>
-
+            
           </div>
           <div className={`bg-${color}-500/10 p-2 sm:p-3 rounded-full`}>
             {icon}
@@ -610,7 +652,7 @@ export default function AdminDashboard() {
           
           <div className="flex items-center justify-between mt-4 text-xs md:text-sm">
             <p className="text-muted-foreground">
-              Showing {currentPage}-{Math.min(currentPage * itemsPerPage, filteredTransactions.length)} of {filteredTransactions.length} transactions
+              Showing {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filteredTransactions.length)} of {filteredTransactions.length} transactions
             </p>
             <div className="flex items-center space-x-2">
               <Button
