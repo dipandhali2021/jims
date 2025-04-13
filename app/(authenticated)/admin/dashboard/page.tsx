@@ -198,24 +198,8 @@ export default function AdminDashboard() {
       const response = await fetch(`/api/sales/analytics?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch analytics');
       const data = await response.json();
-      
-      // Convert sales trend data timestamps to IST
-      if (data.salesTrend) {
-        data.salesTrend = data.salesTrend.map((item: any) => {
-          if (item.timestamp) {
-            // Convert timestamp to IST date
-            const utcDate = new Date(item.timestamp);
-            const istDate = toZonedTime(utcDate, 'Asia/Kolkata');
-            return {
-              ...item,
-              // Format if timestamp exists, otherwise keep original name
-              name: item.timestamp ? formatTZ(istDate, 'MMM dd', { timeZone: 'Asia/Kolkata' }) : item.name
-            };
-          }
-          return item;
-        });
-      }
-      
+      console.log('Analytics Data:', data);
+      // No need to convert timestamps as they're already localized by the API
       setAnalytics(data);
 
       const transResponse = await fetch('/api/sales');

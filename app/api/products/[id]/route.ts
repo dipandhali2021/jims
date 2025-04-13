@@ -160,6 +160,32 @@ export async function DELETE(
       );
     }
 
+    // Find any sales items associated with this product
+    const salesItems = await prisma.salesItem.findMany({
+      where: { productId: id },
+    });
+
+    // If there are associated sales items, update them to preserve historical data
+    if (salesItems.length > 0) {
+      console.log(`Found ${salesItems.length} sales items associated with product ${id}. Preserving data before deletion.`);
+      
+      await prisma.$transaction(
+        salesItems.map((item) => 
+          prisma.salesItem.update({
+            where: { id: item.id },
+            data: {
+              // Store product details for historical reference
+              productName: existingProduct.name,
+              productSku: existingProduct.sku,
+              // Set productId to null - this allows the product to be deleted
+              productId: null
+            }
+          })
+        )
+      );
+      console.log(`Updated ${salesItems.length} sales items to preserve product data`);
+    }
+
     // Delete product from database
     await prisma.product.delete({
       where: { id },

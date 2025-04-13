@@ -22,10 +22,20 @@ import {
   isSameWeek,
   isSameMonth
 } from 'date-fns';
+import { format as formatTZ, toZonedTime } from 'date-fns-tz';
+import { time, timeStamp } from 'console';
+
+// IST timezone constant
+const IST_TIMEZONE = 'Asia/Kolkata';
+
+// Helper function to convert to IST
+function toIST(date:any) {
+  return toZonedTime(date, IST_TIMEZONE);
+}
 
 // Helper function to get date range based on timeframe
 function getDateRange(timeframe: string) {
-  const now = new Date();
+  const now = toIST(new Date());
   switch (timeframe) {
     case 'Today':
       return { 
@@ -78,7 +88,7 @@ function getDateRange(timeframe: string) {
 // Helper function to generate trend data points based on timeframe
 function generateTrendDataPoints(timeframe: string | null, dateRange: any) {
   const { start, end } = dateRange;
-  const now = new Date();
+  const now = toIST(new Date());
   let dataPoints = [];
   
   // If no timeframe is provided (custom date range), determine appropriate interval
@@ -90,26 +100,36 @@ function generateTrendDataPoints(timeframe: string | null, dateRange: any) {
       dataPoints = Array.from({ length: 24 }, (_, i) => {
         const date = new Date(start);
         date.setHours(i, 0, 0, 0);
+        const istDate = toIST(date);
         return {
-          name: `${i}:00`,
-          timestamp: date.getTime(),
+          name: formatTZ(istDate, 'HH:00', { timeZone: IST_TIMEZONE }),
+          timestamp: istDate.getTime(),
+          istDisplayTime: formatTZ(istDate, 'MMM dd, yyyy HH:mm', { timeZone: IST_TIMEZONE }),
           value: 0 // Initialize with 0
         };
       });
     } else if (daysDiff <= 31) {
       // For up to a month, show daily
-      dataPoints = eachDayOfInterval({ start, end }).map(date => ({
-        name: format(date, 'MMM dd'),
-        timestamp: date.getTime(),
-        value: 0 // Initialize with 0
-      }));
+      dataPoints = eachDayOfInterval({ start, end }).map(date => {
+        const istDate = toIST(date);
+        return {
+          name: formatTZ(istDate, 'MMM dd', { timeZone: IST_TIMEZONE }),
+          timestamp: istDate.getTime(),
+          istDisplayTime: formatTZ(istDate, 'MMM dd, yyyy', { timeZone: IST_TIMEZONE }),
+          value: 0 // Initialize with 0
+        };
+      });
     } else {
       // For longer periods, show monthly
-      dataPoints = eachMonthOfInterval({ start, end }).map(date => ({
-        name: format(date, 'MMM yyyy'),
-        timestamp: date.getTime(),
-        value: 0 // Initialize with 0
-      }));
+      dataPoints = eachMonthOfInterval({ start, end }).map(date => {
+        const istDate = toIST(date);
+        return {
+          name: formatTZ(istDate, 'MMM yyyy', { timeZone: IST_TIMEZONE }),
+          timestamp: istDate.getTime(),
+          istDisplayTime: formatTZ(istDate, 'MMM yyyy', { timeZone: IST_TIMEZONE }),
+          value: 0 // Initialize with 0
+        };
+      });
     }
     return dataPoints;
   }
@@ -117,30 +137,43 @@ function generateTrendDataPoints(timeframe: string | null, dateRange: any) {
   switch (timeframe) {
     case 'Today':
       // For today, show hourly data points
-      return Array.from({ length: 24 }, (_, i) => ({
-        name: `${i}:00`,
-        timestamp: new Date(start).setHours(i, 0, 0, 0),
-        value: 0
-      }));
+      return Array.from({ length: 24 }, (_, i) => {
+        const date = new Date(start);
+        date.setHours(i, 0, 0, 0);
+        const istDate = toIST(date);
+        return {
+          name: formatTZ(istDate, 'HH:00', { timeZone: IST_TIMEZONE }),
+          timestamp: istDate.getTime(),
+          istDisplayTime: formatTZ(istDate, 'MMM dd, yyyy HH:mm', { timeZone: IST_TIMEZONE }),
+          value: 0
+        };
+      });
     
     case 'Week':
       // For week, show daily data points
-      return eachDayOfInterval({ start, end }).map(date => ({
-        name: format(date, 'EEE'),
-        timestamp: date.getTime(),
-        value: 0
-      }));
+      return eachDayOfInterval({ start, end }).map(date => {
+        const istDate = toIST(date);
+        return {
+          name: formatTZ(istDate, 'EEE', { timeZone: IST_TIMEZONE }),
+          timestamp: istDate.getTime(),
+          istDisplayTime: formatTZ(istDate, 'MMM dd, yyyy', { timeZone: IST_TIMEZONE }),
+          value: 0
+        };
+      });
     
     case 'Month':
-      // Show continuous 12 months
+      // Show continuous 12 months from current month going backwards, ensuring all months are included
       const months = [];
-      const monthStart = subMonths(endOfMonth(now), 11); // Start 11 months ago
+      const currentMonth = new Date(now);
       
-      for (let i = 0; i < 12; i++) {
-        const date = addMonths(monthStart, i);
+      for (let i = 11; i >= 0; i--) {
+        // Start from 11 months ago and work forward to current month
+        const date = subMonths(currentMonth, i);
+        const istDate = toIST(date);
         months.push({
-          name: format(date, 'MMM'),  // Shows as Jan, Feb, Mar, etc.
-          timestamp: date.getTime(),
+          name: formatTZ(istDate, 'MMM', { timeZone: IST_TIMEZONE }),
+          timestamp: istDate.getTime(),
+          istDisplayTime: formatTZ(istDate, 'MMM yyyy', { timeZone: IST_TIMEZONE }),
           value: 0
         });
       }
@@ -152,9 +185,12 @@ function generateTrendDataPoints(timeframe: string | null, dateRange: any) {
       for (let i = 0; i < 3; i++) {
         const year = new Date(start).getFullYear() + i;
         if (year <= new Date(end).getFullYear()) {
+          const date = new Date(year, 0, 1);
+          const istDate = toIST(date);
           years.push({
             name: year.toString(),
-            timestamp: new Date(year, 0, 1).getTime(),
+            timestamp: istDate.getTime(),
+            istDisplayTime: formatTZ(istDate, 'yyyy', { timeZone: IST_TIMEZONE }),
             value: 0
           });
         }
@@ -212,7 +248,7 @@ export async function GET(req: NextRequest) {
         },
       },
     });
-// Calculate current period key performance metrics
+    // Calculate current period key performance metrics
     // Calculate metrics
     const totalRevenue = transactions.reduce((sum, trans) => sum + trans.totalAmount, 0);
     const totalOrders = transactions.length;
@@ -240,7 +276,8 @@ export async function GET(req: NextRequest) {
     
     // Fill in actual values from transactions
     transactions.forEach(transaction => {
-      const transDate = new Date(transaction.createdAt);
+      // Convert transaction date to IST
+      const transDate = toIST(new Date(transaction.createdAt));
       
       for (let i = 0; i < trendPoints.length; i++) {
         const point = trendPoints[i];
@@ -278,7 +315,8 @@ export async function GET(req: NextRequest) {
 
     const salesTrend = trendPoints.map(point => ({
       name: point.name,
-      value: point.value || 0
+      value: point.value || 0,
+      timestamp: point.istDisplayTime, // Use the pre-formatted IST display time
     }));
 
     // Calculate top selling products by aggregating sales data

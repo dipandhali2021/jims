@@ -63,7 +63,7 @@ interface DashboardSidebarProps {
 }
 
 const sidebarLinks: SidebarLink[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: true },
   { href: '/inventory', label: 'Inventory', icon: Package },
   { href: '/requests', label: 'Requests', icon: History },
   { href: '/admin/users', label: 'Users', icon: Users, adminOnly: true },
@@ -114,7 +114,7 @@ export function DashboardSidebar({
                       OMKAR GOLD COVERING
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {isAdmin ? 'Admin Dashboard' : 'Shopkeeper Dashboard'}
+                      {isAdmin ? 'Admin' : 'Shopkeeper'}
                     </span>
                   </div>
                 </Link>
@@ -264,10 +264,9 @@ export function DashboardSidebar({
               </span>
               <span className="text-xs text-muted-foreground">
                 {isAdmin
-                  ? 'Admin Dashboard'
-                  : isShopkeeper
-                  ? 'Shopkeeper Dashboard'
-                  : 'User Dashboard'}
+                  ? 'Admin'
+                  : 'Shopkeeper'
+                  }
               </span>
             </div>
           </div>

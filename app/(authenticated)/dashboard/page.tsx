@@ -8,6 +8,8 @@ import { formatInTimeZone } from 'date-fns-tz';
 import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { useClerk } from '@clerk/nextjs';
+import { redirect } from 'next/navigation';
 import {
   LineChart,
   Line,
@@ -54,6 +56,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import { toZonedTime, format as formatTZ } from 'date-fns-tz';
 
 const COLORS = ['#4F46E5', '#06B6D4', '#F97316', '#EC4899', '#8B5CF6'];
 
@@ -93,6 +96,16 @@ interface Transaction {
 }
 
 export default function AdminDashboard() {
+  const { user } = useClerk();
+  const isAdmin = user?.publicMetadata?.role === 'admin';
+  
+  // Redirect non-admin users
+  useEffect(() => {
+    if (user && !isAdmin) {
+      redirect('/inventory');
+    }
+  }, [user, isAdmin]);
+  
   const [timeframe, setTimeframe] = useState<'Today' | 'Week' | 'Month' | 'Year' | 'Custom'>(
     'Week'
   );
@@ -121,9 +134,38 @@ export default function AdminDashboard() {
   // Indian timezone constant
   const TIMEZONE = 'Asia/Kolkata';
   
-  // Format date in Indian timezone
-  const formatIndianDate = (date: Date, formatStr: string = 'yyyy-MM-dd HH:mm:ss') => {
-    return formatInTimeZone(date, TIMEZONE, formatStr);
+  // Format date in Indian timezone - more explicitly handling UTC
+  const formatIndianDate = (date: string | Date | number, formatStr: string = 'MMM dd, yyyy') => {
+    try {
+      // Handle different date types
+      let dateObj: Date;
+      
+      if (typeof date === 'string') {
+        dateObj = new Date(date);
+      } else if (typeof date === 'number') {
+        dateObj = new Date(date);
+      } else {
+        dateObj = date;
+      }
+      
+      // Make sure we have a valid date
+      if (isNaN(dateObj.getTime())) {
+        console.error('Invalid date:', date);
+        return 'Invalid date';
+      }
+      
+      // Force timezone conversion from UTC to Asia/Kolkata
+      const zonedDate = toZonedTime(dateObj, TIMEZONE);
+      return formatTZ(zonedDate, formatStr, { timeZone: TIMEZONE });
+    } catch (error) {
+      console.error('Error formatting date:', error);
+      return String(date);
+    }
+  };
+  
+  // Format date with time in Indian timezone
+  const formatIndianDateTime = (date: string | Date | number) => {
+    return formatIndianDate(date, 'MMM dd, yyyy HH:mm');
   };
   
   // Calculate filtered and paginated transactions
@@ -207,7 +249,7 @@ export default function AdminDashboard() {
       if (!response.ok) throw new Error('Failed to fetch analytics');
       const data = await response.json();
       
-      // Process dates in the analytics data if needed
+      // No need to convert timestamps since they're already localized by the API
       setAnalytics(data);
 
       const transResponse = await fetch('/api/sales');
@@ -217,7 +259,7 @@ export default function AdminDashboard() {
       // Format transaction dates in Indian timezone
       const localizedTransactions = transData.map((transaction: Transaction) => ({
         ...transaction,
-        date: formatInTimeZone(new Date(transaction.date), TIMEZONE, 'PPP p') // Using a more readable format
+        date: formatIndianDateTime(transaction.date)
       }));
       
       setTransactions(localizedTransactions);
@@ -441,7 +483,19 @@ export default function AdminDashboard() {
                     height={50}
                   />
                   <YAxis stroke="#888888" tick={{ fontSize: isMobile ? 10 : 12 }} width={35} />
-                  <Tooltip contentStyle={{ fontSize: isMobile ? 10 : 12 }} />
+                  <Tooltip 
+                    contentStyle={{ fontSize: isMobile ? 10 : 12 }}
+                    formatter={(value: any, name: any, props: any) => {
+                      return [`${value}`, name];
+                    }}
+                    labelFormatter={(label: any, payload: any) => {
+                      // Use timestamp directly from the data point if available
+                      if (payload && payload.length > 0 && payload[0].payload.timestamp) {
+                        return payload[0].payload.timestamp;
+                      }
+                      return label;
+                    }}
+                  />
                   <Line
                     type="monotone"
                     dataKey="value"

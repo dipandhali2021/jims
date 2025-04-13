@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
+import { toZonedTime, format as formatTZ } from 'date-fns-tz';
 import {
   Search,
   Calendar,
@@ -44,7 +45,9 @@ interface SalesItem {
   id: string;
   quantity: number;
   price: number;
-  product: {
+  productName?: string;  // From schema update, for deleted products
+  productSku?: string;   // From schema update, for deleted products
+  product?: {
     name: string;
     sku: string;
   };
@@ -82,6 +85,20 @@ export default function RequestsPage() {
   const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
   const itemsPerPage = 8;
   const { toast } = useToast();
+  
+  // Indian timezone constant
+  const TIMEZONE = 'Asia/Kolkata';
+  
+  // Format date in Indian timezone
+  const formatIndianDate = (date: string | Date, formatStr: string = 'MMM dd, yyyy') => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return formatTZ(toZonedTime(dateObj, TIMEZONE), formatStr, { timeZone: TIMEZONE });
+  };
+  
+  // Format date with time in Indian timezone
+  const formatIndianDateTime = (date: string | Date) => {
+    return formatIndianDate(date, 'MMM dd, yyyy HH:mm');
+  };
 
   const fetchSalesRequests = useCallback(async () => {
     try {
@@ -467,7 +484,7 @@ await fetchSalesRequests();
                   <p className="text-gray-500">Items:</p>
                   <p className="break-words">
                     {request.items
-                      .map((item) => `${item.product.name} (${item.quantity})`)
+                      .map((item) => `${item.product?.name || item.productName} (${item.quantity})`)
                       .join(', ')}
                   </p>
                   <p className="text-gray-500 mt-1">
@@ -475,14 +492,14 @@ await fetchSalesRequests();
                   </p>
                 </div>
                 
-                <div className="flex justify-between text-xs sm:text-sm mb-2">
+                <div className="flex justify-between text-xs sm:text-sm mb-3 sm:mb-4">
                   <span className="text-gray-500">Total Value:</span>
                   <span className="font-medium">₹{request.totalValue.toLocaleString()}</span>
                 </div>
                 
                 <div className="flex justify-between text-xs sm:text-sm mb-3 sm:mb-4">
                   <span className="text-gray-500">Date:</span>
-                  <span>{new Date(request.requestDate).toLocaleDateString()}</span>
+                  <span>{formatIndianDate(request.requestDate)}</span>
                 </div>
                 
                 <div className="flex flex-wrap gap-1 w-full mt-auto pt-3 border-t">
@@ -571,7 +588,7 @@ await fetchSalesRequests();
                       <td className="p-3 sm:p-4 text-xs sm:text-sm hidden sm:table-cell">
                         <span className="max-w-[150px] md:max-w-[200px] truncate inline-block">
                           {request.items
-                            .map((item) => `${item.product.name} (${item.quantity})`)
+                            .map((item) => `${item.product?.name || item.productName} (${item.quantity})`)
                             .join(', ')}
                         </span>
                       </td>
@@ -580,6 +597,9 @@ await fetchSalesRequests();
                       </td>
                       <td className="p-3 sm:p-4 text-xs sm:text-sm font-medium">
                         ₹{request.totalValue.toLocaleString()}
+                      </td>
+                      <td className="p-3 sm:p-4 text-xs sm:text-sm hidden lg:table-cell">
+                        {formatIndianDateTime(request.requestDate)}
                       </td>
                       <td className="p-3 sm:p-4 text-xs sm:text-sm">
                         <span
@@ -803,10 +823,10 @@ await fetchSalesRequests();
                     >
                       <div className="mb-2">
                         <p className="font-medium text-sm sm:text-base text-gray-800">
-                          {item.product.name}
+                          {item.product?.name || item.productName}
                         </p>
                         <p className="text-xs sm:text-sm text-gray-500">
-                          Product ID: {item.product.sku}
+                          Product ID: {item.product?.sku || item.productSku}
                         </p>
                       </div>
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-200/70">

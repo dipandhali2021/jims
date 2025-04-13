@@ -25,12 +25,14 @@ export default authMiddleware({
           return NextResponse.redirect(new URL('/admin/users', req.url));
         } 
 
-        // User role redirection logic - removed redundant redirect that was causing infinite loop
-        // No need to redirect if user is already on the dashboard page
+        // Redirect shopkeepers from dashboard to inventory
+        if (role !== 'admin' && req.nextUrl.pathname === '/dashboard') {
+          return NextResponse.redirect(new URL('/inventory', req.url));
+        }
 
         // Prevent non-admin users from accessing admin routes
         if (role !== 'admin' && req.nextUrl.pathname.startsWith('/admin')) {
-          return NextResponse.redirect(new URL('/dashboard', req.url));
+          return NextResponse.redirect(new URL('/inventory', req.url));
         }
 
         // Redirect authenticated users trying to access public routes
@@ -39,7 +41,7 @@ export default authMiddleware({
             new URL(
               role === 'admin'
                 ? '/admin/dashboard'
-                : '/dashboard',
+                : '/inventory',
               req.url
             )
           );

@@ -61,17 +61,22 @@ export async function PUT(
       );
     }
 
+
+    // Check if the user is authorized to update this request
+
     if (status === 'Approved') {
       // Update product stock for each item
       for (const item of salesRequest.items) {
-        await prisma.product.update({
-          where: { id: item.productId },
-          data: {
-            stock: {
-              decrement: item.quantity
+        if (item.productId) {
+          await prisma.product.update({
+            where: { id: item.productId },
+            data: {
+              stock: {
+                decrement: item.quantity
+              }
             }
-          }
-        });
+          });
+        }
       }
     }
 
@@ -83,12 +88,12 @@ export async function PUT(
       // Format items for transaction record with full product details
       const transactionItems = salesRequest.items.map(item => ({
         productId: item.productId,
-        productName: item.product.name,
-        category: item.product.category,
+        productName: item?.product?.name,
+        category: item?.product?.category,
         quantity: item.quantity,
         price: item.price,
         total: item.price * item.quantity,
-        material: item.product.material
+        material: item?.product?.material
       }));
 
       // Create transaction record

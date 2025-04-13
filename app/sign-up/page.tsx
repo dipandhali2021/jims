@@ -31,8 +31,15 @@ export default function SignUp() {
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [acceptTerms, setAcceptTerms] = useState(false);
   const router = useRouter();
+
+  // Add function to check if all required fields are filled
+  const areAllFieldsFilled = () => {
+    return firstName.trim() !== '' && 
+           lastName.trim() !== '' && 
+           emailAddress.trim() !== '' && 
+           password.trim() !== '';
+  };
 
   if (!isLoaded) {
     return null;
@@ -257,26 +264,6 @@ export default function SignUp() {
                     </button>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="terms"
-                    checked={acceptTerms}
-                    onCheckedChange={(checked: boolean) => setAcceptTerms(checked)}
-                  />
-                  <label
-                    htmlFor="terms"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                  >
-                    I agree to the{' '}
-                    <Link href="/terms" className="text-primary hover:underline">
-                      Terms of Service
-                    </Link>{' '}
-                    and{' '}
-                    <Link href="/privacy" className="text-primary hover:underline">
-                      Privacy Policy
-                    </Link>
-                  </label>
-                </div>
                 {error && (
                   <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
@@ -285,7 +272,7 @@ export default function SignUp() {
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={isLoading || !acceptTerms}
+                  disabled={isLoading || !areAllFieldsFilled()}
                 >
                   {isLoading ? (
                     <>

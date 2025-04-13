@@ -31,6 +31,9 @@ export function useProducts(): UseProductsReturn {
   const fetchProducts = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null);
+      
+      console.log('Fetching products from API...');
       const response = await fetch('/api/products');
       
       if (!response.ok) {
@@ -38,8 +41,12 @@ export function useProducts(): UseProductsReturn {
       }
       
       const data = await response.json();
-      setProducts(data);
+      console.log('Products fetched successfully:', data.length, 'products');
+      
+      // Make sure we're setting a new array reference to trigger re-renders
+      setProducts([...data]);
     } catch (err) {
+      console.error('Error fetching products:', err);
       setError(err instanceof Error ? err : new Error('Failed to fetch products'));
     } finally {
       setIsLoading(false);
@@ -47,7 +54,11 @@ export function useProducts(): UseProductsReturn {
   }, []);
 
   useEffect(() => {
+    console.log('Initial products fetch');
     fetchProducts();
+    
+    // Removed the refresh interval that was causing continuous refreshes
+    
   }, [fetchProducts]);
 
   return { products, isLoading, error, refreshProducts: fetchProducts };

@@ -7,8 +7,9 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Role Based Auth Clerk",
-  description: "role based auth app using prisma and clerk",
+  title: "Omkar Gold Covering",
+  description: "Jewellery Gold Covering Service and management",
+  keywords: "jewellery, gold, covering, service",  
 };
 
 export default function RootLayout({

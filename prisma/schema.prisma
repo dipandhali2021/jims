@@ -70,8 +70,10 @@ model SalesItem {
   id             String       @id @default(cuid())
   quantity       Int
   price          Float
-  product        Product      @relation(fields: [productId], references: [id])
-  productId      String
+  product        Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productId      String?
+  productName    String?      // Store product name for historical reference
+  productSku     String?      // Store product SKU for historical reference
   salesRequest   SalesRequest @relation(fields: [salesRequestId], references: [id])
   salesRequestId String
 }
