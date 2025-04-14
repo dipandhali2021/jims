@@ -65,7 +65,8 @@ interface DashboardSidebarProps {
 const sidebarLinks: SidebarLink[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: true },
   { href: '/inventory', label: 'Inventory', icon: Package },
-  { href: '/requests', label: 'Requests', icon: History },
+  { href: '/requests', label: 'Sales Requests', icon: History },
+  { href: '/product-requests', label: 'Product Requests', icon: Package },
   { href: '/admin/users', label: 'Users', icon: Users, adminOnly: true },
   {
     href: '/settings',

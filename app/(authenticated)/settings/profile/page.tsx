@@ -18,7 +18,6 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
-import { UserResource } from '@clerk/types';
 export default function ProfilePage() {
   const { isLoaded, user } = useUser();
   const { toast } = useToast();
@@ -418,8 +417,4 @@ export default function ProfilePage() {
       </Card>
     </div>
   );
-}
-
-function useReverification(arg0: (params: any) => Promise<UserResource>) {
-  throw new Error('Function not implemented.');
 }

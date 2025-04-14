@@ -9,6 +9,26 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+// Helper to delete image from Cloudinary if it belongs to our application
+async function deleteImageFromCloudinary(imageUrl: string | null | undefined) {
+  if (!imageUrl) return;
+  
+  try {
+    // Only delete images that are stored in our Cloudinary folder
+    if (imageUrl.includes('cloudinary.com') && imageUrl.includes('jewelry-inventory')) {
+      // Extract public ID from the URL
+      const publicId = imageUrl.split('/').slice(-2).join('/').split('.')[0];
+      if (publicId) {
+        console.log(`Deleting image from Cloudinary: ${publicId}`);
+        await cloudinary.uploader.destroy(publicId);
+        console.log(`Successfully deleted image: ${publicId}`);
+      }
+    }
+  } catch (error) {
+    console.error(`Error deleting image from Cloudinary:`, error);
+  }
+}
+
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -80,12 +100,28 @@ export async function PUT(
     // Check if we should remove the image
     if (removeImage) {
       console.log('Removing image for product');
-      imageUrl = ''; // Set to empty or a default placeholder URL
+      
+      // If the existing image is from Cloudinary, delete it
+      if (existingProduct.imageUrl && 
+          existingProduct.imageUrl.includes('cloudinary.com') && 
+          !existingProduct.imageUrl.includes('placeholderproduct-500x500-1.png')) {
+        await deleteImageFromCloudinary(existingProduct.imageUrl);
+      }
+      
+      // Set to default placeholder URL
+      imageUrl = 'https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png';
     }
     // Process new image if provided
     else if (image && image instanceof Blob) {
       console.log('New image received:', image.type, image.size);
 
+      // If replacing an existing Cloudinary image, delete the old one
+      if (existingProduct.imageUrl && 
+          existingProduct.imageUrl.includes('cloudinary.com') && 
+          !existingProduct.imageUrl.includes('placeholderproduct-500x500-1.png')) {
+        await deleteImageFromCloudinary(existingProduct.imageUrl);
+      }
+      
       // Convert the file to base64
       const bytes = await image.arrayBuffer();
       const buffer = Buffer.from(bytes);
@@ -121,6 +157,7 @@ export async function PUT(
         imageUrl,
       },
     });
+
     console.log('Product updated successfully:', updatedProduct.id);
 
     return NextResponse.json(updatedProduct);
@@ -132,7 +169,6 @@ export async function PUT(
     );
   }
 }
-
 
 export async function DELETE(
   req: NextRequest,
@@ -184,6 +220,13 @@ export async function DELETE(
         )
       );
       console.log(`Updated ${salesItems.length} sales items to preserve product data`);
+    }
+
+    // Delete the product image from Cloudinary if it's not the default
+    if (existingProduct.imageUrl && 
+        existingProduct.imageUrl.includes('cloudinary.com') && 
+        !existingProduct.imageUrl.includes('placeholderproduct-500x500-1.png')) {
+      await deleteImageFromCloudinary(existingProduct.imageUrl);
     }
 
     // Delete product from database

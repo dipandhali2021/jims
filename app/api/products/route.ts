@@ -74,31 +74,33 @@ export async function POST(req: NextRequest) {
     // For FormData requests, handle image upload
     if (contentType?.includes('multipart/form-data')) {
       if (uploadedImage && uploadedImage instanceof Blob) {
-        // Convert the file to base64
-        const bytes = await uploadedImage.arrayBuffer();
-        const buffer = Buffer.from(bytes);
-        const base64Image = buffer.toString('base64');
-        
-        // Upload to Cloudinary
-        console.log('Uploading to Cloudinary...');
-        const result = await cloudinary.uploader.upload(
-          `data:${uploadedImage.type};base64,${base64Image}`,
-          {
-            folder: 'jewelry-inventory',
-          }
-        );
-        imageUrl = result.secure_url;
-        console.log('Cloudinary upload successful:', imageUrl);
+        try {
+          // Convert the file to base64
+          const bytes = await uploadedImage.arrayBuffer();
+          const buffer = Buffer.from(bytes);
+          const base64Image = buffer.toString('base64');
+          
+          // Upload to Cloudinary
+          console.log('Uploading to Cloudinary...');
+          const result = await cloudinary.uploader.upload(
+            `data:${uploadedImage.type};base64,${base64Image}`,
+            {
+              folder: 'jewelry-inventory',
+            }
+          );
+          imageUrl = result.secure_url;
+          console.log('Cloudinary upload successful:', imageUrl);
+        } catch (error) {
+          console.error('Error uploading to Cloudinary:', error);
+          // Continue with default image if upload fails
+          imageUrl = 'https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png';
+        }
       }
     }
 
     // Ensure we have either an uploaded image URL or a provided image URL
     if (!imageUrl) {
-      console.error('No image URL provided');
-      return NextResponse.json(
-        { error: 'Image URL is required' },
-        { status: 400 }
-      );
+      imageUrl = 'https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png';
     }
 
 
@@ -148,10 +150,63 @@ export async function GET(req: NextRequest) {
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const searchParams = req.nextUrl.searchParams;
+    const query = searchParams.get('query')?.toLowerCase() || '';
+    const category = searchParams.get('category') || '';
+    const material = searchParams.get('material') || '';
+    const sort = searchParams.get('sort') || '';
+
+    // Build filter conditions
+    const whereClause: any = {};
+
+    if (query) {
+      whereClause.OR = [
+        { name: { contains: query, mode: 'insensitive' } },
+        { sku: { contains: query, mode: 'insensitive' } },
+        { description: { contains: query, mode: 'insensitive' } },
+      ];
+    }
+
+    if (category) {
+      whereClause.category = category;
+    }
+
+    if (material) {
+      whereClause.material = material;
+    }
+
+    // Build sort order
+    let orderBy: any = {};
+
+    switch (sort) {
+      case 'nameAsc':
+        orderBy = { name: 'asc' };
+        break;
+      case 'nameDesc':
+        orderBy = { name: 'desc' };
+        break;
+      case 'priceAsc':
+        orderBy = { price: 'asc' };
+        break;
+      case 'priceDesc':
+        orderBy = { price: 'desc' };
+        break;
+      case 'stockAsc':
+        orderBy = { stock: 'asc' };
+        break;
+      case 'stockDesc':
+        orderBy = { stock: 'desc' };
+        break;
+      default:
+        orderBy = { updatedAt: 'desc' };
+    }
+
     const products = await prisma.product.findMany({
-      orderBy: { createdAt: 'desc' },
+      where: whereClause,
+      orderBy,
     });
-    console.log('Fetched products:', products.length);
+
     return NextResponse.json(products);
   } catch (error) {
     console.error('Error fetching products:', error);

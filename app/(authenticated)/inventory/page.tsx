@@ -22,6 +22,9 @@ import {
 } from 'lucide-react';
 import { CreateBulkSalesRequestDialog } from '@/components/products/CreateBulkSalesRequestDialog';
 import { CreateSalesRequestDialog } from '@/components/products/CreateSalesRequestDialog';
+import { AddProductRequestDialog } from '@/components/products/requests/AddProductRequestDialog';
+import { EditProductRequestDialog } from '@/components/products/requests/EditProductRequestDialog';
+import { DeleteProductRequestDialog } from '@/components/products/requests/DeleteProductRequestDialog';
 
 export default function InventoryPage() {
   const { user } = useUser();
@@ -99,7 +102,7 @@ export default function InventoryPage() {
           >
             <List className="h-4 w-4" />
           </Button>
-          {user?.publicMetadata?.role === 'admin' && (
+          {user?.publicMetadata?.role === 'admin' ? (
             <>
               <LowStockThresholdSetting 
                 currentThreshold={lowStockThreshold}
@@ -107,6 +110,8 @@ export default function InventoryPage() {
               />
               <AddProductDialog onProductAdded={refreshProducts} />
             </>
+          ) : (
+            <AddProductRequestDialog onRequestCreated={refreshProducts} />
           )}
         </div>
       </div>
@@ -266,7 +271,7 @@ export default function InventoryPage() {
                       onRequestCreated={refreshProducts}
                     />
                     <ProductPreviewDialog product={product} />
-                    {user?.publicMetadata?.role === 'admin' && (
+                    {user?.publicMetadata?.role === 'admin' ? (
                       <>
                         <EditProductDialog
                           product={product}
@@ -275,6 +280,17 @@ export default function InventoryPage() {
                         <DeleteProductDialog
                           product={product}
                           onProductDeleted={refreshProducts}
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <EditProductRequestDialog
+                          product={product}
+                          onRequestCreated={refreshProducts}
+                        />
+                        <DeleteProductRequestDialog
+                          product={product}
+                          onRequestCreated={refreshProducts}
                         />
                       </>
                     )}
@@ -331,7 +347,11 @@ export default function InventoryPage() {
                       <td className="p-4">
                         <div className="flex gap-2">
                           <ProductPreviewDialog product={product} />
-                          {user?.publicMetadata?.role === 'admin' && (
+                          <CreateSalesRequestDialog
+                            product={product}
+                            onRequestCreated={refreshProducts}
+                          />
+                          {user?.publicMetadata?.role === 'admin' ? (
                             <>
                               <EditProductDialog
                                 product={product}
@@ -340,6 +360,17 @@ export default function InventoryPage() {
                               <DeleteProductDialog
                                 product={product}
                                 onProductDeleted={refreshProducts}
+                              />
+                            </>
+                          ) : (
+                            <>
+                              <EditProductRequestDialog
+                                product={product}
+                                onRequestCreated={refreshProducts}
+                              />
+                              <DeleteProductRequestDialog
+                                product={product}
+                                onRequestCreated={refreshProducts}
                               />
                             </>
                           )}
