@@ -47,9 +47,11 @@ interface SalesItem {
   price: number;
   productName?: string;  // From schema update, for deleted products
   productSku?: string;   // From schema update, for deleted products
+  productImageUrl?: string; // Added to cache the image URL
   product?: {
     name: string;
     sku: string;
+    imageUrl: string;  // Added image URL from product
   };
 }
 
@@ -481,13 +483,29 @@ await fetchSalesRequests();
                 </div>
                 
                 <div className="text-xs sm:text-sm mb-3 sm:mb-4 flex-grow">
-                  <p className="text-gray-500">Items:</p>
-                  <p className="break-words">
-                    {request.items
-                      .map((item) => `${item.product?.name || item.productName} (${item.quantity})`)
-                      .join(', ')}
-                  </p>
-                  <p className="text-gray-500 mt-1">
+                  <div className="flex items-center mb-2">
+                    {request.items.length > 0 && (
+                      <div className="mr-3">
+                        <img
+                          src={request.items[0].product?.imageUrl || request.items[0].productImageUrl || "https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png"}
+                          alt={request.items[0].product?.name || request.items[0].productName || "Product"}
+                          className="w-10 h-10 object-cover rounded"
+                        />
+                        {request.items.length > 1 && (
+                          <div className="text-xs text-center mt-1 text-gray-500">+{request.items.length - 1} more</div>
+                        )}
+                      </div>
+                    )}
+                    <div>
+                      <p className="text-gray-500">Items:</p>
+                      <p className="break-words">
+                        {request.items
+                          .map((item) => `${item.product?.name || item.productName} (${item.quantity})`)
+                          .join(', ')}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="text-gray-500">
                     Total Quantity: {request.items.reduce((sum, item) => sum + item.quantity, 0)}
                   </p>
                 </div>
@@ -586,11 +604,20 @@ await fetchSalesRequests();
                         </td>
                       )}
                       <td className="p-3 sm:p-4 text-xs sm:text-sm hidden sm:table-cell">
-                        <span className="max-w-[150px] md:max-w-[200px] truncate inline-block">
-                          {request.items
-                            .map((item) => `${item.product?.name || item.productName} (${item.quantity})`)
-                            .join(', ')}
-                        </span>
+                        <div className="flex items-center">
+                          <div className="mr-2 flex-shrink-0">
+                            <img
+                              src={request.items[0].product?.imageUrl || request.items[0].productImageUrl || "https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png"}
+                              alt={request.items[0].product?.name || request.items[0].productName || "Product"}
+                              className="w-8 h-8 object-cover rounded"
+                            />
+                          </div>
+                          <span className="max-w-[150px] md:max-w-[200px] truncate">
+                            {request.items
+                              .map((item) => `${item.product?.name || item.productName} (${item.quantity})`)
+                              .join(', ')}
+                          </span>
+                        </div>
                       </td>
                       <td className="p-3 sm:p-4 text-xs sm:text-sm hidden md:table-cell">
                         {request.items.reduce((sum, item) => sum + item.quantity, 0)}
@@ -821,13 +848,20 @@ await fetchSalesRequests();
                       key={item.id}
                       className="p-2 sm:p-3 bg-gray-50 border border-gray-200 rounded"
                     >
-                      <div className="mb-2">
-                        <p className="font-medium text-sm sm:text-base text-gray-800">
-                          {item.product?.name || item.productName}
-                        </p>
-                        <p className="text-xs sm:text-sm text-gray-500">
-                          Product ID: {item.product?.sku || item.productSku}
-                        </p>
+                      <div className="flex gap-3 mb-2">
+                        <img
+                          src={item.product?.imageUrl || item.productImageUrl || "https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png"}
+                          alt={item.product?.name || item.productName || "Product"}
+                          className="w-16 h-16 object-cover rounded"
+                        />
+                        <div>
+                          <p className="font-medium text-sm sm:text-base text-gray-800">
+                            {item.product?.name || item.productName}
+                          </p>
+                          <p className="text-xs sm:text-sm text-gray-500">
+                            Product ID: {item.product?.sku || item.productSku}
+                          </p>
+                        </div>
                       </div>
                       <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-200/70">
                         <div>

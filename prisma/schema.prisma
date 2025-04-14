@@ -74,6 +74,7 @@ model SalesItem {
   productId      String?
   productName    String?      // Store product name for historical reference
   productSku     String?      // Store product SKU for historical reference
+  productImageUrl String?     // Store product image URL for historical reference
   salesRequest   SalesRequest @relation(fields: [salesRequestId], references: [id])
   salesRequestId String
 }

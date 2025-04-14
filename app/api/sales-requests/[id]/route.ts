@@ -88,12 +88,13 @@ export async function PUT(
       // Format items for transaction record with full product details
       const transactionItems = salesRequest.items.map(item => ({
         productId: item.productId,
-        productName: item?.product?.name,
+        productName: item?.product?.name || item.productName,
         category: item?.product?.category,
         quantity: item.quantity,
         price: item.price,
         total: item.price * item.quantity,
-        material: item?.product?.material
+        material: item?.product?.material,
+        imageUrl: item?.product?.imageUrl || item.productImageUrl
       }));
 
       // Create transaction record
