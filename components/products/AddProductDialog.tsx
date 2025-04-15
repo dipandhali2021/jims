@@ -51,6 +51,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
     customMaterial: '',
     price: '',
     stock: '',
+    supplier: '',
   });
 
   const resetForm = () => {
@@ -64,6 +65,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       customMaterial: '',
       price: '',
       stock: '',
+      supplier: '',
     });
     setImageFile(null);
     setPreviewUrl('');
@@ -427,6 +429,19 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
                 required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="supplier" className="font-medium">Supplier</Label>
+            <Input
+              id="supplier"
+              value={formData.supplier}
+              onChange={(e) =>
+                setFormData({ ...formData, supplier: e.target.value })
+              }
+              className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+              placeholder="Enter supplier name (optional)"
+            />
           </div>
 
           <div className="space-y-2">

@@ -12,6 +12,7 @@ export interface Product {
   lowStockThreshold: number;
   imageUrl: string;
   userId: string;
+  supplier?: string;
   createdAt: string;
   updatedAt: string;
 }

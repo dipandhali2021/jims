@@ -64,6 +64,7 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
     customMaterial: '',
     price: '',
     stock: '',
+    supplier: '',
   });
 
   const [image, setImage] = useState<File | null>(null);
@@ -120,6 +121,7 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
       customMaterial: '',
       price: '',
       stock: '',
+      supplier: '',
     });
     setImage(null);
     setImagePreview(null);
@@ -236,7 +238,8 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
         category: finalCategory,
         material: finalMaterial,
         price: parseFloat(formData.price),
-        stock: parseInt(formData.stock)
+        stock: parseInt(formData.stock),
+        supplier: formData.supplier || undefined
       };
       
       formDataToSubmit.append('details', JSON.stringify(details));
@@ -455,6 +458,21 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
                 required
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="supplier" className="font-medium">
+              Supplier
+            </Label>
+            <Input
+              id="supplier"
+              value={formData.supplier}
+              onChange={(e) =>
+                setFormData({ ...formData, supplier: e.target.value })
+              }
+              className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+              placeholder="Enter supplier name (optional)"
+            />
           </div>
 
           <div className="space-y-2">

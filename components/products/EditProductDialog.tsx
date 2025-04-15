@@ -76,6 +76,7 @@ export function EditProductDialog({
     customMaterial: isCustomMaterial ? product.material : '',
     price: product.price.toString(),
     stock: product.stock.toString(),
+    supplier: product.supplier || '',
   });
 
   useEffect(() => {
@@ -94,6 +95,7 @@ export function EditProductDialog({
       customMaterial: isCustomMaterial ? product.material : '',
       price: product.price.toString(),
       stock: product.stock.toString(),
+      supplier: product.supplier || '',
     });
 
     setPreviewUrl(product.imageUrl);
@@ -117,6 +119,7 @@ export function EditProductDialog({
       customMaterial: isCustomMaterial ? product.material : '',
       price: product.price.toString(),
       stock: product.stock.toString(),
+      supplier: product.supplier || '',
     });
     
     // Reset image state
@@ -493,6 +496,19 @@ export function EditProductDialog({
                 required
               />
             </div>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="supplier" className="font-medium">
+              Supplier
+            </Label>
+            <Input
+              id="supplier"
+              value={formData.supplier}
+              onChange={(e) =>
+                setFormData({ ...formData, supplier: e.target.value })
+              }
+              className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+            />
           </div>
           <div className="space-y-2">
             <Label className="font-medium">Product Image</Label>

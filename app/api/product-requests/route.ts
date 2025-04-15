@@ -97,6 +97,7 @@ export async function POST(req: NextRequest) {
             material: formData.get('material') as string,
             price: parseFloat(formData.get('price') as string),
             stock: parseInt(formData.get('stock') as string),
+            supplier: formData.get('supplier') as string || undefined, // Add supplier field
             imageUrl: '', // We'll update this after handling the image
           };
         }
@@ -238,6 +239,7 @@ export async function POST(req: NextRequest) {
               stock: details.stock,
               category: details.category,
               material: details.material,
+              supplier: details.supplier || null, // Include supplier field
               imageUrl: details.imageUrl || imageUrl, // Use the image URL from earlier
             }
           }

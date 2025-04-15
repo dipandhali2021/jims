@@ -643,12 +643,12 @@ export default function ProductRequestsPage() {
                       </td>
                       <td className="p-3 sm:p-4 text-xs sm:text-sm">
                         <span
-                          className={`px-2 py-1 rounded-full text-xs flex items-center ${getTypeColor(
+                          className={`px-2 py-1 rounded-full text-xs inline-flex items-center justify-center ${getTypeColor(
                             request.requestType
                           )}`}
                         >
                           {getTypeIcon(request.requestType)}
-                          <span className="ml-1 capitalize">
+                          <span className="capitalize ml-1">
                             {request.requestType}
                           </span>
                         </span>
@@ -1040,6 +1040,18 @@ export default function ProductRequestsPage() {
                               </p>
                             </div>
                           )}
+                          
+                          {/* Display supplier field in Add Product Request details if it exists */}
+                          {selectedRequest.details.supplier && (
+                            <div>
+                              <p className="text-xs text-gray-500">
+                                Supplier:
+                              </p>
+                              <p className="text-sm">
+                                {selectedRequest.details.supplier}
+                              </p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1106,6 +1118,18 @@ export default function ProductRequestsPage() {
                               </p>
                               <p className="text-xs">
                                 {selectedRequest.product.description}
+                              </p>
+                            </div>
+                          )}
+
+                          {/* Display supplier field if it exists */}
+                          {selectedRequest.product.supplier && (
+                            <div>
+                              <p className="text-xs text-gray-500">
+                                Supplier:
+                              </p>
+                              <p className="text-xs">
+                                {selectedRequest.product.supplier}
                               </p>
                             </div>
                           )}
@@ -1355,6 +1379,44 @@ export default function ProductRequestsPage() {
                                       (Changed from:{' '}
                                       {selectedRequest.product.description ||
                                         '(No description)'}
+                                      )
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Display supplier field in edit comparison */}
+                          {(selectedRequest.details.supplier !== undefined ||
+                            selectedRequest.product.supplier) && (
+                            <div>
+                              <p className="text-xs text-gray-500">
+                                Supplier:
+                              </p>
+                              <div
+                                className={
+                                  selectedRequest.product.supplier !==
+                                  selectedRequest.details.supplier
+                                    ? 'bg-blue-100 p-1 rounded'
+                                    : ''
+                                }
+                              >
+                                <p
+                                  className={`text-xs ${
+                                    selectedRequest.product.supplier !==
+                                    selectedRequest.details.supplier
+                                      ? 'font-medium text-blue-700'
+                                      : ''
+                                  }`}
+                                >
+                                  {selectedRequest.details.supplier || '(None)'}
+                                  {selectedRequest.product.supplier !==
+                                    selectedRequest.details.supplier && (
+                                    <span className="ml-1 text-xs text-blue-600 block mt-1">
+                                      (Changed from:{' '}
+                                      {selectedRequest.product.supplier ||
+                                        '(None)'}
                                       )
                                     </span>
                                   )}

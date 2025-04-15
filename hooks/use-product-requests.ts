@@ -11,6 +11,7 @@ export type ProductRequestDetails = {
   material: string;
   imageUrl?: string;
   lowStockThreshold?: number;
+  supplier?: string;
 };
 
 export type ProductRequest = {

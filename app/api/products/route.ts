@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
     let price: number;
     let stock: number;
     let imageUrl: string | undefined;
+    let supplier: string | undefined;
     let uploadedImage: File | Blob | null = null;
 
     const contentType = req.headers.get('content-type');
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
       price = parseFloat(jsonData.price);
       stock = parseInt(jsonData.stock);
       imageUrl = jsonData.imageUrl;
+      supplier = jsonData.supplier;
     } else {
       // Handle FormData request
       const formData = await req.formData();
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
       material = formData.get('material') as string;
       price = parseFloat(formData.get('price') as string);
       stock = parseInt(formData.get('stock') as string);
-
+      supplier = formData.get('supplier') as string || undefined;
     }
 
     // Validate required fields
@@ -129,6 +131,7 @@ export async function POST(req: NextRequest) {
         price,
         stock,
         imageUrl,
+        supplier,
         userId,
       },
     });

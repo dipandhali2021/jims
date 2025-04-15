@@ -66,6 +66,7 @@ export async function PUT(
     const stock = parseInt(formData.get('stock') as string);
     const image = formData.get('image');
     const removeImage = formData.get('removeImage') === 'true';
+    const supplier = formData.get('supplier') as string || undefined;
 
     // Validate required fields
     if (!name || !sku || !category || !material || isNaN(price) || isNaN(stock)) {
@@ -155,6 +156,7 @@ export async function PUT(
         price,
         stock,
         imageUrl,
+        supplier, // Include supplier field in the update
       },
     });
 

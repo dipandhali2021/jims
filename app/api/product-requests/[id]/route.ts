@@ -137,6 +137,7 @@ export async function PUT(
                 category: productRequest.details.category || '',
                 material: productRequest.details.material || '',
                 imageUrl: productRequest.details.imageUrl || '',
+                supplier: productRequest.details.supplier || null,
                 lowStockThreshold: 10,
                 userId: productRequest.userId // Associate with the requesting user
               }
@@ -167,7 +168,9 @@ export async function PUT(
                 ...(productRequest.details.stock !== null && { stock: productRequest.details.stock }),
                 ...(productRequest.details.category && { category: productRequest.details.category }),
                 ...(productRequest.details.material && { material: productRequest.details.material }),
-                ...(productRequest.details.imageUrl !== null && { imageUrl: productRequest.details.imageUrl })
+                ...(productRequest.details.imageUrl !== null && { imageUrl: productRequest.details.imageUrl }),
+                // Add supplier field to the update
+                ...(productRequest.details.supplier !== undefined && { supplier: productRequest.details.supplier })
               }
             });
           }

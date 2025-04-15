@@ -16,6 +16,8 @@ interface Product {
   createdAt: string;
   updatedAt: string;
   imageUrl: string;
+  supplier?: string;
+  lowStockThreshold: number;
 }
 
 interface ProductPreviewDialogProps {
@@ -90,6 +92,25 @@ export function ProductPreviewDialog({ product }: ProductPreviewDialogProps) {
                 <div>
                   <p className="font-medium">Description</p>
                   <p className="text-gray-600 text-sm mt-1">{product.description}</p>
+                </div>
+              )}
+
+              <div className="flex space-x-2 text-gray-600">
+                <span className="font-medium w-24">Stock:</span>
+                <span className="flex-1">
+                  {product.stock}{' '}
+                  {product.stock <= product.lowStockThreshold && (
+                    <span className="text-amber-600 text-xs bg-amber-100 rounded-full px-2 py-1 ml-2">
+                      Low Stock
+                    </span>
+                  )}
+                </span>
+              </div>
+
+              {product.supplier && (
+                <div className="flex space-x-2 text-gray-600">
+                  <span className="font-medium w-24">Supplier:</span>
+                  <span className="flex-1">{product.supplier}</span>
                 </div>
               )}
               

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useClerk, useUser } from '@clerk/nextjs';
+import { useClerk, useUser, useSignIn } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -23,6 +23,7 @@ export default function AccountPage() {
   const { toast } = useToast();
   const router = useRouter();
   const { signOut } = useClerk();
+  const { signIn } = useSignIn();
 
   // State for change password
   const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
@@ -50,6 +51,8 @@ export default function AccountPage() {
   const [showResetNewPassword, setShowResetNewPassword] = useState(false);
   const [showResetConfirmPassword, setShowResetConfirmPassword] =
     useState(false);
+
+  const isAdmin = user?.publicMetadata?.role === 'admin';
 
   // Reset change password dialog state
   useEffect(() => {
@@ -156,6 +159,41 @@ export default function AccountPage() {
       });
       setIsLoggingOut(false);
       setIsSetupPasswordDialogOpen(false);
+    }
+  };
+
+  // Handler for setup face recognition button
+  const handleSetupFaceRecognition = async () => {
+    try {
+      setIsLoggingOut(true);
+      toast({
+        title: 'Logging out',
+        description: 'You will be redirected to set up face recognition',
+      });
+      // First sign out
+      await signOut();
+      // Then immediately start face authentication flow
+      if (signIn) {
+        await signIn.authenticateWithRedirect({
+          strategy: 'oauth_custom_face_recognition_auth',
+          redirectUrl: `${window.location.origin}/sso-callback`,
+          redirectUrlComplete: '/dashboard',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Face authentication service unavailable. Please refresh and try again.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      console.error('Error during logout or face auth:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to start face recognition. Please try again.',
+        variant: 'destructive',
+      });
+      setIsLoggingOut(false);
     }
   };
 
@@ -388,6 +426,77 @@ export default function AccountPage() {
                 </Dialog>
               )}
             </div>
+          </div>
+
+          {/* Face Recognition Setup Section (Admin only) */}
+          {isAdmin && (
+            <div className="space-y-4 pt-8">
+              <h3 className="text-lg font-semibold">Face Recognition</h3>
+              <p className="text-sm text-muted-foreground">
+                Set up face recognition for secure admin authentication.
+              </p>
+              <Button
+                variant="default"
+                onClick={handleSetupFaceRecognition}
+                disabled={isLoggingOut}
+                className="bg-blue-500 hover:bg-blue-600 text-white"
+              >
+                {isLoggingOut ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging out...
+                  </>
+                ) : (
+                  'Setup Face Recognition'
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Google Authentication Setup Section (All users) */}
+          <div className="space-y-4 pt-8">
+            <h3 className="text-lg font-semibold">Google Authentication</h3>
+            <p className="text-sm text-muted-foreground">
+              Use Google to sign in securely.
+            </p>
+            <Button
+              variant="default"
+              onClick={async () => {
+                setIsLoggingOut(true);
+                toast({
+                  title: 'Logging out',
+                  description: 'You will be redirected to Google authentication',
+                });
+                await signOut();
+                if (signIn) {
+                  await signIn.authenticateWithRedirect({
+                    strategy: 'oauth_google',
+                    redirectUrl: `${window.location.origin}/sso-callback`,
+                    redirectUrlComplete: '/dashboard',
+                  });
+                } else {
+                  toast({
+                    title: 'Error',
+                    description: 'Google authentication service unavailable. Please refresh and try again.',
+                    variant: 'destructive',
+                  });
+                }
+                setIsLoggingOut(false);
+              }}
+              disabled={isLoggingOut}
+              className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+            >
+              {isLoggingOut ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <img
+                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                  alt="Google"
+                  className="w-5 h-5 mr-2"
+                />
+              )}
+              Continue with Google
+            </Button>
           </div>
         </CardContent>
       </Card>

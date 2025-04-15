@@ -73,6 +73,7 @@ export function EditProductRequestDialog({
     customMaterial: isCustomMaterial ? product.material : '',
     price: product?.price?.toString() || '',
     stock: product?.stock?.toString() || '',
+    supplier: product?.supplier || '',
   });
 
   const [image, setImage] = useState<File | null>(null);
@@ -96,6 +97,7 @@ export function EditProductRequestDialog({
         customMaterial: isCustomMaterial ? product.material : '',
         price: product.price?.toString() || '',
         stock: product.stock?.toString() || '',
+        supplier: product.supplier || '',
       });
       setImagePreview(product.imageUrl || null);
       setRemoveImage(false);
@@ -142,6 +144,7 @@ export function EditProductRequestDialog({
       customMaterial: isCustomMaterial ? product.material : '',
       price: product.price?.toString() || '',
       stock: product.stock?.toString() || '',
+      supplier: product.supplier || '',
     });
     setImagePreview(product.imageUrl || null);
     setRemoveImage(false);
@@ -250,6 +253,7 @@ export function EditProductRequestDialog({
       finalMaterial === product.material &&
       parseFloat(formData.price) === product.price &&
       parseInt(formData.stock) === product.stock &&
+      formData.supplier === (product.supplier || '') &&
       !image &&
       !removeImage;
 
@@ -276,6 +280,10 @@ export function EditProductRequestDialog({
       formDataToSubmit.append('price', formData.price);
       formDataToSubmit.append('stock', formData.stock);
       formDataToSubmit.append('removeImage', removeImage.toString());
+      
+      if (formData.supplier) {
+        formDataToSubmit.append('supplier', formData.supplier);
+      }
 
       if (image) {
         formDataToSubmit.append('image', image);
@@ -490,6 +498,22 @@ export function EditProductRequestDialog({
               />
             </div>
           </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="supplier" className="font-medium">
+              Supplier
+            </Label>
+            <Input
+              id="supplier"
+              value={formData.supplier}
+              onChange={(e) =>
+                setFormData({ ...formData, supplier: e.target.value })
+              }
+              className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+              placeholder="Enter supplier name (optional)"
+            />
+          </div>
+          
           <div className="space-y-2">
             <Label className="font-medium">Product Image</Label>
             <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
