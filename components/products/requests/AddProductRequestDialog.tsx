@@ -289,7 +289,7 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
       <DialogTrigger asChild>
         <Button variant="default" size="sm" className="gap-1">
           <Plus className="h-4 w-4" />
-          Request New Product
+          <span className="text-sm">Request New Product</span>
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] p-6 bg-white rounded-lg shadow-lg border-0 max-h-[90vh] overflow-y-auto">

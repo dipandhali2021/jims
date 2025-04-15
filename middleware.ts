@@ -1,7 +1,14 @@
 import { authMiddleware, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
-const publicRoutes = ['/', '/api/webhook/register', '/sign-in', '/sign-up', '/forgot-password'];
+const publicRoutes = [
+  '/', 
+  '/api/webhook/register', 
+  '/sign-in', 
+  '/sign-up', 
+  '/forgot-password',
+  '/api/user/get-role'  // Added this route to make it publicly accessible
+];
 
 export default authMiddleware({
   publicRoutes,
