@@ -40,6 +40,7 @@ export type ProductRequest = {
     material: string;
     imageUrl?: string;
     lowStockThreshold?: number;
+    supplier?: string;
   } | null;
 };
 

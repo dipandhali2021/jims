@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -57,6 +57,9 @@ export function EditProductRequestDialog({
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Determine if product has custom category or material
   const isCustomCategory = !categories.includes(product.category);
@@ -109,17 +112,75 @@ export function EditProductRequestDialog({
   // Handle image selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
+    if (file) {
+      processSelectedFile(file);
+    }
+  };
+  
+  // Process the selected file
+  const processSelectedFile = (file: File) => {
+    // Check file size (limit to 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: 'Error',
+        description: 'Image size should be less than 10MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Error',
+        description: 'Please select a valid image file',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setImage(file);
     setRemoveImage(false);
 
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    } else if (!product.imageUrl) {
-      setImagePreview(null);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle drag enter event
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  // Handle drag leave event
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  // Handle drag over event
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) {
+      setIsDragging(true);
+    }
+  };
+
+  // Handle drop event
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      processSelectedFile(file);
     }
   };
 
@@ -127,6 +188,11 @@ export function EditProductRequestDialog({
     setImage(null);
     setImagePreview(null);
     setRemoveImage(true);
+    
+    // Reset the file input to ensure it can accept new files after removal
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const resetForm = () => {
@@ -516,7 +582,14 @@ export function EditProductRequestDialog({
           
           <div className="space-y-2">
             <Label className="font-medium">Product Image</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
+            <div 
+              ref={dropZoneRef}
+              className={`border-2 border-dashed ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 bg-gray-50'} rounded-lg p-6 transition-colors duration-200`}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
               {imagePreview && !removeImage ? (
                 <div className="relative">
                   <img
@@ -535,9 +608,10 @@ export function EditProductRequestDialog({
                   </Button>
                 </div>
               ) : (
-                <div>
+                <div className="w-full">
                   <input
                     type="file"
+                    ref={fileInputRef}
                     accept="image/*"
                     onChange={handleImageChange}
                     className="hidden"
@@ -545,11 +619,11 @@ export function EditProductRequestDialog({
                   />
                   <label
                     htmlFor="request-image-upload-edit"
-                    className="cursor-pointer flex flex-col items-center py-6"
+                    className="cursor-pointer flex flex-col items-center py-6 w-full"
                   >
                     <Upload className="h-10 w-10 mb-3 text-gray-400" />
                     <span className="text-sm font-medium text-gray-600 mb-1">
-                      Click to upload or drag and drop
+                      {removeImage ? 'Image removed. Click to upload or drag a new image' : 'Click to upload or drag and drop'}
                     </span>
                     <span className="text-xs text-gray-500">
                       PNG, JPG up to 10MB

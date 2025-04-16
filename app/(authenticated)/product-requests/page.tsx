@@ -507,7 +507,7 @@ export default function ProductRequestsPage() {
                             request.details?.name ||
                             'Product'
                           }
-                          className="w-12 h-12 object-cover rounded"
+                          className="w-16 h-16 object-cover rounded"
                         />
                       </div>
                     )}
@@ -667,7 +667,7 @@ export default function ProductRequestsPage() {
                                 request.details?.name ||
                                 'Product'
                               }
-                              className="w-8 h-8 object-cover rounded"
+                              className="w-16 h-16 object-cover rounded"
                             />
                           </div>
                           <span className="max-w-[150px] md:max-w-[200px] truncate">

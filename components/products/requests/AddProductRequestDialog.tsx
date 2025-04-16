@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -52,6 +52,9 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropZoneRef = useRef<HTMLDivElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -75,33 +78,73 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
     const file = e.target.files?.[0] || null;
     
     if (file) {
-      // Check file size (limit to 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: 'Error',
-          description: 'Image size should be less than 10MB',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: 'Error',
-          description: 'Please select a valid image file',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      setImage(file);
-      
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+      processSelectedFile(file);
+    }
+  };
+
+  // Process the selected file
+  const processSelectedFile = (file: File) => {
+    // Check file size (limit to 10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      toast({
+        title: 'Error',
+        description: 'Image size should be less than 10MB',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: 'Error',
+        description: 'Please select a valid image file',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    setImage(file);
+    
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle drag enter event
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(true);
+  };
+
+  // Handle drag leave event
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+  };
+
+  // Handle drag over event
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) {
+      setIsDragging(true);
+    }
+  };
+
+  // Handle drop event
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      processSelectedFile(file);
     }
   };
 
@@ -477,7 +520,14 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
 
           <div className="space-y-2">
             <Label className="font-medium">Product Image</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 bg-gray-50">
+            <div 
+              ref={dropZoneRef}
+              className={`border-2 border-dashed ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 bg-gray-50'} rounded-lg p-6 transition-colors duration-200`}
+              onDragEnter={handleDragEnter}
+              onDragLeave={handleDragLeave}
+              onDragOver={handleDragOver}
+              onDrop={handleDrop}
+            >
               {imagePreview ? (
                 <div className="relative">
                   <img
@@ -499,6 +549,7 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
                 <div>
                   <input
                     type="file"
+                    ref={fileInputRef}
                     accept="image/*"
                     onChange={handleImageChange}
                     className="hidden"

@@ -30,7 +30,7 @@ export function ProductPreviewDialog({ product }: ProductPreviewDialogProps) {
   // Format the price as currency
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'INR',
   }).format(product.price);
 
   // Format the dates (with time)

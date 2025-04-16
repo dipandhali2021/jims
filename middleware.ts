@@ -7,13 +7,26 @@ const publicRoutes = [
   '/sign-in', 
   '/sign-up', 
   '/forgot-password',
-  '/api/user/get-role'  // Added this route to make it publicly accessible
+  '/api/user/get-role',
+  '/api/settings/google-signin'
 ];
 
 export default authMiddleware({
   publicRoutes,
   async afterAuth(auth, req) {
-    if (!auth.userId && !publicRoutes.includes(req.nextUrl.pathname)) {
+    // Helper function to check if a path matches any public route
+    const isPublicPath = (path:any) => {
+      return publicRoutes.some(route => {
+        // For API routes, check if the path starts with the route
+        if (route.startsWith('/api/')) {
+          return path.startsWith(route);
+        }
+        // For non-API routes, use exact matching
+        return path === route;
+      });
+    };
+
+    if (!auth.userId && !isPublicPath(req.nextUrl.pathname)) {
       return NextResponse.redirect(new URL('/sign-in', req.url));
     }
 
@@ -43,7 +56,8 @@ export default authMiddleware({
         }
 
         // Redirect authenticated users trying to access public routes
-        if (publicRoutes.includes(req.nextUrl.pathname)) {
+        // Only redirect non-API public routes
+        if (!req.nextUrl.pathname.startsWith('/api/') && isPublicPath(req.nextUrl.pathname)) {
           return NextResponse.redirect(
             new URL(
               role === 'admin'
@@ -53,8 +67,6 @@ export default authMiddleware({
             )
           );
         }
-
-        
       } catch (error) {
         console.error('Error fetching user data from Clerk:', error);
         return NextResponse.redirect(new URL('/error', req.url));

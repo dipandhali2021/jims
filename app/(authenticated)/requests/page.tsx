@@ -489,7 +489,7 @@ await fetchSalesRequests();
                         <img
                           src={request.items[0].product?.imageUrl || request.items[0].productImageUrl || "https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png"}
                           alt={request.items[0].product?.name || request.items[0].productName || "Product"}
-                          className="w-10 h-10 object-cover rounded"
+                          className="w-16 h-16 object-cover rounded"
                         />
                         {request.items.length > 1 && (
                           <div className="text-xs text-center mt-1 text-gray-500">+{request.items.length - 1} more</div>
@@ -609,7 +609,7 @@ await fetchSalesRequests();
                             <img
                               src={request.items[0].product?.imageUrl || request.items[0].productImageUrl || "https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png"}
                               alt={request.items[0].product?.name || request.items[0].productName || "Product"}
-                              className="w-8 h-8 object-cover rounded"
+                              className="w-16 h-16  object-cover rounded"
                             />
                           </div>
                           <span className="max-w-[150px] md:max-w-[200px] truncate">

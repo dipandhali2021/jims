@@ -3,12 +3,12 @@
 import { useState, useEffect } from 'react';
 import { useClerk, useUser, useSignIn } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Key, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Key, Eye, EyeOff, Settings, Shield, LogOut, UserCheck } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +17,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function AccountPage() {
   const { isLoaded, user } = useUser();
@@ -42,15 +43,18 @@ export default function AccountPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   // State for reset password
-  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] =
-    useState(false);
+  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] = useState(false);
   const [resetPasswordError, setResetPasswordError] = useState<string>('');
   const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [resetNewPassword, setResetNewPassword] = useState('');
   const [resetConfirmPassword, setResetConfirmPassword] = useState('');
   const [showResetNewPassword, setShowResetNewPassword] = useState(false);
-  const [showResetConfirmPassword, setShowResetConfirmPassword] =
-    useState(false);
+  const [showResetConfirmPassword, setShowResetConfirmPassword] = useState(false);
+    
+  // State for Google Sign-in toggle
+  const [showGoogleSignIn, setShowGoogleSignIn] = useState<boolean>(true);
+  const [isLoadingGoogleSetting, setIsLoadingGoogleSetting] = useState<boolean>(true);
+  const [isSavingGoogleSetting, setIsSavingGoogleSetting] = useState<boolean>(false);
 
   const isAdmin = user?.publicMetadata?.role === 'admin';
 
@@ -77,6 +81,33 @@ export default function AccountPage() {
       }, 300);
     }
   }, [isResetPasswordDialogOpen]);
+  
+  // Fetch Google sign-in settings (admin only)
+  useEffect(() => {
+    if (isAdmin) {
+      const fetchGoogleSignInSetting = async () => {
+        try {
+          const response = await fetch('/api/settings/google-signin');
+          
+          if (response.ok) {
+            const data = await response.json();
+            setShowGoogleSignIn(data.showGoogleSignIn);
+          }
+        } catch (error) {
+          console.error('Error fetching Google sign-in setting:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load Google sign-in settings',
+            variant: 'destructive',
+          });
+        } finally {
+          setIsLoadingGoogleSetting(false);
+        }
+      };
+      
+      fetchGoogleSignInSetting();
+    }
+  }, [isAdmin, toast]);
 
   if (!isLoaded) {
     return (
@@ -90,6 +121,41 @@ export default function AccountPage() {
     router.push('/sign-in');
     return null;
   }
+
+  // Handle Google Sign-in toggle change
+  const handleGoogleSignInToggle = async (checked: boolean) => {
+    setIsSavingGoogleSetting(true);
+    try {
+      const response = await fetch('/api/settings/google-signin', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ showGoogleSignIn: checked }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to update settings');
+      }
+      
+      const data = await response.json();
+      setShowGoogleSignIn(data.showGoogleSignIn);
+      
+      toast({
+        title: 'Settings Updated',
+        description: 'Google Sign-in button visibility has been updated',
+      });
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update settings',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSavingGoogleSetting(false);
+    }
+  };
 
   const handleUpdatePassword = async () => {
     if (newPassword.length < 8) {
@@ -147,9 +213,6 @@ export default function AccountPage() {
       
       // Sign out the user
       await signOut({ redirectUrl: '/forgot-password' });
-      
-      // Navigate to forgot-password page
-      // router.push('/forgot-password');
     } catch (error) {
       console.error('Error during logout:', error);
       toast({
@@ -200,306 +263,389 @@ export default function AccountPage() {
   const hasPassword = user.passwordEnabled;
 
   return (
-    <div className="container mx-auto p-6 max-w-2xl">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl font-bold">Account Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Password Management Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Password Management</h3>
-            <p className="text-sm text-muted-foreground">
-              {hasPassword
-                ? 'You can change your password here. Make sure to use a strong password.'
-                : "You haven't set up a password yet. Set one up to enable password-based login."}
-            </p>
+    <div className="max-w-[95vw] sm:max-w-3xl md:max-w-4xl mx-auto py-4 sm:py-6 px-3 sm:px-4">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Account Settings</h1>
+        <p className="text-sm sm:text-base text-gray-600 mt-1">Manage your account preferences and security options</p>
+      </div>
+      
+      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+        <Tabs defaultValue="security" className="w-full">
+          <div className="border-b">
+            <TabsList className="w-full h-full justify-start rounded-none bg-gray-50 px-2 sm:px-4 pt-1 sm:pt-2 overflow-x-auto flex-nowrap">
+              <TabsTrigger value="security" className="data-[state=active]:bg-white data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-t-lg px-3 py-2 text-sm whitespace-nowrap">
+                <Shield className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Security</span>
+                <span className="sm:hidden">Security</span>
+              </TabsTrigger>
+              {isAdmin && (
+                <TabsTrigger value="admin" className="data-[state=active]:bg-white data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-blue-500 rounded-t-lg px-3 py-2 text-sm whitespace-nowrap">
+                  <Settings className="h-4 w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Admin Settings</span>
+                  <span className="sm:hidden">Admin</span>
+                </TabsTrigger>
+              )}
+            </TabsList>
+          </div>
+          
+          <TabsContent value="security" className="p-3 sm:p-4 md:p-6 space-y-6 sm:space-y-8">
+            
+            
+            {/* Password Management Section */}
+            <div className="flex flex-col space-y-3 pb-6 border-b border-gray-200">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Password Settings</h2>
+              <div className="bg-gray-50 p-3 sm:p-4 md:p-5 rounded-lg">
+                <div>
+                  <div className="flex items-center mb-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500 mr-2 flex-shrink-0"></div>
+                    <span className="text-sm font-medium">
+                      {hasPassword ? "Password protection enabled" : "Password not set"}
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-gray-500 mb-4">
+                    {hasPassword
+                      ? 'You can change your password at any time. We recommend using a strong, unique password.'
+                      : "You haven't set up a password yet. Setting up a password will enable password-based login."}
+                  </p>
+                  
+                  {hasPassword ? (
+                    <Dialog
+                      open={isPasswordDialogOpen}
+                      onOpenChange={setIsPasswordDialogOpen}
+                    >
+                      <DialogTrigger asChild>
+                        <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-sm">
+                          <Key className="h-4 w-4 mr-2" />
+                          Change Password
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-white max-w-[95vw] sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle className="text-lg sm:text-xl">Change Password</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 py-2 sm:py-4">
+                          {passwordError && (
+                            <div className="p-2 sm:p-3 bg-red-50 border border-red-200 text-red-600 text-xs sm:text-sm rounded-md">
+                              {passwordError}
+                            </div>
+                          )}
 
-            <div className="space-x-4">
-              {hasPassword ? (
-                <Dialog
-                  open={isPasswordDialogOpen}
-                  onOpenChange={setIsPasswordDialogOpen}
-                >
-                  <DialogTrigger asChild>
-                    <Button variant="default">
-                      <Key className="h-4 w-4 mr-2" />
-                      Change Password
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="bg-white">
-                    <DialogHeader>
-                      <DialogTitle>Change Password</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      {passwordError && (
-                        <div className="p-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-md">
-                          {passwordError}
+                          <div className="space-y-1 sm:space-y-2">
+                            <Label htmlFor="current-password" className="text-sm">
+                              Current Password
+                            </Label>
+                            <div className="relative">
+                              <Input
+                                id="current-password"
+                                type={showCurrentPassword ? 'text' : 'password'}
+                                value={currentPassword}
+                                onChange={(e) => setCurrentPassword(e.target.value)}
+                                placeholder="Enter current password"
+                                className="pr-10 text-sm"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                onClick={() =>
+                                  setShowCurrentPassword(!showCurrentPassword)
+                                }
+                              >
+                                {showCurrentPassword ? (
+                                  <EyeOff className="h-4 w-4 text-gray-500" />
+                                ) : (
+                                  <Eye className="h-4 w-4 text-gray-500" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1 sm:space-y-2">
+                            <Label htmlFor="new-password" className="text-sm">New Password</Label>
+                            <div className="relative">
+                              <Input
+                                id="new-password"
+                                type={showNewPassword ? 'text' : 'password'}
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                placeholder="Enter new password"
+                                className="pr-10 text-sm"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                onClick={() => setShowNewPassword(!showNewPassword)}
+                              >
+                                {showNewPassword ? (
+                                  <EyeOff className="h-4 w-4 text-gray-500" />
+                                ) : (
+                                  <Eye className="h-4 w-4 text-gray-500" />
+                                )}
+                              </Button>
+                            </div>
+                            <p className="text-xs text-gray-500">
+                              Password must be at least 8 characters long
+                            </p>
+                          </div>
+
+                          <div className="space-y-1 sm:space-y-2">
+                            <Label htmlFor="confirm-password" className="text-sm">
+                              Confirm New Password
+                            </Label>
+                            <div className="relative">
+                              <Input
+                                id="confirm-password"
+                                type={showConfirmPassword ? 'text' : 'password'}
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="Confirm new password"
+                                className="pr-10 text-sm"
+                              />
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
+                                onClick={() =>
+                                  setShowConfirmPassword(!showConfirmPassword)
+                                }
+                              >
+                                {showConfirmPassword ? (
+                                  <EyeOff className="h-4 w-4 text-gray-500" />
+                                ) : (
+                                  <Eye className="h-4 w-4 text-gray-500" />
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2 pt-1 sm:pt-2">
+                            <Switch
+                              id="sign-out-others"
+                              checked={signOutOthers}
+                              onCheckedChange={setSignOutOthers}
+                            />
+                            <Label
+                              htmlFor="sign-out-others"
+                              className="text-xs sm:text-sm font-normal"
+                            >
+                              Sign out of all other sessions
+                            </Label>
+                          </div>
                         </div>
-                      )}
-
-                      <div className="space-y-2">
-                        <Label htmlFor="current-password">
-                          Current Password
-                        </Label>
-                        <div className="relative">
-                          <Input
-                            id="current-password"
-                            type={showCurrentPassword ? 'text' : 'password'}
-                            value={currentPassword}
-                            onChange={(e) => setCurrentPassword(e.target.value)}
-                            placeholder="Enter current password"
-                            className="bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-blue-500 pr-10"
-                          />
+                        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-between">
                           <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                            onClick={() =>
-                              setShowCurrentPassword(!showCurrentPassword)
+                            variant="outline"
+                            onClick={() => setIsPasswordDialogOpen(false)}
+                            disabled={isUpdatingPassword}
+                            className="w-full sm:w-auto order-2 sm:order-1"
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleUpdatePassword}
+                            disabled={
+                              isUpdatingPassword ||
+                              !currentPassword ||
+                              !newPassword ||
+                              !confirmPassword
                             }
+                            className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto order-1 sm:order-2"
                           >
-                            {showCurrentPassword ? (
-                              <EyeOff className="h-4 w-4 text-gray-500" />
+                            {isUpdatingPassword ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Updating...
+                              </>
                             ) : (
-                              <Eye className="h-4 w-4 text-gray-500" />
+                              'Update Password'
                             )}
                           </Button>
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  ) : (
+                    <Dialog
+                      open={isSetupPasswordDialogOpen}
+                      onOpenChange={setIsSetupPasswordDialogOpen}
+                    >
+                      <DialogTrigger asChild>
+                        <Button className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-sm">
+                          <Key className="h-4 w-4 mr-2" />
+                          Set Up Password
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-white max-w-[95vw] sm:max-w-md">
+                        <DialogHeader>
+                          <DialogTitle className="text-lg sm:text-xl">Set Up Password</DialogTitle>
+                        </DialogHeader>
+                        <div className="py-2 sm:py-4">
+                          <p className="text-sm text-gray-700">
+                            You will be logged out from this session and redirected to the password setup page.
+                            Do you want to continue?
+                          </p>
                         </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="new-password">New Password</Label>
-                        <div className="relative">
-                          <Input
-                            id="new-password"
-                            type={showNewPassword ? 'text' : 'password'}
-                            value={newPassword}
-                            onChange={(e) => setNewPassword(e.target.value)}
-                            placeholder="Enter new password"
-                            className="bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-blue-500 pr-10"
-                          />
+                        <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:justify-between">
                           <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                            onClick={() => setShowNewPassword(!showNewPassword)}
+                            variant="outline"
+                            onClick={() => setIsSetupPasswordDialogOpen(false)}
+                            disabled={isLoggingOut}
+                            className="w-full sm:w-auto order-2 sm:order-1"
                           >
-                            {showNewPassword ? (
-                              <EyeOff className="h-4 w-4 text-gray-500" />
-                            ) : (
-                              <Eye className="h-4 w-4 text-gray-500" />
-                            )}
+                            Cancel
                           </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                          Password must be at least 8 characters long
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label htmlFor="confirm-password">
-                          Confirm New Password
-                        </Label>
-                        <div className="relative">
-                          <Input
-                            id="confirm-password"
-                            type={showConfirmPassword ? 'text' : 'password'}
-                            value={confirmPassword}
-                            onChange={(e) => setConfirmPassword(e.target.value)}
-                            placeholder="Confirm new password"
-                            className="bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-blue-500 pr-10"
-                          />
                           <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
-                            onClick={() =>
-                              setShowConfirmPassword(!showConfirmPassword)
-                            }
+                            onClick={handleSetupPassword}
+                            disabled={isLoggingOut}
+                            className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto order-1 sm:order-2"
                           >
-                            {showConfirmPassword ? (
-                              <EyeOff className="h-4 w-4 text-gray-500" />
+                            {isLoggingOut ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Logging out...
+                              </>
                             ) : (
-                              <Eye className="h-4 w-4 text-gray-500" />
+                              'Continue'
                             )}
                           </Button>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-2 pt-2">
-                        <input
-                          type="checkbox"
-                          id="sign-out-others"
-                          checked={signOutOthers}
-                          onChange={(e) => setSignOutOthers(e.target.checked)}
-                          className="h-4 w-4 rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                        </DialogFooter>
+                      </DialogContent>
+                    </Dialog>
+                  )}
+                </div>
+              </div>
+            </div>
+            
+            {/* Authentication Methods */}
+            <div className="flex flex-col space-y-3">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Authentication Methods</h2>
+              <div className="space-y-3">
+                {/* Google Auth */}
+                <div className="bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-100">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="flex items-center">
+                      <div className="bg-white p-2 rounded-full mr-3 shadow-sm flex-shrink-0">
+                        <img
+                          src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                          alt="Google"
+                          className="w-5 h-5"
                         />
-                        <Label
-                          htmlFor="sign-out-others"
-                          className="text-sm font-normal"
-                        >
-                          Sign out of all other sessions
-                        </Label>
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-medium text-sm sm:text-base">Google Authentication</h3>
+                        <p className="text-xs sm:text-sm text-gray-500">Sign in with your Google account</p>
                       </div>
                     </div>
-                    <DialogFooter className="flex justify-between sm:justify-between">
-                      <Button
-                        variant="outline"
-                        onClick={() => setIsPasswordDialogOpen(false)}
-                        disabled={isUpdatingPassword}
-                        className="border-gray-200 hover:bg-gray-50"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleUpdatePassword}
-                        disabled={
-                          isUpdatingPassword ||
-                          !currentPassword ||
-                          !newPassword ||
-                          !confirmPassword
+                    <Button
+                      variant="outline"
+                      onClick={async () => {
+                        setIsLoggingOut(true);
+                        toast({
+                          title: 'Logging out',
+                          description: 'You will be redirected to Google authentication',
+                        });
+                        await signOut();
+                        if (signIn) {
+                          await signIn.authenticateWithRedirect({
+                            strategy: 'oauth_google',
+                            redirectUrl: `${window.location.origin}/sso-callback`,
+                            redirectUrlComplete: '/dashboard',
+                          });
+                        } else {
+                          toast({
+                            title: 'Error',
+                            description: 'Google authentication service unavailable. Please refresh and try again.',
+                            variant: 'destructive',
+                          });
                         }
-                        className="bg-blue-500 hover:bg-blue-600 text-white"
-                      >
-                        {isUpdatingPassword ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Updating...
-                          </>
-                        ) : (
-                          'Update Password'
-                        )}
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              ) : (
-                <Dialog
-                  open={isSetupPasswordDialogOpen}
-                  onOpenChange={setIsSetupPasswordDialogOpen}
-                >
-                  <DialogTrigger asChild>
-                    <Button variant="default">
-                      <Key className="h-4 w-4 mr-2" />
-                      Set Up Password
+                        setIsLoggingOut(false);
+                      }}
+                      disabled={isLoggingOut}
+                      className="bg-white w-full sm:w-auto text-sm"
+                    >
+                      {isLoggingOut ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <span className="sm:hidden">Connect with Google</span>
+                          <span className="hidden sm:inline">Connect</span>
+                        </>
+                      )}
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="bg-white">
-                    <DialogHeader>
-                      <DialogTitle>Set Up Password</DialogTitle>
-                    </DialogHeader>
-                    <div className="py-4">
-                      <p>
-                        You will be logged out from this session and redirected to the password setup page.
-                        Do you want to continue?
-                      </p>
-                    </div>
-                    <DialogFooter className="flex justify-between sm:justify-between">
+                  </div>
+                </div>
+                
+                {/* Face Recognition (Admin only) */}
+                {isAdmin && (
+                  <div className="bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div className="flex items-center">
+                        <div className="bg-white p-2 rounded-full mr-3 shadow-sm flex-shrink-0">
+                          <UserCheck className="h-5 w-5 text-blue-600" />
+                        </div>
+                        <div className="min-w-0">
+                          <h3 className="font-medium text-sm sm:text-base">Face Recognition</h3>
+                          <p className="text-xs sm:text-sm text-gray-500">Admin-only secure authentication method</p>
+                        </div>
+                      </div>
                       <Button
-                        variant="outline"
-                        onClick={() => setIsSetupPasswordDialogOpen(false)}
+                        onClick={handleSetupFaceRecognition}
                         disabled={isLoggingOut}
-                        className="border-gray-200 hover:bg-gray-50"
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleSetupPassword}
-                        disabled={isLoggingOut}
-                        className="bg-blue-500 hover:bg-blue-600 text-white"
+                        className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto text-sm"
                       >
                         {isLoggingOut ? (
-                          <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Logging out...
-                          </>
+                          <Loader2 className="h-4 w-4 animate-spin" />
                         ) : (
-                          'Continue'
+                          'Setup'
                         )}
                       </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              )}
-            </div>
-          </div>
-
-          {/* Face Recognition Setup Section (Admin only) */}
-          {isAdmin && (
-            <div className="space-y-4 pt-8">
-              <h3 className="text-lg font-semibold">Face Recognition</h3>
-              <p className="text-sm text-muted-foreground">
-                Set up face recognition for secure admin authentication.
-              </p>
-              <Button
-                variant="default"
-                onClick={handleSetupFaceRecognition}
-                disabled={isLoggingOut}
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-              >
-                {isLoggingOut ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Logging out...
-                  </>
-                ) : (
-                  'Setup Face Recognition'
+                    </div>
+                  </div>
                 )}
-              </Button>
+              </div>
             </div>
+          </TabsContent>
+          
+          {/* Admin Settings Tab */}
+          {isAdmin && (
+            <TabsContent value="admin" className="p-3 sm:p-4 md:p-6 space-y-6 sm:space-y-8">
+              <div className="flex flex-col space-y-3">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Authentication Settings</h2>
+                <div className="bg-gray-50 p-3 sm:p-4 md:p-5 rounded-lg">
+                  {isLoadingGoogleSetting ? (
+                    <div className="flex items-center space-x-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="text-sm">Loading settings...</span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="space-y-1">
+                        <h3 className="font-medium text-sm sm:text-base">Google Sign-in</h3>
+                        <p className="text-xs sm:text-sm text-gray-500">
+                          Show or hide the "Continue with Google" button on the sign-in page
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-2 self-end sm:self-auto">
+                        {isSavingGoogleSetting && <Loader2 className="h-4 w-4 animate-spin" />}
+                        <Switch
+                          id="google-signin"
+                          checked={showGoogleSignIn}
+                          onCheckedChange={handleGoogleSignInToggle}
+                          disabled={isSavingGoogleSetting}
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </TabsContent>
           )}
-
-          {/* Google Authentication Setup Section (All users) */}
-          <div className="space-y-4 pt-8">
-            <h3 className="text-lg font-semibold">Google Authentication</h3>
-            <p className="text-sm text-muted-foreground">
-              Use Google to sign in securely.
-            </p>
-            <Button
-              variant="default"
-              onClick={async () => {
-                setIsLoggingOut(true);
-                toast({
-                  title: 'Logging out',
-                  description: 'You will be redirected to Google authentication',
-                });
-                await signOut();
-                if (signIn) {
-                  await signIn.authenticateWithRedirect({
-                    strategy: 'oauth_google',
-                    redirectUrl: `${window.location.origin}/sso-callback`,
-                    redirectUrlComplete: '/dashboard',
-                  });
-                } else {
-                  toast({
-                    title: 'Error',
-                    description: 'Google authentication service unavailable. Please refresh and try again.',
-                    variant: 'destructive',
-                  });
-                }
-                setIsLoggingOut(false);
-              }}
-              disabled={isLoggingOut}
-              className="bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-            >
-              {isLoggingOut ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <img
-                  src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                  alt="Google"
-                  className="w-5 h-5 mr-2"
-                />
-              )}
-              Continue with Google
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        </Tabs>
+      </div>
+    
     </div>
   );
 }

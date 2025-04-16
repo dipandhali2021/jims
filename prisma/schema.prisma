@@ -164,3 +164,9 @@ model ProductRequestDetails {
   request     ProductRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   requestId   String        @unique
 }
+
+model AppSettings {
+  id                    String   @id @default("default")
+  showGoogleSignIn      Boolean  @default(true)
+  updatedAt             DateTime @updatedAt
+}

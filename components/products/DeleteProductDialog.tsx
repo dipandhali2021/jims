@@ -77,7 +77,7 @@ export function DeleteProductDialog({ product, onProductDeleted }: DeleteProduct
           />
           <div className="ml-4">
             <p className="font-medium">{product.name}</p>
-            <p className="text-sm text-gray-500">SProduct IDKU: {product.sku}</p>
+            <p className="text-sm text-gray-500">Product ID: {product.sku}</p>
             <p className="text-sm text-gray-500">Stock: {product.stock}</p>
           </div>
         </div>

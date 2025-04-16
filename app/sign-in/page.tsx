@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSignIn, useClerk } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -28,7 +28,28 @@ export default function SignIn() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [needsFaceVerification, setNeedsFaceVerification] = useState(false);
+  const [showGoogleSignIn, setShowGoogleSignIn] = useState(true); // Default to true until we fetch from the API
+  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
   const router = useRouter();
+
+  // Fetch the Google sign-in visibility setting on component mount
+  useEffect(() => {
+    const fetchGoogleSignInSetting = async () => {
+      try {
+        const response = await fetch('/api/settings/google-signin');
+        if (response.ok) {
+          const data = await response.json();
+          setShowGoogleSignIn(data.showGoogleSignIn);
+        }
+      } catch (error) {
+        console.error('Error fetching Google sign-in setting:', error);
+      } finally {
+        setIsLoadingSettings(false);
+      }
+    };
+
+    fetchGoogleSignInSetting();
+  }, []);
 
   if (!isLoaded) {
     return null;
@@ -169,33 +190,39 @@ export default function SignIn() {
           {!needsFaceVerification ? (
             // First step: Email/Password verification
             <>
-              <Button
-                onClick={handleGoogleSignIn}
-                className="w-full mb-4 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <img
-                    src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
-                    alt="Google"
-                    className="w-5 h-5 mr-2"
-                  />
-                )}
-                Continue with Google
-              </Button>
+              {/* Only render Google sign-in button if setting is enabled */}
+              {showGoogleSignIn && !isLoadingSettings && (
+                <Button
+                  onClick={handleGoogleSignIn}
+                  className="w-full mb-4 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <img
+                      src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                      alt="Google"
+                      className="w-5 h-5 mr-2"
+                    />
+                  )}
+                  Continue with Google
+                </Button>
+              )}
 
-              <div className="relative my-4">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
+              {/* Divider is only shown when Google sign-in is enabled */}
+              {showGoogleSignIn && !isLoadingSettings && (
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-300"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-500">
+                      Or continue with email
+                    </span>
+                  </div>
                 </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">
-                    Or continue with email
-                  </span>
-                </div>
-              </div>
+              )}
 
               <form onSubmit={submit} className="space-y-4">
                 <div className="space-y-2">

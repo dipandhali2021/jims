@@ -17,8 +17,14 @@ async function deleteImageFromCloudinary(imageUrl: string | null | undefined) {
     // Only delete images that are stored in our Cloudinary folder
     if (imageUrl.includes('cloudinary.com') && imageUrl.includes('jewelry-inventory')) {
       // Extract public ID from the URL
-      const publicId = imageUrl.split('/').slice(-2).join('/').split('.')[0];
-      if (publicId) {
+      // Example URL: https://res.cloudinary.com/cloud-name/image/upload/v1234567890/jewelry-inventory/abcdef
+      const urlParts = imageUrl.split('/');
+      const folderIndex = urlParts.findIndex(part => part === 'jewelry-inventory');
+      
+      if (folderIndex !== -1 && folderIndex < urlParts.length - 1) {
+        // Get the folder and filename parts (without file extension)
+        const publicId = `jewelry-inventory/${urlParts[folderIndex + 1].split('.')[0]}`;
+        
         console.log(`Deleting image from Cloudinary: ${publicId}`);
         await cloudinary.uploader.destroy(publicId);
         console.log(`Successfully deleted image: ${publicId}`);
