@@ -19,7 +19,6 @@ export async function GET(req: NextRequest) {
 
     // Get all users
     const users = (await clerkClient.users.getUserList()).data;
-    console.log('Fetched users:', users);
 
     return NextResponse.json({ users });
   } catch (error) {

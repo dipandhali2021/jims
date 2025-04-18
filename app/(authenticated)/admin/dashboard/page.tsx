@@ -198,7 +198,6 @@ export default function AdminDashboard() {
       const response = await fetch(`/api/sales/analytics?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch analytics');
       const data = await response.json();
-      console.log('Analytics Data:', data);
       // No need to convert timestamps as they're already localized by the API
       setAnalytics(data);
 

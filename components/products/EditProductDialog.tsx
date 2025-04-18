@@ -7,6 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,7 +21,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { PenSquare, Upload, X, Loader2 } from 'lucide-react';
+import { PenSquare, Upload, X, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Product } from '@/hooks/use-products';
 
 const categories = [
@@ -60,6 +61,8 @@ export function EditProductDialog({
   const [error, setError] = useState<string | null>(null);
   const [removeImage, setRemoveImage] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [stockAdjustment, setStockAdjustment] = useState<string>('0');
+  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -104,7 +107,9 @@ export function EditProductDialog({
     setPreviewUrl(product.imageUrl);
     setImageFile(null);
     setRemoveImage(false);
+    setStockAdjustment('0');
     setError(null);
+    setShowAdvancedOptions(false);
   }, [product]);
 
   const resetForm = () => {
@@ -132,7 +137,9 @@ export function EditProductDialog({
     setImageFile(null);
     setPreviewUrl(product.imageUrl);
     setRemoveImage(false);
+    setStockAdjustment('0');
     setError(null);
+    setShowAdvancedOptions(false);
   };
 
   // Handle file input change
@@ -234,6 +241,13 @@ export function EditProductDialog({
     }
   };
 
+  // Calculate new stock based on current stock and adjustment
+  const calculateNewStock = (): number => {
+    const currentStock = parseInt(formData.stock);
+    const adjustment = parseInt(stockAdjustment || '0');
+    return currentStock + adjustment;
+  };
+
   // Form submission handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -310,11 +324,15 @@ export function EditProductDialog({
       return;
     }
 
-    if (!formData.stock || isNaN(parseInt(formData.stock))) {
-      setError('Valid stock quantity is required');
+    // Calculate new stock based on adjustment
+    const newStock = calculateNewStock();
+    
+    // Validate new stock value
+    if (newStock < 0) {
+      setError('Stock cannot be negative');
       toast({
         title: 'Error',
-        description: 'Please enter a valid stock quantity',
+        description: 'Stock adjustment would result in negative stock',
         variant: 'destructive',
       });
       return;
@@ -336,6 +354,9 @@ export function EditProductDialog({
       // Override category and material with final values
       dataToSend.category = finalCategory;
       dataToSend.material = finalMaterial;
+      
+      // Update the stock value with the calculated new stock
+      dataToSend.stock = newStock.toString();
 
       // Append form data fields
       Object.entries(dataToSend).forEach(([key, value]) => {
@@ -405,233 +426,285 @@ export function EditProductDialog({
       >
         <PenSquare className="h-4 w-4" />
       </Button>
-      <DialogContent className="sm:max-w-[600px] p-6 bg-white rounded-lg shadow-lg border-0 max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="mb-4">
-          <DialogTitle className="text-xl font-bold">Edit Product</DialogTitle>
-        </DialogHeader>
-
-        {error && (
-          <div className="bg-red-50 text-red-800 px-4 py-3 rounded-md mb-4 text-sm">
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="name" className="font-medium">
-                Product Name *
-              </Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sku" className="font-medium">
-              Product ID *
-              </Label>
-              <Input
-                id="sku"
-                value={formData.sku}
-                onChange={(e) =>
-                  setFormData({ ...formData, sku: e.target.value })
-                }
-                className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
-                required
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="description" className="font-medium">
-              Description
-            </Label>
-            <Textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              className="min-h-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="category" className="font-medium">
-                Category *
-              </Label>
-              <Select
-                value={formData.category}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, category: value })
-                }
-              >
-                <SelectTrigger className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50">
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category}>
-                      {category}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {formData.category === 'Other' && (
-                <div className="mt-2">
-                  <Input
-                    placeholder="Enter custom category"
-                    value={formData.customCategory}
-                    onChange={(e) =>
-                      setFormData({ ...formData, customCategory: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="material" className="font-medium">
-                Material *
-              </Label>
-              <Select
-                value={formData.material}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, material: value })
-                }
-              >
-                <SelectTrigger className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50">
-                  <SelectValue placeholder="Select material" />
-                </SelectTrigger>
-                <SelectContent>
-                  {materials.map((material) => (
-                    <SelectItem key={material} value={material}>
-                      {material}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {formData.material === 'Other' && (
-                <div className="mt-2">
-                  <Input
-                    placeholder="Enter custom material"
-                    value={formData.customMaterial}
-                    onChange={(e) =>
-                      setFormData({ ...formData, customMaterial: e.target.value })
-                    }
-                    className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
-                  />
-                </div>
-              )}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price" className="font-medium">
-                Price (₹) *
-              </Label>
-              <Input
-                id="price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
-                }
-                className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="stock" className="font-medium">
-                Stock *
-              </Label>
-              <Input
-                id="stock"
-                type="number"
-                min="0"
-                value={formData.stock}
-                onChange={(e) =>
-                  setFormData({ ...formData, stock: e.target.value })
-                }
-                className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
-                required
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="supplier" className="font-medium">
-              Supplier
-            </Label>
-            <Input
-              id="supplier"
-              value={formData.supplier}
-              onChange={(e) =>
-                setFormData({ ...formData, supplier: e.target.value })
-              }
-              className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="font-medium">Product Image</Label>
-            <div 
-              ref={dropZoneRef}
-              className={`border-2 border-dashed ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 bg-gray-50'} rounded-lg p-6 transition-colors duration-200`}
-              onDragEnter={handleDragEnter}
-              onDragLeave={handleDragLeave}
-              onDragOver={handleDragOver}
-              onDrop={handleDrop}
+      <DialogContent className="sm:max-w-[600px] p-0 bg-white rounded-lg shadow-lg border-0 max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 z-10 bg-white border-b px-6 py-4 flex flex-col space-y-4">
+          <div className="flex justify-between items-center">
+            <DialogTitle className="text-xl font-bold">Edit Product</DialogTitle>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+              onClick={() => setIsOpen(false)}
             >
-              {previewUrl ? (
-                <div className="relative">
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    className="mx-auto max-h-48 rounded object-contain"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="absolute top-0 right-0 bg-white rounded-full shadow-sm hover:bg-gray-100"
-                    onClick={handleRemoveImage}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+              <X className="h-4 w-4" />
+              <span className="sr-only">Close</span>
+            </Button>
+          </div>
+
+          {error && (
+            <div className="bg-red-50 text-red-800 px-4 py-3 rounded-md text-sm">
+              {error}
+            </div>
+          )}
+          
+          {/* Quick Edit Section - Always visible */}
+          <div className="bg-gray-50 p-4 rounded-lg border">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Quick Stock Update</h3>
+            <div className="grid grid-cols-2 gap-4  justify-center items-center">
+              <div className="space-y-2">
+                <Label htmlFor="stockAdjustment" className="text-sm font-medium">
+                  Stock Adjustment
+                </Label>
+                <div className="space-y-1">
+                  <div className="text-xs text-gray-600">
+                    Current Stock: <span className="font-medium">{formData.stock}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Input
+                      id="stockAdjustment"
+                      type="number"
+                      value={stockAdjustment}
+                      onChange={(e) => setStockAdjustment(e.target.value)}
+                      className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                      placeholder="Add or remove stock"
+                    />
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    New Stock: <span className="font-medium">{calculateNewStock()}</span>
+                    {calculateNewStock() < 0 && (
+                      <span className="text-red-500 ml-2">Cannot be negative</span>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <div className="w-full">
-                  <input
-                    type="file"
-                    ref={fileInputRef}
-                    accept="image/*"
-                    onChange={handleImageChange}
-                    className="hidden"
-                    id="image-upload-edit"
-                  />
-                  <label
-                    htmlFor="image-upload-edit"
-                    className="cursor-pointer flex flex-col items-center py-6 w-full"
-                  >
-                    <Upload className="h-10 w-10 mb-3 text-gray-400" />
-                    <span className="text-sm font-medium text-gray-600 mb-1">
-                      {removeImage ? 'Image removed. Click to upload or drag a new image' : 'Click to upload or drag and drop'}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      PNG, JPG up to 10MB
-                    </span>
-                  </label>
-                </div>
-              )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="supplier" className="text-sm font-medium">
+                  Supplier
+                </Label>
+                <Input
+                  id="supplier"
+                  value={formData.supplier}
+                  onChange={(e) =>
+                    setFormData({ ...formData, supplier: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                  placeholder="Enter supplier name"
+                />
+              </div>
             </div>
           </div>
-          <div className="flex justify-end space-x-3 pt-2">
+        </div>
+
+        <form id="edit-product-form" onSubmit={handleSubmit} className="px-6 py-4">
+          {/* Advanced Options Section - Toggle */}
+          <button
+            type="button"
+            className="flex items-center justify-between w-full text-left text-sm font-medium text-gray-700 mb-4 hover:text-gray-900"
+            onClick={() => setShowAdvancedOptions(!showAdvancedOptions)}
+          >
+            <span>Advanced Options</span>
+            {showAdvancedOptions ? (
+              <ChevronUp className="h-4 w-4" />
+            ) : (
+              <ChevronDown className="h-4 w-4" />
+            )}
+          </button>
+
+          {/* Advanced Options - Conditionally rendered */}
+          {showAdvancedOptions && (
+            <div className="space-y-5 mb-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name" className="font-medium">
+                    Product Name *
+                  </Label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="sku" className="font-medium">
+                    Product ID *
+                  </Label>
+                  <Input
+                    id="sku"
+                    value={formData.sku}
+                    onChange={(e) =>
+                      setFormData({ ...formData, sku: e.target.value })
+                    }
+                    className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="description" className="font-medium">
+                  Description
+                </Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  className="min-h-10 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="category" className="font-medium">
+                    Category *
+                  </Label>
+                  <Select
+                    value={formData.category}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, category: value })
+                    }
+                  >
+                    <SelectTrigger className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {categories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formData.category === 'Other' && (
+                    <div className="mt-2">
+                      <Input
+                        placeholder="Enter custom category"
+                        value={formData.customCategory}
+                        onChange={(e) =>
+                          setFormData({ ...formData, customCategory: e.target.value })
+                        }
+                        className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="material" className="font-medium">
+                    Material *
+                  </Label>
+                  <Select
+                    value={formData.material}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, material: value })
+                    }
+                  >
+                    <SelectTrigger className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50">
+                      <SelectValue placeholder="Select material" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {materials.map((material) => (
+                        <SelectItem key={material} value={material}>
+                          {material}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formData.material === 'Other' && (
+                    <div className="mt-2">
+                      <Input
+                        placeholder="Enter custom material"
+                        value={formData.customMaterial}
+                        onChange={(e) =>
+                          setFormData({ ...formData, customMaterial: e.target.value })
+                        }
+                        className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="price" className="font-medium">
+                  Price (₹) *
+                </Label>
+                <Input
+                  id="price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.price}
+                  onChange={(e) =>
+                    setFormData({ ...formData, price: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label className="font-medium">Product Image</Label>
+                <div 
+                  ref={dropZoneRef}
+                  className={`border-2 border-dashed ${isDragging ? 'border-primary bg-primary/5' : 'border-gray-300 bg-gray-50'} rounded-lg p-4 transition-colors duration-200`}
+                  onDragEnter={handleDragEnter}
+                  onDragLeave={handleDragLeave}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                >
+                  {previewUrl ? (
+                    <div className="relative">
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="mx-auto max-h-36 rounded object-contain"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-0 right-0 bg-white rounded-full shadow-sm hover:bg-gray-100"
+                        onClick={handleRemoveImage}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="w-full">
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                        id="image-upload-edit"
+                      />
+                      <label
+                        htmlFor="image-upload-edit"
+                        className="cursor-pointer flex flex-col items-center py-4 w-full"
+                      >
+                        <Upload className="h-8 w-8 mb-2 text-gray-400" />
+                        <span className="text-xs font-medium text-gray-600 mb-1">
+                          {removeImage ? 'Image removed. Click to upload or drag a new image' : 'Click to upload or drag and drop'}
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          PNG, JPG up to 10MB
+                        </span>
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Move buttons to bottom */}
+          <div className="flex justify-end space-x-2 pt-6 border-t mt-6">
             <Button
               type="button"
               variant="outline"
@@ -639,7 +712,6 @@ export function EditProductDialog({
                 setIsOpen(false);
                 resetForm();
               }}
-              className="border border-gray-300 hover:bg-gray-50"
             >
               Cancel
             </Button>

@@ -159,6 +159,7 @@ model ProductRequestDetails {
   material    String?
   price       Float?
   stock       Int?
+  stockAdjustment Int?
   imageUrl    String?
   supplier    String?
   request     ProductRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)

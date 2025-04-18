@@ -58,7 +58,6 @@ export async function DELETE(
           select: { id: true }
         });
         const userProductIds = userProducts.map(p => p.id);
-        console.log(`Found ${userProductIds.length} products owned by user`);
         
         // 2. Find all sales requests by this user
         const userSalesRequests = await tx.salesRequest.findMany({
@@ -74,7 +73,6 @@ export async function DELETE(
           .filter(sr => sr.status === "Completed")
           .map(sr => sr.id);
           
-        console.log(`Found ${pendingSalesRequestIds.length} pending sales requests and ${completedSalesRequestIds.length} completed sales requests`);
         
         // 3. Handle SalesItems - First handle those attached to user's products
         // Update SalesItems that reference the user's products to preserve historical data
@@ -87,14 +85,12 @@ export async function DELETE(
             // The productName, productSku, etc. should already be stored
           }
         });
-        console.log("Updated sales items to preserve product reference data");
         
         // 4. Delete SalesItems associated with pending sales requests
         if (pendingSalesRequestIds.length > 0) {
           await tx.salesItem.deleteMany({
             where: { salesRequestId: { in: pendingSalesRequestIds } }
           });
-          console.log(`Deleted sales items for ${pendingSalesRequestIds.length} pending sales requests`);
         }
         
         // 5. Transfer completed sales requests and their items to admin
@@ -103,7 +99,6 @@ export async function DELETE(
             where: { id: { in: completedSalesRequestIds } },
             data: { userId: newOwnerId }
           });
-          console.log(`Transferred ${completedSalesRequestIds.length} completed sales requests to admin`);
         }
         
         // 6. Now we can delete pending sales requests
@@ -128,14 +123,12 @@ export async function DELETE(
           .filter(pr => pr.status === "Approved")
           .map(pr => pr.id);
           
-        console.log(`Found ${pendingProductRequestIds.length} pending product requests and ${approvedProductRequestIds.length} approved product requests`);
         
         // 8. Handle product request details for pending requests
         if (pendingProductRequestIds.length > 0) {
           await tx.productRequestDetails.deleteMany({
             where: { requestId: { in: pendingProductRequestIds } }
           });
-          console.log(`Deleted details for ${pendingProductRequestIds.length} pending product requests`);
         }
         
         // 9. Transfer approved product requests to admin
@@ -144,7 +137,6 @@ export async function DELETE(
             where: { id: { in: approvedProductRequestIds } },
             data: { userId: newOwnerId }
           });
-          console.log(`Transferred ${approvedProductRequestIds.length} approved product requests to admin`);
         }
         
         // 10. Delete pending product requests
@@ -152,7 +144,6 @@ export async function DELETE(
           await tx.productRequest.deleteMany({
             where: { id: { in: pendingProductRequestIds } }
           });
-          console.log(`Deleted ${pendingProductRequestIds.length} pending product requests`);
         }
 
         // 11. Handle products - reassign to admin or delete if no admin
@@ -163,13 +154,11 @@ export async function DELETE(
               where: { id: { in: userProductIds } },
               data: { userId: newOwnerId }
             });
-            console.log(`Reassigned ${userProductIds.length} products to admin user: ${newOwnerId}`);
           } else {
             // If no admin users exist to reassign to, we delete the products
             await tx.product.deleteMany({
               where: { id: { in: userProductIds } }
             });
-            console.log(`No admin found, deleted ${userProductIds.length} products`);
           }
         }
 
@@ -177,7 +166,6 @@ export async function DELETE(
         await tx.todo.deleteMany({
           where: { userId: targetUserId }
         });
-        console.log("Deleted todos");
 
         await tx.transaction.deleteMany({
           where: { userId: targetUserId }
