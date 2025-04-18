@@ -18,6 +18,7 @@ import {
   DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
+import { toZonedTime, format as formatTZ } from 'date-fns-tz';
 export default function ProfilePage() {
   const { isLoaded, user } = useUser();
   const { toast } = useToast();
@@ -78,6 +79,25 @@ export default function ProfilePage() {
     router.push('/sign-in');
     return null;
   }
+
+    // Indian timezone constant
+    const TIMEZONE = 'Asia/Kolkata';
+
+    // Format date in Indian timezone
+    const formatIndianDate = (
+      date: string | Date,
+      formatStr: string = 'MMM dd, yyyy'
+    ) => {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      return formatTZ(toZonedTime(dateObj, TIMEZONE), formatStr, {
+        timeZone: TIMEZONE,
+      });
+    };
+  
+    // Format date with time in Indian timezone in AM/PM format
+    const formatIndianDateTime = (date: string | Date) => {
+      return formatIndianDate(date, 'MMM dd, yyyy hh:mm a');
+    };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -365,11 +385,7 @@ export default function ProfilePage() {
                       <p className="font-medium">Account Created</p>
                       <p className="text-sm text-muted-foreground">
                         {user.createdAt ? (
-                          new Date(user.createdAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })
+                          formatIndianDateTime(user.createdAt)
                         ) : (
                           'Unknown'
                         )}
@@ -383,11 +399,7 @@ export default function ProfilePage() {
                       <p className="font-medium">Last Updated</p>
                       <p className="text-sm text-muted-foreground">
                         {user.updatedAt ? (
-                          new Date(user.updatedAt).toLocaleDateString('en-US', {
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric',
-                          })
+                          formatIndianDateTime(user.updatedAt)
                         ) : (
                           'Unknown'
                         )}

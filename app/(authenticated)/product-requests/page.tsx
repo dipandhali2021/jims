@@ -87,9 +87,9 @@ export default function ProductRequestsPage() {
     });
   };
 
-  // Format date with time in Indian timezone
+  // Format date with time in Indian timezone in AM/PM format
   const formatIndianDateTime = (date: string | Date) => {
-    return formatIndianDate(date, 'MMM dd, yyyy HH:mm');
+    return formatIndianDate(date, 'MMM dd, yyyy hh:mm a');
   };
 
   // Fetch product requests on component mount
@@ -492,8 +492,8 @@ export default function ProductRequestsPage() {
                   </span>
                 </div>
 
-                <div className="text-xs sm:text-sm mb-3 sm:mb-4 flex-grow">
-                  <div className="flex items-start mb-2">
+                <div className="text-xs sm:text-sm flex-grow">
+                  <div className="flex items-start">
                     {(request.product || request.details) && (
                       <div className="mr-3">
                         <img
@@ -507,40 +507,116 @@ export default function ProductRequestsPage() {
                             request.details?.name ||
                             'Product'
                           }
-                          className="w-16 h-16 object-cover rounded"
+                          className="w-16 h-16 object-cover rounded-md border border-gray-200 shadow-sm"
                         />
                       </div>
                     )}
-                    <div>
-                      <p className="font-medium">
+                    <div className="flex flex-col h-full min-h-[70px]">
+                      <p className="font-medium text-gray-800">
                         {request.requestType === 'add'
                           ? request.details?.name
                           : request.product?.name || 'Unknown Product'}
                       </p>
-                      <p className="text-gray-500">
+                      <p className="text-gray-500 text-xs mb-2">
                         {request.requestType === 'add'
                           ? `Product ID: ${request.details?.sku}`
                           : `Product ID: ${request.product?.sku}`}
                       </p>
 
                       {request.requestType === 'edit' && (
-                        <div className="mt-1 text-xs text-amber-600">
-                          <p>Requested changes to product</p>
+                        <div className="text-xs text-amber-600 mb-2">
+                          <p>Requesting product changes</p>
+                        </div>
+                      )}
+
+                      {request.requestType === 'add' && (
+                        <div className="text-xs text-blue-600 mb-2">
+                          <p>New product request</p>
                         </div>
                       )}
 
                       {request.requestType === 'delete' && (
-                        <div className="mt-1 text-xs text-red-600">
-                          <p>Requested product deletion</p>
+                        <div className="text-xs text-red-600 mb-2">
+                          <p>Delete product request</p>
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
+                
+                <div className="flex flex-col gap-2 mb-3">
+                  {/* Stock badges - always on their own line */}
+                  <div className="flex flex-wrap gap-2">
+                    {request.requestType === 'add' && request.details && (
+                      <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                        <span className="flex h-2 w-2 rounded-full bg-blue-500 mr-1.5"></span>
+                        Stock: {request.details.stock}
+                      </div>
+                    )}
 
-                <div className="flex justify-between text-xs sm:text-sm mb-3 sm:mb-4">
-                  <span className="text-gray-500">Request Date:</span>
-                  <span>{formatIndianDate(request.requestDate)}</span>
+                    {request.requestType === 'delete' && request.product && (
+                      <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                        <span className="flex h-2 w-2 rounded-full bg-blue-500 mr-1.5"></span>
+                        Stock: {request.product.stock}
+                      </div>
+                    )}
+
+                    {request.requestType === 'edit' && request.product && request.details && (
+                      <>
+                        {request.product.stock !== request.details.stock ? (
+                          <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                            <span className="flex h-2 w-2 rounded-full bg-blue-500 mr-1.5"></span>
+                            Stock: {request.product.stock} → {request.details.stock}
+                          </div>
+                        ) : (
+                          <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-blue-50 text-blue-700 border border-blue-100">
+                            <span className="flex h-2 w-2 rounded-full bg-blue-500 mr-1.5"></span>
+                            Stock: {request.product.stock}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+
+                  {/* Supplier badges - always on their own line */}
+                  <div className="flex flex-wrap gap-2">
+                    {request.requestType === 'add' && request.details?.supplier && (
+                      <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
+                        <span className="flex h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
+                        Supplier: {request.details.supplier}
+                      </div>
+                    )}
+
+                    {request.requestType === 'delete' && request.product?.supplier && (
+                      <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
+                        <span className="flex h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
+                        Supplier: {request.product.supplier}
+                      </div>
+                    )}
+
+                    {request.requestType === 'edit' && request.product && request.details && (
+                      <>
+                        {request.product.supplier !== request.details.supplier ? (
+                          <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
+                            <span className="flex h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
+                            Supplier: {(request.product.supplier || '(None)').length > 10 ? (request.product.supplier || '(None)').substring(0, 10) + '...' : (request.product.supplier || '(None)')} → {(request.details.supplier || '(None)').length > 10 ? (request.details.supplier || '(None)').substring(0, 10) + '...' : (request.details.supplier || '(None)')}
+                          </div>
+                        ) : (
+                          request.product.supplier && (
+                            <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
+                              <span className="flex h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
+                              Supplier: {request.product.supplier.length > 15 ? request.product.supplier.substring(0, 15) + '...' : request.product.supplier}
+                            </div>
+                          )
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center text-xs sm:text-sm mb-3 sm:mb-4 bg-gray-50 p-2 rounded-md border border-gray-200">
+                  <span className="text-gray-700 font-medium">Request Date:</span>
+                  <span className="text-gray-800">{formatIndianDateTime(request.requestDate)}</span>
                 </div>
 
                 <div className="flex flex-wrap gap-1 w-full mt-auto pt-3 border-t">
@@ -670,11 +746,42 @@ export default function ProductRequestsPage() {
                               className="w-16 h-16 object-cover rounded"
                             />
                           </div>
-                          <span className="max-w-[150px] md:max-w-[200px] truncate">
-                            {request.requestType === 'add'
-                              ? request.details?.name
-                              : request.product?.name || 'Unknown Product'}
-                          </span>
+                          <div className="flex flex-col">
+                            <span className="max-w-[150px] md:max-w-[200px] truncate font-medium">
+                              {request.requestType === 'add'
+                                ? request.details?.name
+                                : request.product?.name || 'Unknown Product'}
+                            </span>
+                            
+                            <span className="text-xs text-gray-500">
+                              {request.requestType === 'add'
+                                ? `ID: ${request.details?.sku}`
+                                : `ID: ${request.product?.sku}`}
+                            </span>
+                            
+                            {/* Stock and Supplier changes for Edit requests in list view */}
+                            {request.requestType === 'edit' && request.product && request.details && (
+                              <div className="mt-1 space-y-1">
+                                {request.product.stock !== request.details.stock && (
+                                  <div className="flex items-center">
+                                    <span className="inline-flex h-2 w-2 bg-blue-600 rounded-full mr-1"></span>
+                                    <span className="text-xs text-blue-700 font-medium whitespace-nowrap">
+                                      Stock: {request.product.stock} → {request.details.stock}
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {request.product.supplier !== request.details.supplier && (
+                                  <div className="flex items-center">
+                                    <span className="inline-flex h-2 w-2 bg-purple-600 rounded-full mr-1"></span>
+                                    <span className="text-xs text-purple-700 font-medium whitespace-nowrap">
+                                      Supplier change
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="p-3 sm:p-4 text-xs sm:text-sm hidden md:table-cell">
@@ -1325,7 +1432,7 @@ export default function ProductRequestsPage() {
                               className={
                                 selectedRequest.product.stock !==
                                 selectedRequest.details.stock
-                                  ? 'bg-blue-100 p-1 rounded'
+                                  ? 'bg-blue-100 p-2 rounded border border-blue-200'
                                   : ''
                               }
                             >
@@ -1340,10 +1447,13 @@ export default function ProductRequestsPage() {
                                 {selectedRequest.details.stock}
                                 {selectedRequest.product.stock !==
                                   selectedRequest.details.stock && (
-                                  <span className="ml-1 text-xs text-blue-600">
-                                    (Changed from:{' '}
-                                    {selectedRequest.product.stock})
-                                  </span>
+                                  <div className="flex items-center mt-1">
+                                    <span className="inline-flex h-2 w-2 bg-blue-600 rounded-full mr-1.5"></span>
+                                    <span className="text-xs text-blue-700">
+                                      Stock adjustment: {selectedRequest.product.stock < selectedRequest.details.stock ? '+' : ''}
+                                      {selectedRequest.details.stock - selectedRequest.product.stock}
+                                    </span>
+                                  </div>
                                 )}
                               </p>
                             </div>

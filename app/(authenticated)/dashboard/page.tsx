@@ -165,7 +165,7 @@ export default function AdminDashboard() {
   
   // Format date with time in Indian timezone
   const formatIndianDateTime = (date: string | Date | number) => {
-    return formatIndianDate(date, 'MMM dd, yyyy HH:mm');
+    return formatIndianDate(date, 'MMM dd, yyyy hh:mm a');
   };
   
   // Calculate filtered and paginated transactions

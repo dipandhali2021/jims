@@ -99,7 +99,7 @@ export default function RequestsPage() {
   
   // Format date with time in Indian timezone
   const formatIndianDateTime = (date: string | Date) => {
-    return formatIndianDate(date, 'MMM dd, yyyy HH:mm');
+    return formatIndianDate(date, 'MMM dd, yyyy hh:mm a');
   };
 
   const fetchSalesRequests = useCallback(async () => {
@@ -517,7 +517,7 @@ await fetchSalesRequests();
                 
                 <div className="flex justify-between text-xs sm:text-sm mb-3 sm:mb-4">
                   <span className="text-gray-500">Date:</span>
-                  <span>{formatIndianDate(request.requestDate)}</span>
+                  <span>{formatIndianDateTime(request.requestDate)}</span>
                 </div>
                 
                 <div className="flex flex-wrap gap-1 w-full mt-auto pt-3 border-t">
@@ -835,7 +835,7 @@ await fetchSalesRequests();
                 <div>
                   <p className="text-xs sm:text-sm text-gray-500">Date</p>
                   <p className="font-medium text-sm sm:text-base text-gray-800">
-                    {new Date(selectedRequest.requestDate).toLocaleDateString()}
+                    {formatIndianDateTime(selectedRequest.requestDate)}
                   </p>
                 </div>
               </div>

@@ -118,6 +118,26 @@ export default function AdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   
+
+  // Indian timezone constant
+  const TIMEZONE = 'Asia/Kolkata';
+
+  // Format date in Indian timezone
+  const formatIndianDate = (
+    date: string | Date,
+    formatStr: string = 'MMM dd, yyyy'
+  ) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    return formatTZ(toZonedTime(dateObj, TIMEZONE), formatStr, {
+      timeZone: TIMEZONE,
+    });
+  };
+
+  // Format date with time in Indian timezone in AM/PM format
+  const formatIndianDateTime = (date: string | Date) => {
+    return formatIndianDate(date, 'MMM dd, yyyy hh:mm a');
+  };
+
   // Calculate filtered and paginated transactions
   const filteredTransactions = transactions.filter((transaction) =>
     searchTerm === '' ||
@@ -596,7 +616,7 @@ export default function AdminDashboard() {
                   </div>
                   <div className="text-xs space-y-1">
                     <p><span className="text-muted-foreground">Products:</span> {transaction.products.join(', ')}</p>
-                    <p><span className="text-muted-foreground">Date:</span> {transaction.date}</p>
+                    <p><span className="text-muted-foreground">Date:</span> {formatIndianDateTime(transaction.date)}</p>
                     <p><span className="text-muted-foreground">Amount:</span> ₹{transaction.amount.toLocaleString()}</p>
                   </div>
                 </div>
@@ -625,7 +645,7 @@ export default function AdminDashboard() {
                       <td className="p-4 max-w-xs truncate">
                         {transaction.products.join(', ')}
                       </td>
-                      <td className="p-4">{transaction.date}</td>
+                      <td className="p-4">{formatIndianDateTime(transaction.date)}</td>
                       <td className="p-4">
                       ₹{transaction.amount.toLocaleString()}
                       </td>
