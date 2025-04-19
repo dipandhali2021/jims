@@ -4,67 +4,106 @@ A comprehensive jewelry shop management system built with Next.js, featuring rol
 
 ## Implemented Features
 
-### 1. User Roles & Permissions
+### 1. User Management 👥
 The system implements role-based access control (RBAC) with two user types:
 - **Admin (Owner)**: Full control over inventory and sales approval
 - **Shopkeeper (Worker)**: Can browse products and create sales requests
 
-### 2. Product Management
+Additional user features:
+- 🔐 Google Sign-In integration
+- ⭐ Premium subscription system
+- 👤 User profile management
+
+### 2. Product Management 💎
 Products are managed with jewelry-specific attributes:
-- Product ID tracking
-- Detailed product information (name, description, category)
-- Material specification
-- Price and stock management
-- Image support
-- Automated inventory tracking
+- 📦 Product ID tracking
+- 📝 Detailed product information (name, description, category)
+- 🏷️ Material specification
+- 💰 Price and stock management
+- 🖼️ Image support
+- 📊 Automated inventory tracking
+- ⚠️ Low stock threshold alerts
+- 📋 Product request workflow (Add/Edit/Delete)
 
-### 3. Sales Request Workflow
-Streamlined process for handling sales:
-- Shopkeepers can create single or bulk sales requests
-- Customer information tracking
-- Real-time stock validation
-- Automated total value calculation
-- Status tracking (Pending, Approved, Rejected)
-- Unique request ID generation (Format: SR-YYYY-XXXX)
+### 3. Sales Management 💫
+Comprehensive sales handling system:
+- 🛍️ Single/bulk sales request creation
+- 👥 Customer information tracking
+- ✅ Real-time stock validation
+- 🧮 Automated total value calculation
+- 📈 Sales analytics and reporting
+- 📜 Complete transaction history
+- 🏷️ Unique request ID generation (Format: SR-YYYY-XXXX)
 
-### 4. Notification System
+### 4. Notification System 🔔
 Real-time notifications for:
-- Sales request status updates
-- New request notifications
-- Unread notification tracking
-- Interactive notification interface
+- 📫 Sales request status updates
+- 🆕 New request notifications
+- 📊 Low stock alerts
+- 📱 Unread notification tracking
+- 🔄 Interactive notification interface
 
 ## System Workflows
+
+### Authentication Workflow
+```mermaid
+flowchart TD
+    A[User] -->|Visits| B[Sign In Page]
+    B -->|Choose Method| C{Auth Method}
+    C -->|Regular| D[Email/Password Form]
+    C -->|Google| E[Google OAuth]
+    D -->|Submit| F[Validate Credentials]
+    E -->|Authorize| G[Get Google Profile]
+    F -->|Success| H{User Exists?}
+    G -->|Success| H
+    H -->|Yes| I[Load User Data]
+    H -->|No| J[Create Account]
+    J -->|Set Role| I
+    I -->|Check| K{Is Subscribed?}
+    K -->|Yes| L[Premium Features]
+    K -->|No| M[Basic Features]
+    L & M -->|Access| N[Dashboard]
+    style A fill:#f9f,stroke:#333
+    style C fill:#bbf,stroke:#333
+    style H fill:#dfd,stroke:#333
+    style K fill:#ffd,stroke:#333
+```
 
 ### Sales Request Workflow
 ```mermaid
 flowchart TD
     A[Shopkeeper] -->|Creates| B[Sales Request]
-    B -->|Notifies| C[Admin]
-    C -->|Reviews| D{Decision}
-    D -->|Approve| E[Update Inventory]
-    E -->|Notify| A
-    D -->|Reject| F[Send Feedback]
-    F -->|Notify| A
+    B -->|Validates Stock| C[Stock Check]
+    C -->|If Valid| D[Notifies Admin]
+    C -->|If Invalid| E[Error Message]
+    D -->|Reviews| F{Decision}
+    F -->|Approve| G[Update Inventory]
+    G -->|Create| H[Transaction Record]
+    H -->|Update| I[Sales Analytics]
+    G -->|Notify| A
+    F -->|Reject| J[Send Feedback]
+    J -->|Notify| A
     style A fill:#f9f,stroke:#333
-    style C fill:#bbf,stroke:#333
-    style D fill:#dfd,stroke:#333
+    style F fill:#bbf,stroke:#333
+    style C fill:#dfd,stroke:#333
+    style I fill:#ffd,stroke:#333
 ```
 
-### User Role Interaction
+### Product Management Workflow
 ```mermaid
 flowchart LR
     A[Admin] -->|Manages| B[Products]
-    A -->|Approves| C[Sales Requests]
-    D[Shopkeeper] -->|Views| B
-    D -->|Creates| C
-    B -->|Stock Updates| E[Notifications]
-    C -->|Status Changes| E
-    E -->|Alerts| A
-    E -->|Alerts| D
+    B -->|Monitors| C[Stock Levels]
+    C -->|Triggers| D[Low Stock Alerts]
+    E[Shopkeeper] -->|Creates| F[Product Request]
+    F -->|Notifies| A
+    A -->|Reviews| F
+    F -->|Approved| B
+    B -->|Updates| G[Analytics]
     style A fill:#bbf,stroke:#333
-    style D fill:#f9f,stroke:#333
-    style E fill:#dfd,stroke:#333
+    style E fill:#f9f,stroke:#333
+    style D fill:#ffd,stroke:#333
+    style G fill:#dfd,stroke:#333
 ```
 
 ## Getting Started
@@ -108,6 +147,8 @@ npm run dev
 - **UI Components**: Custom components with Tailwind CSS
 - **State Management**: React Hooks
 - **API**: Next.js API routes
+- **Analytics**: Built-in sales and inventory analytics
+- **Authentication**: NextAuth.js with Google Sign-In
 
 ## License
 

@@ -112,7 +112,7 @@ export function DashboardSidebar({
                   </div>
                   <div className="flex flex-col gap-0.5 leading-none">
                     <span className="font-bold text-lg tracking-tight">
-                      OMKAR GOLD COVERING
+                      JEWELRY INVENTORY
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {isAdmin ? 'Admin' : 'Shopkeeper'}
@@ -232,7 +232,7 @@ export function DashboardSidebar({
             <span>Log out</span>
           </Button>
           <div className="mt-4 text-xs text-center text-muted-foreground">
-            <p>© 2025 Omkar Gold Covering</p>
+            <p>© 2025 Jewelry Inventory</p>
             <p className="mt-1 text-xs text-muted-foreground/70">
               All rights reserved
             </p>
@@ -261,7 +261,7 @@ export function DashboardSidebar({
             </div>
             <div className="flex flex-col">
               <span className="font-semibold text-lg tracking-tight">
-                OMKAR GOLD COVERING
+                JEWELRY INVENTORY
               </span>
               <span className="text-xs text-muted-foreground">
                 {isAdmin
@@ -405,7 +405,7 @@ export function DashboardSidebar({
             <span>Log out</span>
           </Button>
           <div className="mt-4 text-xs text-center text-muted-foreground">
-            <p>© 2025 Omkar Gold Covering</p>
+            <p>© 2025 Jewelry Inventory</p>
             <p className="mt-1 text-xs text-muted-foreground/70">
               All rights reserved
             </p>
