@@ -599,7 +599,7 @@ export default function ProductRequestsPage() {
                         {request.product.supplier !== request.details.supplier ? (
                           <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
                             <span className="flex h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
-                            Supplier: {(request.product.supplier || '(None)').length > 10 ? (request.product.supplier || '(None)').substring(0, 10) + '...' : (request.product.supplier || '(None)')} → {(request.details.supplier || '(None)').length > 10 ? (request.details.supplier || '(None)').substring(0, 10) + '...' : (request.details.supplier || '(None)')}
+                            Supplier: {(request.product.supplier || '(None)')} → {(request.details.supplier || '(None)')}
                           </div>
                         ) : (
                           request.product.supplier && (
