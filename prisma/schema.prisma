@@ -23,6 +23,7 @@ model User {
   transactions      Transaction[]
   notifications     Notification[]
   productRequests   ProductRequest[]
+  bills             Bill[]
 }
 
 model Todo {
@@ -170,4 +171,38 @@ model AppSettings {
   id                    String   @id @default("default")
   showGoogleSignIn      Boolean  @default(true)
   updatedAt             DateTime @updatedAt
+}
+
+model Bill {
+  id              String    @id @default(cuid())
+  billNumber      String    @unique
+  billType        String    // "GST" or "Non-GST"
+  date            DateTime  @default(now())
+  dateOfSupply    DateTime? // Date when goods/services were supplied
+  timeOfSupply    String?   // Time when goods/services were supplied
+  customerName    String
+  customerAddress String?
+  customerState   String?
+  customerGSTIN   String?   // Only for GST bills
+  items           Json      // Store line items (particulars, qty, rate, amount)
+  totalAmount     Float
+  sgst            Float?    // Only for GST bills
+  cgst            Float?    // Only for GST bills
+  igst            Float?    // Only for GST bills
+  hsnCodes        Json?     // Optional: per item HSN
+  transportMode   String?   // For GST bills
+  vehicleNo       String?   // For GST bills
+  placeOfSupply   String?   // For GST bills
+  isTaxable       Boolean?  // For GST bills
+  user            User      @relation(fields: [userId], references: [id])
+  userId          String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdBy      String?  // User who created the bill
+  updatedBy      String?  // User who last updated the bill
+
+  @@index([billNumber])
+
+  @@index([createdAt])
+  @@index([userId])
 }

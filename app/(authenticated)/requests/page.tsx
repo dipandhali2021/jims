@@ -25,7 +25,9 @@ import {
   LayoutGrid,
   List,
   Trash2,
+  Receipt,
 } from 'lucide-react';
+import { CreateBillFromSalesDialog } from '@/components/bills/CreateBillFromSalesDialog';
 import {
   Select,
   SelectContent,
@@ -132,7 +134,10 @@ export default function RequestsPage() {
 
   useEffect(() => {
     fetchSalesRequests();
-  }, [fetchSalesRequests]);
+  }, [fetchSalesRequests]);  const [showBillDialog, setShowBillDialog] = useState(false);
+  const [showGSTBillDialog, setShowGSTBillDialog] = useState(false);
+  const [requestForBill, setRequestForBill] = useState<SalesRequest | null>(null);
+  const [billType, setBillType] = useState<'GST' | 'Non-GST' | null>(null);
 
   const handleStatusUpdate = async (
     requestId: string,
@@ -146,7 +151,19 @@ export default function RequestsPage() {
         rejecting: newStatus === 'Rejected' ? true : false
       }
     }));
+    
     try {
+      // If the status is approved, find the request and show the bill dialog
+      if (newStatus === 'Approved') {
+        const request = salesRequests.find(req => req.id === requestId);
+        if (request) {
+          setRequestForBill(request);
+          setShowBillDialog(true);
+          return; // Stop here and let the bill dialog handle the approval
+        }
+      }
+      
+      // Otherwise, just update the status normally
       const response = await fetch(`/api/sales-requests/${requestId}`, {
         method: 'PUT',
         headers: {
@@ -163,7 +180,7 @@ export default function RequestsPage() {
         title: 'Success',
         description: `Request ${newStatus.toLowerCase()} successfully`,
       });
-await fetchSalesRequests();
+      
       fetchSalesRequests();
     } catch (error) {
       toast({
@@ -178,6 +195,81 @@ await fetchSalesRequests();
         [requestId]: { approving: false, rejecting: false }
       }));
     }
+  };
+
+  // Handle approval with bill generation
+  const handleApproveWithBill = async (billType: 'GST' | 'Non-GST') => {
+    if (!requestForBill) return;
+      // For GST bills, show the detailed form dialog
+    if (billType === 'GST') {
+      // Just show the GST bill creation dialog and close the current dialog
+      setShowBillDialog(false);
+      setShowGSTBillDialog(true);
+      return;
+    }
+    
+    // For Non-GST bills, continue with direct creation
+    setLoadingStates(prev => ({
+      ...prev,
+      [requestForBill.id]: {
+        approving: true,
+        rejecting: false
+      }
+    }));
+    
+    try {
+      const response = await fetch(`/api/sales-requests/${requestForBill.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          status: 'Approved',
+          billType: billType 
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to approve request and create bill');
+      }
+
+      toast({
+        title: 'Success',
+        description: `Request approved and ${billType} bill created successfully`,
+      });
+      
+      // Close dialog and refresh
+      setShowBillDialog(false);
+      setRequestForBill(null);
+      fetchSalesRequests();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to approve request and create bill',
+        variant: 'destructive',
+      });
+    } finally {
+      // Reset loading state
+      if (requestForBill) {
+        setLoadingStates(prev => ({
+          ...prev,
+          [requestForBill.id]: { approving: false, rejecting: false }
+        }));
+      }
+    }
+  };
+    // Handle GST bill creation after form details are filled
+  const handleGstBillCreation = async () => {
+    if (!requestForBill) return;
+    
+    // Dialog component will handle the form validation and bill creation
+    // We just need to update the sales request status after the bill is created
+    
+    setShowGSTBillDialog(false);
+    setRequestForBill(null);
+    
+    // Refresh the sales requests list
+    fetchSalesRequests();
   };
 
   const handleDeleteAllRequests = async () => {
@@ -534,12 +626,15 @@ await fetchSalesRequests();
                     {/* <span className="text-xs sm:text-sm truncate">Details</span> */}
                   </Button>
                   {request.status === 'Pending' && user?.publicMetadata?.role === 'admin' && (
-                    <>
-                      <Button
+                    <>                      <Button
                         variant="outline"
                         size="sm"
                         className="flex-1 min-w-0 h-8 text-center justify-center text-green-600 hover:text-green-700 disabled:opacity-50"
-                        onClick={() => handleStatusUpdate(request.id, 'Approved')}
+                        onClick={() => {
+                          // Open bill dialog when approving from grid view
+                          setRequestForBill(request);
+                          setShowBillDialog(true);
+                        }}
                         disabled={loadingStates[request.id]?.approving || loadingStates[request.id]?.rejecting}
                       >
                         {loadingStates[request.id]?.approving ? (
@@ -653,13 +748,16 @@ await fetchSalesRequests();
                             <span className="sr-only">View</span>
                           </Button>
                           {request.status === 'Pending' && user?.publicMetadata?.role === 'admin' && (
-                            <>
-                              <Button
+                            <>                              <Button
                                 variant="outline"
                                 size="sm"
                                 className="text-green-600 hover:text-green-700 disabled:opacity-50 h-8 w-8 p-0"
                                 title="Approve Request"
-                                onClick={() => handleStatusUpdate(request.id, 'Approved')}
+                                onClick={() => {
+                                  // Open bill dialog when approving from list view
+                                  setRequestForBill(request);
+                                  setShowBillDialog(true);
+                                }}
                                 disabled={loadingStates[request.id]?.approving || loadingStates[request.id]?.rejecting}
                               >
                                 {loadingStates[request.id]?.approving ? (
@@ -887,16 +985,16 @@ await fetchSalesRequests();
                 <p className="font-bold text-sm sm:text-base text-gray-900">
                   ₹{selectedRequest.totalValue.toLocaleString()}
                 </p>
-              </div>
-
-              {selectedRequest.status === 'Pending' && user?.publicMetadata?.role === 'admin' && (
+              </div>              {selectedRequest.status === 'Pending' && user?.publicMetadata?.role === 'admin' && (
                 <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-gray-200">
                   <Button
                     variant="outline"
                     size="sm"
                     className="flex-1 text-green-600 hover:text-green-700 disabled:opacity-50"
                     onClick={() => {
-                      handleStatusUpdate(selectedRequest.id, 'Approved');
+                      // Show bill dialog instead of direct approval
+                      setRequestForBill(selectedRequest);
+                      setShowBillDialog(true);
                       setShowDetails(false);
                     }}
                     disabled={loadingStates[selectedRequest.id]?.approving || loadingStates[selectedRequest.id]?.rejecting}
@@ -972,8 +1070,110 @@ await fetchSalesRequests();
               <span>Delete All</span>
             </Button>
           </div>
-        </DialogContent>
-      </Dialog>
+        </DialogContent>      </Dialog>
+        {/* Bill Creation Dialog - Choose Bill Type */}
+      {requestForBill && (
+        <Dialog open={showBillDialog && !showGSTBillDialog} onOpenChange={(open) => {
+          setShowBillDialog(open);
+          if (!open) {
+            // Reset loading state when dialog is closed without action
+            setLoadingStates(prev => ({
+              ...prev,
+              [requestForBill.id]: { approving: false, rejecting: false }
+            }));
+          }
+        }}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Create Bill for Sales Request</DialogTitle>
+            </DialogHeader>
+            <div className="py-4">
+              <p className="text-sm text-gray-600 mb-6">
+                Do you want to create a bill for this sales request?
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <Button
+                  onClick={() => {
+                    // For GST bill, show the GST bill dialog
+                    setShowGSTBillDialog(true);
+                    setShowBillDialog(false);
+                    setBillType('GST');
+                  }}
+                  className="flex items-center justify-center gap-2"
+                  disabled={loadingStates[requestForBill.id]?.approving}
+                >
+                  <Receipt className="h-4 w-4" />
+                  Create GST Bill
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  onClick={() => handleApproveWithBill('Non-GST')}
+                  className="flex items-center justify-center gap-2"
+                  disabled={loadingStates[requestForBill.id]?.approving}
+                >
+                  {loadingStates[requestForBill.id]?.approving ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Receipt className="h-4 w-4" />
+                  )}
+                  Create Non-GST Bill
+                </Button>
+              </div>
+              
+              <div className="mt-4">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    // Just approve without creating bill
+                    handleStatusUpdate(requestForBill.id, 'Approved');
+                    setShowBillDialog(false);
+                  }}
+                  className="w-full text-gray-500"
+                  disabled={loadingStates[requestForBill.id]?.approving}
+                >
+                  Skip bill creation
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+      
+      {/* GST Bill Form Dialog */}
+      {requestForBill && (
+        <CreateBillFromSalesDialog
+          open={showGSTBillDialog}
+          onClose={() => {
+            setShowGSTBillDialog(false);
+            setShowBillDialog(true);
+            
+            // Reset loading state when dialog is closed without action
+            setLoadingStates(prev => ({
+              ...prev,
+              [requestForBill.id]: { approving: false, rejecting: false }
+            }));
+          }}
+          salesRequest={requestForBill}
+          onSuccess={() => {
+            // On successful bill creation, refresh the list
+            fetchSalesRequests();
+            setShowGSTBillDialog(false);
+            
+            // Reset loading state
+            setLoadingStates(prev => ({
+              ...prev,
+              [requestForBill.id]: { approving: false, rejecting: false }
+            }));
+            
+            toast({
+              title: 'Success',
+              description: 'Request approved and GST bill created successfully',
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

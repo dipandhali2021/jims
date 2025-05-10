@@ -67,6 +67,7 @@ const sidebarLinks: SidebarLink[] = [
   { href: '/inventory', label: 'Inventory', icon: Package },
   { href: '/requests', label: 'Sales Requests', icon: History },
   { href: '/product-requests', label: 'Product Requests', icon: Package },
+  { href: '/bills', label: 'Bills', icon: ShoppingBag },
   { href: '/admin/users', label: 'Users', icon: Users, adminOnly: true },
   {
     href: '/settings',
