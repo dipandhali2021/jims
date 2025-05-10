@@ -213,6 +213,7 @@ export async function GET(req: NextRequest) {
     const timeframe = searchParams.get('timeframe');
     const startDate = searchParams.get('start');
     const endDate = searchParams.get('end');
+    const billType = searchParams.get('billType'); // Get billType filter parameter
 
     let dateRange;
     if (startDate && endDate) {
@@ -227,27 +228,37 @@ export async function GET(req: NextRequest) {
       };
     } else {
       dateRange = getDateRange(timeframe || 'Today');
+    }    // Set up the base transaction query with date range
+    const whereClause: any = {
+      createdAt: {
+        gte: dateRange.start,
+        lte: dateRange.end,
+      }
+    };
+
+    // Set up the previous period where clause
+    const previousWhereClause: any = {
+      createdAt: {
+        gte: dateRange.previous.start,
+        lte: dateRange.previous.end,
+      }
+    };
+
+    // Add billType filter if provided
+    if (billType && ['GST', 'Non-GST'].includes(billType)) {
+      whereClause.billType = billType;
+      previousWhereClause.billType = billType;
     }
 
+    // Create the final query objects
+    const transactionQuery = { where: whereClause };
+    const previousTransactionQuery = { where: previousWhereClause };
+
     // Get transactions within the date range
-    const transactions = await prisma.transaction.findMany({
-      where: {
-        createdAt: {
-          gte: dateRange.start,
-          lte: dateRange.end,
-        },
-      }
-    });
+    const transactions = await prisma.transaction.findMany(transactionQuery);
 
     // Fetch previous period transactions for calculating period-over-period changes
-    const previousTransactions = await prisma.transaction.findMany({
-      where: {
-        createdAt: {
-          gte: dateRange.previous.start,
-          lte: dateRange.previous.end,
-        },
-      },
-    });
+    const previousTransactions = await prisma.transaction.findMany(previousTransactionQuery);
     // Calculate current period key performance metrics
     // Calculate metrics
     const totalRevenue = transactions.reduce((sum, trans) => sum + trans.totalAmount, 0);

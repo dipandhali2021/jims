@@ -13,28 +13,60 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const recentTransactions = await prisma.transaction.findMany({
+    // Get billType filter from query params
+    const { searchParams } = new URL(req.url);
+    const billType = searchParams.get('billType');    // Set up query with proper typing
+    const queryOptions = {
       orderBy: {
-        createdAt: 'desc',
+        createdAt: 'desc' as const,
       },
-      take: 5,
+      take: 20, // Increase to show more transactions
       include: {
         user: true
+      },
+      where: {} as any
+    };
+    
+    // Add billType filter if provided
+    if (billType && ['GST', 'Non-GST'].includes(billType)) {
+      queryOptions.where = {
+        billType
+      };
+    }
+    
+    // Execute the properly structured query
+    const recentTransactions = await prisma.transaction.findMany(queryOptions);
+    
+    const formattedTransactions = recentTransactions.map(transaction => {
+      // Parse the JSON items field
+      let items = [];
+      try {
+        if (typeof transaction.items === 'string') {
+          items = JSON.parse(transaction.items);
+        } else {
+          items = transaction.items as any[];
+        }
+      } catch (e) {
+        console.error('Error parsing transaction items', e);
+        items = [];
       }
+      
+      return {
+        id: transaction.orderId,
+        customer: transaction.customer,
+        products: Array.isArray(items) 
+          ? items.map(item => item.productName || 'Unknown Product')
+          : ['Unknown Product'],
+        // Format the date directly in IST
+        date: formatInTimeZone(transaction.createdAt, IST_TIMEZONE, 'MMM dd, yyyy HH:mm'),
+        // Also provide requestDate field which is simply an alias for createdAt to match expected API structure
+        requestDate: formatInTimeZone(transaction.createdAt, IST_TIMEZONE, 'MMM dd, yyyy HH:mm'),
+        amount: transaction.totalAmount,
+        status: transaction.status,
+        billType: transaction.billType || 'Unknown',
+        seller: transaction.user ? `${transaction.user.firstName} ${transaction.user.lastName}` : 'Unknown'
+      };
     });
-
-    const formattedTransactions = recentTransactions.map(transaction => ({
-      id: transaction.orderId,
-      customer: transaction.customer,
-      products: (transaction.items as any[]).map(item => item.productName),
-      // Format the date directly in IST
-      date: formatInTimeZone(transaction.createdAt, IST_TIMEZONE, 'MMM dd, yyyy HH:mm'),
-      // Also provide requestDate field which is simply an alias for createdAt to match expected API structure
-      requestDate: formatInTimeZone(transaction.createdAt, IST_TIMEZONE, 'MMM dd, yyyy HH:mm'),
-      amount: transaction.totalAmount,
-      status: transaction.status,
-      seller: `${transaction.user.firstName} ${transaction.user.lastName}`
-    }));
 
     return NextResponse.json(formattedTransactions);
   } catch (error) {

@@ -88,9 +88,7 @@ export async function PUT(
       // Check if a transaction already exists for this sales request
       const existingTransaction = await prisma.transaction.findUnique({
         where: { orderId: salesRequest.requestId }
-      });
-
-      // Only create a transaction if one doesn't exist
+      });      // Only create a transaction if one doesn't exist
       if (!existingTransaction) {
         // Format items for transaction record with full product details
         const transactionItems = salesRequest.items.map(item => ({
@@ -104,7 +102,7 @@ export async function PUT(
           imageUrl: item?.product?.imageUrl || item.productImageUrl
         }));
 
-        // Create transaction record
+        // Create transaction record with billType information
         await prisma.transaction.create({
           data: {
             orderId: salesRequest.requestId,
@@ -112,6 +110,7 @@ export async function PUT(
             totalAmount: salesRequest.totalValue,
             items: transactionItems,
             userId: salesRequest.userId,
+            billType: billType || null, // Set billType from request (GST or Non-GST)
           }
         });
       }

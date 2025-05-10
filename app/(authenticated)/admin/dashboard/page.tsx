@@ -45,6 +45,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import {
   Sheet,
@@ -117,6 +124,8 @@ export default function AdminDashboard() {
   const { toast } = useToast();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+  // New state for transaction type filter
+  const [transactionType, setTransactionType] = useState<'All' | 'GST' | 'Non-GST'>('All');
   
 
   // Indian timezone constant
@@ -201,9 +210,7 @@ export default function AdminDashboard() {
           break;
       }
     }
-  }, [timeframe]);
-
-  const fetchAnalytics = async () => {
+  }, [timeframe]);  const fetchAnalytics = async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
@@ -215,13 +222,24 @@ export default function AdminDashboard() {
         params.append('timeframe', timeframe);
       }
       
+      // Add billType filter to analytics if selected
+      if (transactionType !== 'All') {
+        params.append('billType', transactionType);
+      }
+      
       const response = await fetch(`/api/sales/analytics?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch analytics');
       const data = await response.json();
       // No need to convert timestamps as they're already localized by the API
       setAnalytics(data);
 
-      const transResponse = await fetch('/api/sales');
+      // Create params for transactions request
+      const transParams = new URLSearchParams();
+      if (transactionType !== 'All') {
+        transParams.append('billType', transactionType);
+      }
+      
+      const transResponse = await fetch(`/api/sales?${transParams.toString()}`);
       if (!transResponse.ok) throw new Error('Failed to fetch transactions');
       let transData = await transResponse.json();
       
@@ -260,10 +278,9 @@ export default function AdminDashboard() {
       setIsLoading(false);
     }
   };
-
   useEffect(() => {
     fetchAnalytics();
-  }, [timeframe, date?.from, date?.to]);
+  }, [timeframe, date?.from, date?.to, transactionType]);
 
   if (isLoading || !analytics) {
     return (
@@ -349,9 +366,25 @@ export default function AdminDashboard() {
   return (
     <div className="p-3 md:p-6 max-w-screen-2xl mx-auto">
       {/* Header */}
-      <div className="flex flex-col space-y-4 mb-4 md:mb-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <h1 className="text-xl md:text-2xl font-bold">Sales Dashboard</h1>
+      <div className="flex flex-col space-y-4 mb-4 md:mb-6">        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl md:text-2xl font-bold">Sales Dashboard</h1>
+            
+            {/* GST/Non-GST Filter at the top for better accessibility */}
+            <Select
+              value={transactionType}
+              onValueChange={(value) => setTransactionType(value as 'All' | 'GST' | 'Non-GST')}
+            >
+              <SelectTrigger className="h-8 w-[150px]">
+                <SelectValue placeholder="All Transactions" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Transactions</SelectItem>
+                <SelectItem value="GST">GST Bills</SelectItem>
+                <SelectItem value="Non-GST">Non-GST Bills</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           
           {/* Mobile date filter using Sheet for small screens */}
           {isMobile ? (
@@ -400,9 +433,7 @@ export default function AdminDashboard() {
               className="w-full md:w-auto"
             />
           )}
-        </div>
-
-        {/* Time Period Selector - scrollable on mobile */}
+        </div>        {/* Time Period Selector - scrollable on mobile */}
         <div className="flex overflow-x-auto pb-2 gap-2 scrollbar-hide">
           {(['Today', 'Week', 'Month', 'Year'] as const).map((period) => (
             <Button
@@ -416,10 +447,44 @@ export default function AdminDashboard() {
             </Button>
           ))}
         </div>
-      </div>
-
-      {/* Stats Grid - 2 columns on mobile, 4 on desktop */}
+        
+        {/* Active filters summary */}
+        <div className="flex flex-wrap gap-2">
+          {timeframe && (
+            <div className="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs flex items-center">
+              <span>{timeframe === 'Custom' ? 'Custom Date Range' : timeframe}</span>
+            </div>
+          )}
+          {transactionType !== 'All' && (
+            <div className={`px-2 py-1 rounded-full text-xs flex items-center ${
+              transactionType === 'GST' 
+                ? 'bg-blue-100 text-blue-800' 
+                : 'bg-amber-100 text-amber-800'
+            }`}>
+              <span>{transactionType} Transactions</span>
+              <button 
+                className="ml-1 hover:bg-gray-200 rounded-full p-0.5"
+                onClick={() => setTransactionType('All')}
+                aria-label="Clear filter"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>{/* Stats Grid - 2 columns on mobile, 4 on desktop */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6 mb-4 md:mb-6">
+        {transactionType !== 'All' && (
+          <div className="col-span-2 lg:col-span-4 bg-blue-50 border border-blue-200 rounded-md p-2 mb-2 text-sm flex items-center">
+            <Filter className="h-4 w-4 mr-2 text-blue-600" />
+            <span className="text-blue-800">
+              Showing metrics for <strong>{transactionType}</strong> transactions only
+            </span>
+          </div>
+        )}
         <StatCard
           title="Total Revenue"
           value={`₹${analytics.metrics.totalRevenue.toLocaleString()}`}
@@ -586,9 +651,37 @@ export default function AdminDashboard() {
 
       {/* Recent Transactions */}
       <Card>
-        <CardContent className="p-3 md:p-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
-            <h3 className="text-sm md:text-base font-semibold">Recent Transactions</h3>
+        <CardContent className="p-3 md:p-6">          <div className="flex flex-col space-y-3 md:space-y-0 md:flex-row justify-between items-start md:items-center gap-3 mb-4">
+            <div className="flex items-center gap-3">
+              <h3 className="text-sm md:text-base font-semibold">
+                Recent Transactions
+                {transactionType !== 'All' && (
+                  <span className={`ml-2 px-2 py-1 rounded-full text-xs ${
+                    transactionType === 'GST' 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-amber-100 text-amber-800'
+                  }`}>
+                    {transactionType}
+                  </span>
+                )}
+              </h3>
+              <Select
+                value={transactionType}
+                onValueChange={(value) => {
+                  setTransactionType(value as 'All' | 'GST' | 'Non-GST');
+                  setCurrentPage(1); // Reset to first page when changing filter
+                }}
+              >
+                <SelectTrigger className="h-8 w-[150px]">
+                  <SelectValue placeholder="All Transactions" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Transactions</SelectItem>
+                  <SelectItem value="GST">GST Bills</SelectItem>
+                  <SelectItem value="Non-GST">Non-GST Bills</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="relative w-full md:w-auto">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
@@ -599,20 +692,30 @@ export default function AdminDashboard() {
               />
             </div>
           </div>
-          
-          {/* Mobile Transaction Cards */}
+            {/* Mobile Transaction Cards */}
           <div className="md:hidden space-y-3">
             {paginatedTransactions
-              .map((transaction) => (
+              .map((transaction: any) => (
                 <div key={transaction.id} className="border rounded-lg p-3">
                   <div className="flex justify-between items-start mb-2">
                     <div>
                       <p className="font-medium text-sm">{transaction.id}</p>
                       <p className="text-sm text-muted-foreground">{transaction.customer}</p>
                     </div>
-                    <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
-                      {transaction.status}
-                    </span>
+                    <div className="flex flex-col items-end gap-1">
+                      {transaction.billType && (
+                        <span className={`px-2 py-1 rounded-full text-xs ${
+                          transaction.billType === 'GST' 
+                            ? 'bg-blue-100 text-blue-800' 
+                            : 'bg-amber-100 text-amber-800'
+                        }`}>
+                          {transaction.billType}
+                        </span>
+                      )}
+                      <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">
+                        {transaction.status}
+                      </span>
+                    </div>
                   </div>
                   <div className="text-xs space-y-1">
                     <p><span className="text-muted-foreground">Products:</span> {transaction.products.join(', ')}</p>
@@ -625,20 +728,20 @@ export default function AdminDashboard() {
           
           {/* Desktop Table */}
           <div className="hidden md:block overflow-x-auto">
-            <table className="w-full">
-              <thead>
+            <table className="w-full">              <thead>
                 <tr className="border-b">
                   <th className="text-left p-4 font-medium text-muted-foreground">Order ID</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Customer</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Products</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Date</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Amount</th>
+                  <th className="text-left p-4 font-medium text-muted-foreground">Type</th>
                   <th className="text-left p-4 font-medium text-muted-foreground">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedTransactions
-                  .map((transaction) => (
+                  .map((transaction: any) => (
                     <tr key={transaction.id} className="border-b hover:bg-muted/50 transition-colors">
                       <td className="p-4 font-medium">{transaction.id}</td>
                       <td className="p-4">{transaction.customer}</td>
@@ -648,6 +751,17 @@ export default function AdminDashboard() {
                       <td className="p-4">{formatIndianDateTime(transaction.date)}</td>
                       <td className="p-4">
                       ₹{transaction.amount.toLocaleString()}
+                      </td>
+                      <td className="p-4">
+                        {transaction.billType && (
+                          <span className={`px-2 py-1 rounded-full text-xs ${
+                            transaction.billType === 'GST' 
+                              ? 'bg-blue-100 text-blue-800' 
+                              : 'bg-amber-100 text-amber-800'
+                          }`}>
+                            {transaction.billType}
+                          </span>
+                        )}
                       </td>
                       <td className="p-4">
                         <span className="px-2 py-1 bg-green-100 text-green-800 rounded-full text-xs">

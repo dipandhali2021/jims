@@ -118,7 +118,8 @@ export default function BillsPage() {
   const totalPages = Math.max(1, Math.ceil(filteredBills.length / itemsPerPage));
   
   // Handle bill creation success
-  const handleBillCreated = (bill: Bill) => {
+  const handleBillCreated = (bill?: Bill) => {
+    if (!bill) return;
     setNewlyCreatedBill(bill);
     setShowPrintDialog(true);
     fetchBills(); // Refresh the bills list
@@ -541,18 +542,6 @@ export default function BillsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      
-      {/* Print After Create Dialog */}
-      {newlyCreatedBill && (
-        <PrintAfterCreateDialog 
-          bill={newlyCreatedBill}
-          open={showPrintDialog}
-          onClose={() => {
-            setShowPrintDialog(false);
-            setNewlyCreatedBill(null);
-          }}
-        />
-      )}
     </div>
   );
 }

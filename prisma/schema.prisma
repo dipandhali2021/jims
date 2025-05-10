@@ -103,6 +103,7 @@ model Transaction {
   totalAmount Float
   items       Json      // Store array of items with product details
   status      String    @default("Completed")
+  billType    String?   // "GST" or "Non-GST"
   userId      String
   user        User      @relation(fields: [userId], references: [id])
   createdAt   DateTime  @default(now())
@@ -110,6 +111,7 @@ model Transaction {
 
   @@index([createdAt])
   @@index([userId])
+  @@index([billType])
 }
 
 // New model for sales analytics
