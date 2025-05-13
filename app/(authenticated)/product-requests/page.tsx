@@ -44,6 +44,7 @@ import {
   useProductRequests,
   ProductRequest,
 } from '@/hooks/use-product-requests';
+import { AdminActionBadge } from '@/components/products/AdminActionBadge';
 
 export default function ProductRequestsPage() {
   const { user } = useUser();
@@ -59,10 +60,10 @@ export default function ProductRequestsPage() {
 
   const [loadingStates, setLoadingStates] = useState<{
     [key: string]: { approving: boolean; rejecting: boolean };
-  }>({});
-  const [searchTerm, setSearchTerm] = useState('');
+  }>({});  const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [sourceFilter, setSourceFilter] = useState<string>('all'); // Filter for admin vs shopkeeper actions
   const [selectedRequest, setSelectedRequest] = useState<ProductRequest | null>(
     null
   );
@@ -123,7 +124,6 @@ export default function ProductRequestsPage() {
       }));
     }
   };
-
   const handleDeleteAllRequests = async () => {
     setIsDeleting(true);
     try {
@@ -132,6 +132,7 @@ export default function ProductRequestsPage() {
       setCurrentPage(1);
       setStatusFilter('all');
       setTypeFilter('all');
+      setSourceFilter('all');
     } catch (error) {
       console.error('Error deleting all product requests:', error);
     } finally {
@@ -178,7 +179,6 @@ export default function ProductRequestsPage() {
         return 'bg-gray-100 text-gray-800';
     }
   };
-
   // Filter product requests
   const filteredRequests = productRequests.filter((request) => {
     // Search by request ID, product name, or user name
@@ -203,8 +203,14 @@ export default function ProductRequestsPage() {
     // Filter by type
     const matchesType =
       typeFilter === 'all' || request.requestType === typeFilter;
+    
+    // Filter by source (admin action or shopkeeper request)
+    const matchesSource =
+      sourceFilter === 'all' || 
+      (sourceFilter === 'admin' && request.adminAction === true) || 
+      (sourceFilter === 'shopkeeper' && request.adminAction !== true);
 
-    return matchesSearch && matchesStatus && matchesType;
+    return matchesSearch && matchesStatus && matchesType && matchesSource;
   });
 
   // Calculate stats
@@ -381,9 +387,7 @@ export default function ProductRequestsPage() {
               <SelectItem value="Approved">Approved</SelectItem>
               <SelectItem value="Rejected">Rejected</SelectItem>
             </SelectContent>
-          </Select>
-
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
+          </Select>          <Select value={typeFilter} onValueChange={setTypeFilter}>
             <SelectTrigger className="w-full sm:w-[150px]">
               <SelectValue placeholder="All Types" />
             </SelectTrigger>
@@ -392,6 +396,17 @@ export default function ProductRequestsPage() {
               <SelectItem value="add">Add</SelectItem>
               <SelectItem value="edit">Edit</SelectItem>
               <SelectItem value="delete">Delete</SelectItem>
+            </SelectContent>
+          </Select>
+          
+          <Select value={sourceFilter} onValueChange={setSourceFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="All Sources" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Sources</SelectItem>
+              <SelectItem value="admin">Admin Actions</SelectItem>
+              <SelectItem value="shopkeeper">Shopkeeper Requests</SelectItem>
             </SelectContent>
           </Select>
 
@@ -464,8 +479,7 @@ export default function ProductRequestsPage() {
                   <div className="overflow-hidden">
                     <h3 className="font-semibold text-sm sm:text-base break-words">
                       {request.requestId}
-                    </h3>
-                    <div className="flex items-center gap-1 mt-1">
+                    </h3>                    <div className="flex items-center gap-1 mt-1">
                       <span
                         className={`px-2 py-1 rounded-full text-xs flex items-center ${getTypeColor(
                           request.requestType
@@ -476,6 +490,7 @@ export default function ProductRequestsPage() {
                           {request.requestType}
                         </span>
                       </span>
+                      {request.adminAction && <AdminActionBadge adminAction={request.adminAction} />}
                     </div>
                     {request.user && (
                       <p className="text-xs mt-1 text-blue-600 break-words">
@@ -792,14 +807,16 @@ export default function ProductRequestsPage() {
                       <td className="p-3 sm:p-4 text-xs sm:text-sm hidden lg:table-cell">
                         {formatIndianDateTime(request.requestDate)}
                       </td>
-                      <td className="p-3 sm:p-4 text-xs sm:text-sm">
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ${getStatusColor(
-                            request.status
-                          )}`}
-                        >
-                          {request.status}
-                        </span>
+                      <td className="p-3 sm:p-4 text-xs sm:text-sm">                        <div className="flex gap-1 items-center flex-wrap">
+                          <span
+                            className={`px-2 py-1 rounded-full text-xs whitespace-nowrap ${getStatusColor(
+                              request.status
+                            )}`}
+                          >
+                            {request.status}
+                          </span>
+                          {request.adminAction && <AdminActionBadge adminAction={request.adminAction} />}
+                        </div>
                       </td>
                       <td className="p-3 sm:p-4">
                         <div className="flex items-center gap-1 sm:gap-2">
@@ -1033,12 +1050,11 @@ export default function ProductRequestsPage() {
                         selectedRequest.requestType
                       )}`}
                     >
-                      {getTypeIcon(selectedRequest.requestType)}
-                      <span className="ml-1 capitalize">
+                      {getTypeIcon(selectedRequest.requestType)}                    <span className="ml-1 capitalize">
                         {selectedRequest.requestType}
                       </span>
                     </span>
-                    
+                    {selectedRequest.adminAction && <AdminActionBadge adminAction={selectedRequest.adminAction} />}
                   </div>
                 </div>
 

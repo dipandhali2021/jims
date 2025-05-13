@@ -1,0 +1,66 @@
+'use client';
+
+import { useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { 
+  Users, 
+  UserCircle, 
+  FileText, 
+  CreditCard, 
+  ShoppingBag, 
+  Clock,
+  CheckCircle,
+  XCircle,
+  PlusCircle
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { useClerk } from '@clerk/nextjs';
+import { VyapariTab } from '@/components/khata/VyapariTab';
+import { KarigarTab } from '@/components/khata/KarigarTab';
+
+export default function KhataPage() {
+  const { user } = useClerk();
+  const isAdmin = user?.publicMetadata?.role === 'admin';
+  const [activeTab, setActiveTab] = useState('vyapari');
+
+  return (
+    <div className="container mx-auto py-6 max-w-7xl">
+      <div className="flex flex-col gap-6">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Khata Book</h1>
+          <p className="text-muted-foreground">
+            Manage your traders (VYAPARI) and artisans (KARIGAR) records, transactions, and payments.
+          </p>
+        </div>
+
+        <Tabs defaultValue="vyapari" className="w-full" onValueChange={setActiveTab}>
+          <div className="flex items-center justify-between">
+            <TabsList>
+              <TabsTrigger value="vyapari" className="relative">
+                <Users className="h-4 w-4 mr-2" />
+                <span>VYAPARI (Traders)</span>
+              </TabsTrigger>
+              <TabsTrigger value="karigar">
+                <UserCircle className="h-4 w-4 mr-2" />
+                <span>KARIGAR (Artisans)</span>
+              </TabsTrigger>
+              {/* Will add Analytics tab in future */}
+            </TabsList>
+          </div>
+          
+          <div className="mt-4">
+            <TabsContent value="vyapari" className="space-y-4">
+              <VyapariTab isAdmin={isAdmin} />
+            </TabsContent>
+            
+            <TabsContent value="karigar" className="space-y-4">
+              <KarigarTab isAdmin={isAdmin} />
+            </TabsContent>
+          </div>
+        </Tabs>
+      </div>
+    </div>
+  );
+}

@@ -1,44 +1,68 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Trash2 } from 'lucide-react';
 import { Product, useProducts } from '@/hooks/use-products';
+import { useAdminProductActions } from '@/hooks/use-admin-product-actions';
 
 interface DeleteProductDialogProps {
   product: Product;
   onProductDeleted: () => Promise<void>;
 }
 
-export function DeleteProductDialog({ product, onProductDeleted }: DeleteProductDialogProps) {
-  const [isOpen, setIsOpen] = useState(false);
+export function DeleteProductDialog({ product, onProductDeleted }: DeleteProductDialogProps) {  const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
+  const router = useRouter();
+  const { trackProductDeletion } = useAdminProductActions();
   const handleDelete = async () => {
     try {
       setIsLoading(true);
       
-      const response = await fetch(`/api/products/${product.id}`, {
-        method: 'DELETE',
+      // Create product details object for the delete request
+      const productDetails = {
+        name: product.name,
+        sku: product.sku,
+        description: product.description || '',
+        price: product.price,
+        stock: product.stock,
+        category: product.category,
+        material: product.material,
+        imageUrl: product.imageUrl,
+        supplier: product.supplier || undefined
+      };
+      
+      // Instead of directly deleting, create a product delete request
+      const response = await fetch('/api/product-requests', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          requestType: 'delete',
+          productId: product.id,
+          details: productDetails,
+          adminAction: true
+        }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to delete product');
+        throw new Error(error.error || 'Failed to create delete request');
       }
 
       // Call the callback to refresh products
-      await onProductDeleted();
-
-      toast({
+      await onProductDeleted();      toast({
         title: 'Success',
-        description: 'Product deleted successfully',
+        description: 'Product deletion request created successfully. Please approve it in the Product Requests page.',
       });
 
       setIsOpen(false);
+        
     } catch (error: any) {
       console.error('Error deleting product:', error);
       toast({

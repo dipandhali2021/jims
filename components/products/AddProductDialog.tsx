@@ -10,6 +10,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Upload, X, Loader2 } from 'lucide-react';
+import { useAdminProductActions } from '@/hooks/use-admin-product-actions';
 
 const categories = [
   'Rings',
@@ -40,6 +41,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const router = useRouter();
+  const { trackProductCreation } = useAdminProductActions();
 
   const [formData, setFormData] = useState({
     name: '',
@@ -196,32 +198,67 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       }
 
       console.log('Submitting product data');
-      
-      // Send the request to the API endpoint
-      const response = await fetch('/api/products', requestOptions);
+        // Instead of directly creating the product, create a product request
+      const productDetails = {
+        name: formData.name,
+        sku: formData.sku,
+        description: formData.description || '',
+        price: parseFloat(formData.price),
+        stock: parseInt(formData.stock),
+        category: finalCategory,
+        material: finalMaterial,
+        supplier: formData.supplier || undefined
+      };
 
+      // If there's an image file, use FormData for the product request
+      let productRequestOptions: RequestInit;
+      if (imageFile) {
+        const data = new FormData();
+        data.append('requestType', 'add');
+        data.append('details', JSON.stringify(productDetails));
+        data.append('image', imageFile);
+        data.append('adminAction', 'true');
+        
+        productRequestOptions = {
+          method: 'POST',
+          body: data
+        };
+      } else {
+        // If no image, send as JSON with default imageUrl
+        productRequestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            requestType: 'add',
+            details: {
+              ...productDetails,
+              imageUrl: DEFAULT_IMAGE_URL
+            },
+            adminAction: true
+          })
+        };
+      }
+      
+      // Send the request to create a product request
+      const response = await fetch('/api/product-requests', productRequestOptions);
+      
       // Parse the response as JSON
       const result = await response.json();
-
+      
       if (!response.ok) {
-        throw new Error(result.error || 'Failed to create product');
-      }
-
-      // Call the callback to refresh products
+        throw new Error(result.error || 'Failed to create product request');
+      }      // Call the callback to refresh products
       await onProductAdded();
 
       // Show success toast
       toast({
         title: 'Success',
-        description: 'Product created successfully',
-      });
-
-      // Close the dialog and reset form
+        description: 'Product request created successfully. Please approve it in the Product Requests page.',
+      });      // Close the dialog and reset form
       setIsOpen(false);
       resetForm();
-      
-      // Refresh the page to show updated products
-      router.refresh();
     } catch (error: any) {
       console.error('Error creating product:', error);
       

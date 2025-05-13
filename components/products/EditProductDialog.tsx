@@ -23,6 +23,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { PenSquare, Upload, X, Loader2, ChevronDown, ChevronUp } from 'lucide-react';
 import { Product } from '@/hooks/use-products';
+import { useAdminProductActions } from '@/hooks/use-admin-product-actions';
 
 const categories = [
   'Rings',
@@ -67,6 +68,7 @@ export function EditProductDialog({
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const router = useRouter();
+  const { trackProductUpdate } = useAdminProductActions();
 
   // Determine if product has custom category or material
   const isCustomCategory = !categories.includes(product.category);
@@ -369,26 +371,43 @@ export function EditProductDialog({
       }
 
       // Add a flag to indicate if image should be removed
-      data.append('removeImage', removeImage.toString());
-
-      console.log(`Updating product with ID: ${product.id}`);
-
-      // Send the request to the API endpoint
-      const response = await fetch(`/api/products/${product.id}`, {
-        method: 'PUT',
+      data.append('removeImage', removeImage.toString());      console.log(`Creating product update request for ID: ${product.id}`);
+        // Create product details for the request
+      const productDetails = {
+        name: formData.name,
+        sku: formData.sku,
+        description: formData.description || '',
+        price: parseFloat(formData.price),
+        stock: calculateNewStock(),
+        category: finalCategory,
+        material: finalMaterial,
+        supplier: formData.supplier || undefined,
+        stockAdjustment: parseInt(stockAdjustment.toString(), 10) // Ensure stockAdjustment is an integer
+      };
+      
+      // Create a product request instead of directly updating
+      data.append('requestType', 'edit');
+      data.append('productId', product.id);
+      data.append('details', JSON.stringify(productDetails));
+      data.append('adminAction', 'true');
+      
+      if (removeImage) {
+        data.append('removeImage', 'true');
+      }
+      
+      // Send the request to create a product edit request
+      const response = await fetch('/api/product-requests', {
+        method: 'POST',
         body: data,
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update product');
+        throw new Error(errorData.error || 'Failed to create product update request');
       }
-
-      const updatedProduct = await response.json();
-      
-      toast({
+        toast({
         title: 'Success',
-        description: 'Product updated successfully',
+        description: 'Product update request created successfully. Please approve it in the Product Requests page.',
       });
       
       // Close the dialog and refresh data

@@ -8,86 +8,89 @@ datasource db {
 }
 
 model User {
-  id                String          @id
-  email             String          @unique
-  firstName         String
-  lastName          String
-  role              String          @default("user")
-  isSubscribed      Boolean         @default(false)
-  subscriptionEnds  DateTime?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  todos             Todo[]
-  products          Product[]
-  salesRequests     SalesRequest[]
-  transactions      Transaction[]
-  notifications     Notification[]
-  productRequests   ProductRequest[]
-  bills             Bill[]
-}
+  id               String           @id
+  email            String           @unique
+  firstName        String
+  lastName         String
+  role             String           @default("user")
+  isSubscribed     Boolean          @default(false)
+  subscriptionEnds DateTime?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  products         Product[]
+  salesRequests    SalesRequest[]
+  transactions     Transaction[]
+  notifications    Notification[]
+  productRequests  ProductRequest[]
+  bills            Bill[]
 
-model Todo {
-  id        String   @id @default(cuid())
-  title     String
-  completed Boolean  @default(false)
-  user      User     @relation(fields: [userId], references: [id])
-  userId    String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  // Khata (Book Record) feature relations
+  createdVyaparis     Vyapari[]            @relation("createdVyapari")
+  approvedVyaparis    Vyapari[]            @relation("approvedVyapari")
+  createdKarigars     Karigar[]            @relation("createdKarigar")
+  approvedKarigars    Karigar[]            @relation("approvedKarigar")
+  vyapariTransactions VyapariTransaction[]
+  karigarTransactions KarigarTransaction[]
+  vyapariPayments     VyapariPayment[]
+  karigarPayments     KarigarPayment[]
 }
 
 model Product {
-  id          String         @id @default(cuid())
-  name        String
-  sku         String         @unique
-  description String?
-  category    String
-  material    String
-  price       Float
-  stock       Int
-  lowStockThreshold Int      @default(10)
-  supplier    String?
-  imageUrl    String
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
-  user        User           @relation(fields: [userId], references: [id])
-  userId      String
-  salesItems  SalesItem[]
-  productRequests ProductRequest[]
+  id                String           @id @default(cuid())
+  name              String
+  sku               String           @unique
+  description       String?
+  category          String
+  material          String
+  price             Float
+  stock             Int
+  lowStockThreshold Int              @default(10)
+  supplier          String?
+  imageUrl          String
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  user              User             @relation(fields: [userId], references: [id])
+  userId            String
+  salesItems        SalesItem[]
+  productRequests   ProductRequest[]
 }
 
 model SalesRequest {
-  id           String      @id @default(cuid())
-  requestId    String      @unique // Format: SR-YYYY-XXXX
-  customer     String
-  totalValue   Float
-  status       String      @default("Pending") // Pending, Approved, Rejected
-  requestDate  DateTime    @default(now())
-  items        SalesItem[]
-  user         User        @relation(fields: [userId], references: [id])
-  userId       String
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
+  id          String      @id @default(cuid())
+  requestId   String      @unique // Format: SR-YYYY-XXXX
+  customer    String
+  totalValue  Float
+  status      String      @default("Pending") // Pending, Approved, Rejected
+  requestDate DateTime    @default(now())
+  items       SalesItem[]
+  user        User        @relation(fields: [userId], references: [id])
+  userId      String
+  vyapari     Vyapari?    @relation(fields: [vyapariId], references: [id])
+  vyapariId   String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  @@index([vyapariId])
 }
 
 model SalesItem {
-  id             String       @id @default(cuid())
-  quantity       Int
-  price          Float
-  product        Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
-  productId      String?
-  productName    String?      // Store product name for historical reference
-  productSku     String?      // Store product SKU for historical reference
-  productImageUrl String?     // Store product image URL for historical reference
-  salesRequest   SalesRequest @relation(fields: [salesRequestId], references: [id])
-  salesRequestId String
+  id              String       @id @default(cuid())
+  quantity        Int
+  price           Float
+  product         Product?     @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productId       String?
+  productName     String? // Store product name for historical reference
+  productSku      String? // Store product SKU for historical reference
+  productImageUrl String? // Store product image URL for historical reference
+  salesRequest    SalesRequest @relation(fields: [salesRequestId], references: [id])
+  salesRequestId  String
 }
 
 model Notification {
   id        String   @id @default(cuid())
   title     String
   message   String
-  type      String   // 'request', 'status_update', etc.
+  type      String // 'request', 'status_update', etc.
   isRead    Boolean  @default(false)
   user      User     @relation(fields: [userId], references: [id])
   userId    String
@@ -97,17 +100,17 @@ model Notification {
 
 // Model for storing completed transactions
 model Transaction {
-  id          String    @id @default(cuid())
-  orderId     String    @unique // Will use the SalesRequest's requestId
+  id          String   @id @default(cuid())
+  orderId     String   @unique // Will use the SalesRequest's requestId
   customer    String
   totalAmount Float
-  items       Json      // Store array of items with product details
-  status      String    @default("Completed")
-  billType    String?   // "GST" or "Non-GST"
+  items       Json // Store array of items with product details
+  status      String   @default("Completed")
+  billType    String? // "GST" or "Non-GST"
   userId      String
-  user        User      @relation(fields: [userId], references: [id])
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  user        User     @relation(fields: [userId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@index([createdAt])
   @@index([userId])
@@ -116,18 +119,18 @@ model Transaction {
 
 // New model for sales analytics
 model SalesAnalytics {
-  id              String   @id @default(cuid())
-  date            DateTime
-  totalRevenue    Float
-  totalOrders     Int
-  avgOrderValue   Float
-  productId       String
-  productName     String
-  category        String
-  quantity        Int
-  revenue         Float
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id            String   @id @default(cuid())
+  date          DateTime
+  totalRevenue  Float
+  totalOrders   Int
+  avgOrderValue Float
+  productId     String
+  productName   String
+  category      String
+  quantity      Int
+  revenue       Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   @@index([date])
   @@index([category])
@@ -135,18 +138,19 @@ model SalesAnalytics {
 }
 
 model ProductRequest {
-  id           String               @id @default(cuid())
-  requestId    String               @unique // Format: PR-YYYY-XXXX
-  requestType  String               // Add, Edit, Delete
-  status       String               @default("Pending") // Pending, Approved, Rejected
-  details      ProductRequestDetails?
-  product      Product?             @relation(fields: [productId], references: [id], onDelete: SetNull)
-  productId    String?              // For Edit and Delete requests
-  user         User                 @relation(fields: [userId], references: [id])
-  userId       String
-  requestDate  DateTime             @default(now())
-  createdAt    DateTime             @default(now())
-  updatedAt    DateTime             @updatedAt
+  id          String                 @id @default(cuid())
+  requestId   String                 @unique // Format: PR-YYYY-XXXX
+  requestType String // Add, Edit, Delete
+  status      String                 @default("Pending") // Pending, Approved, Rejected
+  adminAction Boolean                @default(false) // Flag to indicate if this was a direct admin action
+  details     ProductRequestDetails?
+  product     Product?               @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productId   String? // For Edit and Delete requests
+  user        User                   @relation(fields: [userId], references: [id])
+  userId      String
+  requestDate DateTime               @default(now())
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
 
   @@index([userId])
   @@index([status])
@@ -154,57 +158,184 @@ model ProductRequest {
 }
 
 model ProductRequestDetails {
-  id          String        @id @default(cuid())
-  name        String?
-  sku         String?
-  description String?
-  category    String?
-  material    String?
-  price       Float?
-  stock       Int?
+  id              String         @id @default(cuid())
+  name            String?
+  sku             String?
+  description     String?
+  category        String?
+  material        String?
+  price           Float?
+  stock           Int?
   stockAdjustment Int?
-  imageUrl    String?
-  supplier    String?
-  request     ProductRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
-  requestId   String        @unique
+  imageUrl        String?
+  supplier        String?
+  request         ProductRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  requestId       String         @unique
 }
 
 model AppSettings {
-  id                    String   @id @default("default")
-  showGoogleSignIn      Boolean  @default(true)
-  updatedAt             DateTime @updatedAt
+  id               String   @id @default("default")
+  showGoogleSignIn Boolean  @default(true)
+  updatedAt        DateTime @updatedAt
 }
 
 model Bill {
   id              String    @id @default(cuid())
   billNumber      String    @unique
-  billType        String    // "GST" or "Non-GST"
+  billType        String // "GST" or "Non-GST"
   date            DateTime  @default(now())
   dateOfSupply    DateTime? // Date when goods/services were supplied
-  timeOfSupply    String?   // Time when goods/services were supplied
+  timeOfSupply    String? // Time when goods/services were supplied
   customerName    String
   customerAddress String?
   customerState   String?
-  customerGSTIN   String?   // Only for GST bills
-  items           Json      // Store line items (particulars, qty, rate, amount)
+  customerGSTIN   String? // Only for GST bills
+  items           Json // Store line items (particulars, qty, rate, amount)
   totalAmount     Float
-  sgst            Float?    // Only for GST bills
-  cgst            Float?    // Only for GST bills
-  igst            Float?    // Only for GST bills
-  hsnCodes        Json?     // Optional: per item HSN
-  transportMode   String?   // For GST bills
-  vehicleNo       String?   // For GST bills
-  placeOfSupply   String?   // For GST bills
-  isTaxable       Boolean?  // For GST bills
+  sgst            Float? // Only for GST bills
+  cgst            Float? // Only for GST bills
+  igst            Float? // Only for GST bills
+  hsnCodes        Json? // Optional: per item HSN
+  transportMode   String? // For GST bills
+  vehicleNo       String? // For GST bills
+  placeOfSupply   String? // For GST bills
+  isTaxable       Boolean? // For GST bills
   user            User      @relation(fields: [userId], references: [id])
   userId          String
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  createdBy      String?  // User who created the bill
-  updatedBy      String?  // User who last updated the bill
+  createdBy       String? // User who created the bill
+  updatedBy       String? // User who last updated the bill
 
   @@index([billNumber])
-
   @@index([createdAt])
   @@index([userId])
+}
+
+// Models for Khata (Book Record) feature
+
+// Model for traders (VYAPARI)
+model Vyapari {
+  id            String               @id @default(cuid())
+  name          String
+  phone         String?
+  email         String?
+  address       String?
+  status        String               @default("Active") // Active, Inactive
+  isApproved    Boolean              @default(false)
+  createdBy     User                 @relation("createdVyapari", fields: [createdById], references: [id])
+  createdById   String
+  approvedBy    User?                @relation("approvedVyapari", fields: [approvedById], references: [id])
+  approvedById  String?
+  transactions  VyapariTransaction[]
+  payments      VyapariPayment[]
+  salesRequests SalesRequest[]
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@index([name])
+  @@index([status])
+  @@index([isApproved])
+}
+
+// Model for artisans (KARIGAR)
+model Karigar {
+  id             String               @id @default(cuid())
+  name           String
+  phone          String?
+  email          String?
+  address        String?
+  specialization String? // Type of work they specialize in
+  status         String               @default("Active") // Active, Inactive
+  isApproved     Boolean              @default(false)
+  createdBy      User                 @relation("createdKarigar", fields: [createdById], references: [id])
+  createdById    String
+  approvedBy     User?                @relation("approvedKarigar", fields: [approvedById], references: [id])
+  approvedById   String?
+  transactions   KarigarTransaction[]
+  payments       KarigarPayment[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([name])
+  @@index([status])
+  @@index([isApproved])
+}
+
+// Model for trader transactions (VYAPARI transactions)
+model VyapariTransaction {
+  id            String   @id @default(cuid())
+  transactionId String   @unique // Format: VT-YYYY-XXXX
+  vyapari       Vyapari  @relation(fields: [vyapariId], references: [id])
+  vyapariId     String
+  description   String
+  amount        Float // Positive for credit to trader (we owe them), negative for debit (they owe us)
+  items         Json? // Optional items details in transaction
+  createdBy     User     @relation(fields: [createdById], references: [id])
+  createdById   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([vyapariId])
+  @@index([createdById])
+  @@index([createdAt])
+}
+
+// Model for artisan transactions (KARIGAR transactions)
+model KarigarTransaction {
+  id            String   @id @default(cuid())
+  transactionId String   @unique // Format: KT-YYYY-XXXX
+  karigar       Karigar  @relation(fields: [karigarId], references: [id])
+  karigarId     String
+  description   String
+  amount        Float // Positive for credit to artisan (we owe them), negative for debit (they owe us)
+  items         Json? // Optional items details in transaction
+  createdBy     User     @relation(fields: [createdById], references: [id])
+  createdById   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([karigarId])
+  @@index([createdById])
+  @@index([createdAt])
+}
+
+// Model for trader payments (VYAPARI payments)
+model VyapariPayment {
+  id              String   @id @default(cuid())
+  paymentId       String   @unique // Format: VP-YYYY-XXXX
+  vyapari         Vyapari  @relation(fields: [vyapariId], references: [id])
+  vyapariId       String
+  amount          Float
+  paymentMode     String // Cash, UPI, Bank Transfer, etc.
+  referenceNumber String? // For online transactions
+  notes           String?
+  createdBy       User     @relation(fields: [createdById], references: [id])
+  createdById     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([vyapariId])
+  @@index([createdById])
+  @@index([createdAt])
+}
+
+// Model for artisan payments (KARIGAR payments)
+model KarigarPayment {
+  id              String   @id @default(cuid())
+  paymentId       String   @unique // Format: KP-YYYY-XXXX
+  karigar         Karigar  @relation(fields: [karigarId], references: [id])
+  karigarId       String
+  amount          Float
+  paymentMode     String // Cash, UPI, Bank Transfer, etc.
+  referenceNumber String? // For online transactions
+  notes           String?
+  createdBy       User     @relation(fields: [createdById], references: [id])
+  createdById     String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([karigarId])
+  @@index([createdById])
+  @@index([createdAt])
 }

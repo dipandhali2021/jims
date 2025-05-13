@@ -11,23 +11,14 @@
 - use context7 for latest documentation
 
 # Feature requests
-- BILL GENERATION
-    - bill button in sidebar
-    - When an admin approves a SALES REQUEST, provide two options: "Create bill with GST" and "Create bill without GST".
-    - Once an option is chosen (e.g., "Create bill with GST"), the other option (e.g., "Create bill without GST") cannot be used for that specific transaction.
-    - In UI show like this after admin approves a SALES REQUEST:
-        - open a dialofue with two options in top tab select GST and NON GST
-        - according to the schema prepare the GST and NON GST bills.            
-    - Implement a separate bill page to track all bills.
-    - Automatically delete all bills (both GST and non-GST) that are older than two months from the current date.
-    - Provide functionality for manual deletion of individual bills (both GST and non-GST).
-    - Implement search functionality on the BILLS PAGE, allowing searches based on customer name.
-    - Implement MANUAL BILL CREATION (i.e., FAKE BILLS) that are not stored in the database and not displayed on the sales or bill dashboards.
-        - This feature should support creating bills both with and without GST.
-    - On the BILLS PAGE, add the ability to edit existing bills.
-        - Allow admins to update bill details and save changes.
-    - Add a "Print Bill" feature for each bill.
-        - Clicking "Print" should open a printable view of the bill in a beautiful, well-formatted layout.
-        - Ensure the printed format is clean, professional, and suitable for sharing with customers.
-
-
+- Khata (Book Record) feature
+- Add features to track VYAPARI (trader) and KARIGAR (artisan) transactions and payments.
+- Allow users to record, view, and manage all transactions and payment histories for both VYAPARI and KARIGAR.
+- Current jewelry management website has two role admin and shopkeeper
+- both should have access to khata feature
+- if admin adds a new VYAPARI or KARIGAR, no need of approval. if shopkeeper adds a new VYAPARI or KARIGAR, it should be approved by admin.
+- Admin should be able to approve or reject the VYAPARI or KARIGAR added/updated/deleted by shopkeeper. similar to the current approval process for sales requests.
+- Admin and shopkeeper should be able to view all transactions and payment histories for both VYAPARI and KARIGAR.
+- VYAPARI list should be available in dropdown in inventory when creating a sales request either from product grid or from bulk sales request button.
+- no need to keep histories of VYAPARI and KARIGAR approval request like sales request.
+- build all these feature in one tab of sidebar. optimize way.

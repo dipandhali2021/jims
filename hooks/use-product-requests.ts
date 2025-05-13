@@ -19,6 +19,7 @@ export type ProductRequest = {
   requestId: string;
   requestType: 'add' | 'edit' | 'delete';
   status: 'Pending' | 'Approved' | 'Rejected';
+  adminAction: boolean;  // Flag to indicate if this was a direct admin action
   requestDate: Date | string;
   userId: string;
   productId?: string | null;

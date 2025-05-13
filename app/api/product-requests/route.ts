@@ -62,17 +62,21 @@ export async function POST(req: NextRequest) {
         }
       });
     }
-
-    // Check if the request is FormData or JSON
-    const contentType = req.headers.get('content-type') || '';
-    let requestType, productId, details;
-    let imageUrl = 'https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png'; // Default image
     
-    if (contentType.includes('multipart/form-data')) {
+    // Check if user is admin
+    const isAdmin = user.role === 'admin';    // Check if the request is FormData or JSON
+    const contentType = req.headers.get('content-type') || '';
+    let requestType, productId, details, adminAction = false, autoApproved = false;
+    let imageUrl = 'https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png'; // Default image
+      if (contentType.includes('multipart/form-data')) {
       // Handle FormData request
       const formData = await req.formData();
       requestType = formData.get('requestType') as string;
       productId = formData.get('productId') as string;
+      
+      // Get adminAction flag from form data
+      const adminActionValue = formData.get('adminAction');
+      adminAction = adminActionValue === 'true';
       
       // Check if details is provided as JSON string
       const detailsJson = formData.get('details');
@@ -147,12 +151,13 @@ export async function POST(req: NextRequest) {
           }
         }
       }
-    } else {
-      // Handle JSON request
+    } else {      // Handle JSON request
       const body = await req.json();
       requestType = body.requestType;
       productId = body.productId;
       details = body.details;
+      adminAction = body.adminAction || false;
+      autoApproved = body.autoApproved || false;
       
       // If we have imageUrl in details, use it
       if (details?.imageUrl) {
@@ -216,29 +221,38 @@ export async function POST(req: NextRequest) {
           { status: 404 }
         );
       }
-    }
-
+    }    // Determine status based on request parameters
+    let status = 'Pending';
+    
+    // Client wants all product actions to go through approval process, even admin actions
+    // We'll keep this commented code for reference but not use auto-approval anymore
+    // if (isAdmin && adminAction && autoApproved) {
+    //   status = 'Approved';
+    // }
+    
     // Create product request based on type
     let productRequest;
     
-    if (requestType === 'add' || requestType === 'edit') {
-      // For add and edit requests, we need to create details
+    if (requestType === 'add' || requestType === 'edit') {      // For add and edit requests, we need to create details
       productRequest = await prisma.productRequest.create({
         data: {
           requestId: generateRequestId(),
           requestType,
-          status: 'Pending',
+          status,
           requestDate: new Date(),
           userId,
           productId: productId || null,
+          adminAction, // Include adminAction flag
           details: {
-            create: {
-              name: details.name,
+            create: {              name: details.name,
               sku: details.sku,
               description: details.description || '',
               price: details.price,
               stock: details.stock,
-              stockAdjustment: details.stockAdjustment, // Include stockAdjustment field
+              stockAdjustment: details.stockAdjustment !== undefined ? 
+                (typeof details.stockAdjustment === 'string' ? 
+                  parseInt(details.stockAdjustment, 10) : details.stockAdjustment) : 
+                null, // Ensure stockAdjustment is an integer
               category: details.category,
               material: details.material,
               supplier: details.supplier || null, // Include supplier field
@@ -259,16 +273,16 @@ export async function POST(req: NextRequest) {
           details: true
         }
       });
-    } else {
-      // For delete requests, we don't need details
+    } else {      // For delete requests, we don't need details
       productRequest = await prisma.productRequest.create({
         data: {
           requestId: generateRequestId(),
           requestType,
-          status: 'Pending',
+          status,
           requestDate: new Date(),
           userId,
-          productId: productId
+          productId: productId,
+          adminAction // Include adminAction flag
         },
         include: {
           user: {
@@ -283,29 +297,49 @@ export async function POST(req: NextRequest) {
           details: true
         }
       });
-    }
-
-    // Find admin users and create notifications for them
-    const adminUserIds = await findAdminUsers();
+    }    // Find admin users and create notifications for them
+    // For admin actions, we should notify other admins but not the admin who created the request
+    const allAdminUserIds = await findAdminUsers();
+    
+    // Filter out the current user if this is an admin action to avoid self-notification
+    const adminUserIds = adminAction 
+      ? allAdminUserIds.filter(adminId => adminId !== userId) 
+      : allAdminUserIds;
     
     if (adminUserIds.length > 0) {
       let notificationMessage = '';
       const requestTypeName = requestType.charAt(0).toUpperCase() + requestType.slice(1);
       const productName = details?.name || productRequest.product?.name || 'Unknown product';
       
-      switch (requestType) {
-        case 'add':
-          notificationMessage = `New product add request (${productRequest.requestId}) created by ${user.firstName} ${user.lastName} for product "${productName}".`;
-          break;
-        case 'edit':
-          notificationMessage = `New product edit request (${productRequest.requestId}) created by ${user.firstName} ${user.lastName} for product "${productName}".`;
-          break;
-        case 'delete':
-          notificationMessage = `New product delete request (${productRequest.requestId}) created by ${user.firstName} ${user.lastName} for product "${productName}".`;
-          break;
+      // Create different notification messages for admin actions
+      if (adminAction) {
+        switch (requestType) {
+          case 'add':
+            notificationMessage = `Admin ${user.firstName} ${user.lastName} has requested to add product "${productName}" (${productRequest.requestId}). This requires approval.`;
+            break;
+          case 'edit':
+            notificationMessage = `Admin ${user.firstName} ${user.lastName} has requested to edit product "${productName}" (${productRequest.requestId}). This requires approval.`;
+            break;
+          case 'delete':
+            notificationMessage = `Admin ${user.firstName} ${user.lastName} has requested to delete product "${productName}" (${productRequest.requestId}). This requires approval.`;
+            break;
+        }
+      } else {
+        // Regular shopkeeper notifications
+        switch (requestType) {
+          case 'add':
+            notificationMessage = `New product add request (${productRequest.requestId}) created by ${user.firstName} ${user.lastName} for product "${productName}".`;
+            break;
+          case 'edit':
+            notificationMessage = `New product edit request (${productRequest.requestId}) created by ${user.firstName} ${user.lastName} for product "${productName}".`;
+            break;
+          case 'delete':
+            notificationMessage = `New product delete request (${productRequest.requestId}) created by ${user.firstName} ${user.lastName} for product "${productName}".`;
+            break;
+        }
       }
 
-      // Create notifications for all admin users
+      // Create notifications for all relevant admin users
       await prisma.notification.createMany({
         data: adminUserIds.map(adminId => ({
           title: `New Product ${requestTypeName} Request`,
