@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { Plus, Upload, X, Loader2 } from 'lucide-react';
 import { useAdminProductActions } from '@/hooks/use-admin-product-actions';
+import { useKarigar } from '@/hooks/use-karigar';
 
 const categories = [
   'Rings',
@@ -39,9 +40,31 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const router = useRouter();
-  const { trackProductCreation } = useAdminProductActions();
+  const [karigars, setKarigars] = useState<any[]>([]);
+  const [loadingKarigars, setLoadingKarigars] = useState(false);  const { toast } = useToast();
+  const router = useRouter();  const { trackProductCreation } = useAdminProductActions();
+  const { fetchKarigars } = useKarigar();
+
+  // Fetch Karigars when dialog opens
+  useEffect(() => {
+    const loadKarigars = async () => {
+      if (isOpen) {
+        try {
+          setLoadingKarigars(true);
+          const data = await fetchKarigars();
+          // Filter to only include approved karigars
+          const approvedKarigars = data.filter((k: any) => k.isApproved);
+          setKarigars(approvedKarigars);
+        } catch (error) {
+          console.error('Failed to load artisans:', error);
+        } finally {
+          setLoadingKarigars(false);
+        }
+      }
+    };
+    
+    loadKarigars();
+  }, [isOpen, fetchKarigars]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -466,19 +489,33 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
                 required
               />
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="supplier" className="font-medium">Supplier</Label>
-            <Input
-              id="supplier"
+          </div>          <div className="space-y-2">
+            <Label htmlFor="supplier" className="font-medium">Karigar/Artisan</Label>
+            <Select
               value={formData.supplier}
-              onChange={(e) =>
-                setFormData({ ...formData, supplier: e.target.value })
+              onValueChange={(value) =>
+                setFormData({ ...formData, supplier: value })
               }
-              className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
-              placeholder="Enter supplier name (optional)"
-            />
+            >
+              <SelectTrigger className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50">
+                <SelectValue placeholder="Select karigar/artisan" />
+              </SelectTrigger>
+              <SelectContent>                {loadingKarigars ? (
+                  <div className="flex items-center justify-center p-2">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Loading...
+                  </div>
+                ) : karigars.length === 0 ? (
+                  <div className="p-2 text-sm text-gray-500">No karigars found</div>
+                ) : (
+                  karigars.map((karigar) => (
+                    <SelectItem key={karigar.id} value={karigar.name}>
+                      {karigar.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

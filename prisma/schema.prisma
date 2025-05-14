@@ -38,7 +38,7 @@ model User {
 model Product {
   id                String           @id @default(cuid())
   name              String
-  sku               String           @unique
+  sku               String           
   description       String?
   category          String
   material          String
