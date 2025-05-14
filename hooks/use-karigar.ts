@@ -205,7 +205,6 @@ export function useKarigar() {
       throw error;
     }
   }, [toast]);
-
   // Approve or reject a karigar (admin only)
   const updateKarigarStatus = useCallback(async (id: string, approve: boolean) => {
     try {
@@ -217,26 +216,26 @@ export function useKarigar() {
         body: JSON.stringify({ approve }),
       });
       
+      // Check if response is ok
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          throw new Error(`Failed to ${approve ? 'approve' : 'reject'} artisan. Status: ${response.status}`);
+        }
         throw new Error(errorData.error || `Failed to ${approve ? 'approve' : 'reject'} artisan`);
       }
       
       const result = await response.json();
       
-      toast({
-        title: 'Success',
-        description: `Artisan ${approve ? 'approved' : 'rejected'} successfully`,
-      });
+      // Don't show toast here - let the component handle it
+      // This prevents duplicate toasts
       
       return result;
     } catch (error: any) {
       console.error(`Error updating karigar ${id} status:`, error);
-      toast({
-        title: 'Error',
-        description: error.message || `Failed to ${approve ? 'approve' : 'reject'} artisan`,
-        variant: 'destructive',
-      });
+      // Don't show toast here - let the component handle it
       throw error;
     }
   }, [toast]);

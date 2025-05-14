@@ -203,7 +203,7 @@ export function useVyapari() {
     }
   }, [toast]);
 
-  // Approve or reject a vyapari (admin only)
+  // Approve or reject a vyapari (admin only)  
   const updateVyapariStatus = useCallback(async (id: string, approve: boolean) => {
     try {
       const response = await fetch(`/api/khata/vyaparis/${id}/approve`, {
@@ -214,26 +214,26 @@ export function useVyapari() {
         body: JSON.stringify({ approve }),
       });
       
+      // Check if response is ok
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (e) {
+          throw new Error(`Failed to ${approve ? 'approve' : 'reject'} trader. Status: ${response.status}`);
+        }
         throw new Error(errorData.error || `Failed to ${approve ? 'approve' : 'reject'} trader`);
       }
       
       const result = await response.json();
       
-      toast({
-        title: 'Success',
-        description: `Trader ${approve ? 'approved' : 'rejected'} successfully`,
-      });
+      // Don't show toast here - let the component handle it
+      // This prevents duplicate toasts
       
       return result;
     } catch (error: any) {
       console.error(`Error updating vyapari ${id} status:`, error);
-      toast({
-        title: 'Error',
-        description: error.message || `Failed to ${approve ? 'approve' : 'reject'} trader`,
-        variant: 'destructive',
-      });
+      // Don't show toast here - let the component handle it
       throw error;
     }
   }, [toast]);

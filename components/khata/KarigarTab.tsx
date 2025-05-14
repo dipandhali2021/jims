@@ -62,11 +62,11 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showTransactionDialog, setShowTransactionDialog] = useState(false);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
-  const [selectedKarigar, setSelectedKarigar] = useState<any>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);  const [selectedKarigar, setSelectedKarigar] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [karigars, setKarigars] = useState<any[]>([]);
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
+  const [loadingStates, setLoadingStates] = useState<Record<string, { approving: boolean, rejecting: boolean }>>({});
 
   const { fetchKarigars, updateKarigarStatus, fetchPendingKarigars } = useKarigar();
 
@@ -96,18 +96,32 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
     
     loadData();
   }, [fetchKarigars, fetchPendingKarigars, toast, isAdmin]);
-
   const handleApproveReject = async (id: string, approve: boolean) => {
+    // Set the appropriate loading state
+    setLoadingStates(prev => ({
+      ...prev,
+      [id]: {
+        approving: approve,
+        rejecting: !approve
+      }
+    }));
+    
     try {
       await updateKarigarStatus(id, approve);
       
-      // Refresh data after status change
-      const data = await fetchKarigars();
-      setKarigars(data);
-      
-      if (isAdmin) {
-        const pendingData = await fetchPendingKarigars();
-        setPendingApprovals(pendingData);
+      if (!approve) {
+        // If rejecting, immediately remove from the lists
+        setKarigars(prev => prev.filter(k => k.id !== id));
+        setPendingApprovals(prev => prev.filter(k => k.id !== id));
+      } else {
+        // If approving, refresh data to get updated status
+        const data = await fetchKarigars();
+        setKarigars(data);
+        
+        if (isAdmin) {
+          const pendingData = await fetchPendingKarigars();
+          setPendingApprovals(pendingData);
+        }
       }
       
       toast({
@@ -118,9 +132,15 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
       console.error('Failed to update status:', error);
       toast({
         title: 'Error',
-        description: 'Failed to update status',
+        description: `Failed to ${approve ? 'approve' : 'reject'} artisan. Please try again.`,
         variant: 'destructive',
       });
+    } finally {
+      // Reset the loading state
+      setLoadingStates(prev => ({
+        ...prev,
+        [id]: { approving: false, rejecting: false }
+      }));
     }
   };
 
@@ -180,15 +200,19 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                         <TableCell>
                           {new Date(karigar.createdAt).toLocaleDateString()}
                         </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
+                        <TableCell>                        <div className="flex items-center gap-2">
                             <Button
                               variant="outline"
                               size="icon"
                               className="h-8 w-8 text-green-600"
                               onClick={() => handleApproveReject(karigar.id, true)}
+                              disabled={loadingStates[karigar.id]?.approving || loadingStates[karigar.id]?.rejecting}
                             >
-                              <CheckCircle className="h-4 w-4" />
+                              {loadingStates[karigar.id]?.approving ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <CheckCircle className="h-4 w-4" />
+                              )}
                               <span className="sr-only">Approve</span>
                             </Button>
                             <Button
@@ -196,8 +220,13 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                               size="icon"
                               className="h-8 w-8 text-red-600"
                               onClick={() => handleApproveReject(karigar.id, false)}
+                              disabled={loadingStates[karigar.id]?.approving || loadingStates[karigar.id]?.rejecting}
                             >
-                              <XCircle className="h-4 w-4" />
+                              {loadingStates[karigar.id]?.rejecting ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <XCircle className="h-4 w-4" />
+                              )}
                               <span className="sr-only">Reject</span>
                             </Button>
                             <Button

@@ -12,7 +12,13 @@ export async function PUT(req: Request, { params }: RouteParams) {
   try {
     const { userId } = auth();
     const { id } = params;
-    const data = await req.json();
+    let data;
+    
+    try {
+      data = await req.json();
+    } catch (error) {
+      return NextResponse.json({ error: 'Invalid request body' }, { status: 400 });
+    }
     
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -40,37 +46,46 @@ export async function PUT(req: Request, { params }: RouteParams) {
         { status: 404 }
       );
     }
-
+    
     // Approve or reject
     const approve = data.approve === true;
     
-    const updatedVyapari = await prisma.vyapari.update({
-      where: { id },
-      data: {
-        isApproved: approve,
-        approvedById: userId,
-        // If rejected, mark as inactive
-        status: approve ? existingVyapari.status : 'Inactive'
-      },
-      include: {
-        createdBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true
-          }
+    if (approve) {
+      // If approving, update the record
+      const updatedVyapari = await prisma.vyapari.update({
+        where: { id },
+        data: {
+          isApproved: true,
+          approvedById: userId,
+          status: existingVyapari.status || 'Active'
         },
-        approvedBy: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true
+        include: {
+          createdBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true
+            }
+          },
+          approvedBy: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true
+            }
           }
         }
-      }
-    });
-
-    return NextResponse.json(updatedVyapari);
+      });
+      
+      return NextResponse.json(updatedVyapari);
+    } else {
+      // Reject the vyapari - delete the record instead of just marking inactive
+      await prisma.vyapari.delete({
+        where: { id }
+      });
+      
+      return NextResponse.json({ message: 'Trader rejected and removed successfully' });
+    }
   } catch (error) {
     console.error(`Error updating vyapari approval status ${params.id}:`, error);
     return NextResponse.json(
