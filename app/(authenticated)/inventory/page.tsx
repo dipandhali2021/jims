@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
+import Link from 'next/link';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -81,10 +82,21 @@ export default function InventoryPage() {
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
 
   return (
-    <div className="p-6">
-      {/* Header */}
+    <div className="p-6">      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center md:items-center mb-6 gap-4">
-        <h1 className="text-2xl md:text-2xl font-bold">Inventory Management</h1>
+        <div className="flex items-center gap-4">
+          <h1 className="text-2xl md:text-2xl font-bold">Inventory Management</h1>          <Button 
+            variant="outline"
+            size="sm"
+            asChild
+            className="hidden md:flex items-center gap-2"
+          >
+            <Link href="/inventory/dashboard" prefetch={true}>
+              Dashboard
+              <ChevronDown className="h-4 w-4 rotate-90" />
+            </Link>
+          </Button>
+        </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"

@@ -64,7 +64,15 @@ interface DashboardSidebarProps {
 
 const sidebarLinks: SidebarLink[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, adminOnly: true },
-  { href: '/inventory', label: 'Inventory', icon: Package },
+  { 
+    href: '/inventory', 
+    label: 'Inventory', 
+    icon: Package,
+    subItems: [
+      { href: '/inventory', label: 'Products' },
+      { href: '/inventory/dashboard', label: 'Dashboard' },
+    ],
+  },
   { href: '/requests', label: 'Sales Requests', icon: History },
   { href: '/product-requests', label: 'Product Requests', icon: Package },
   { href: '/bills', label: 'Bills', icon: ShoppingBag },
@@ -93,6 +101,22 @@ export function DashboardSidebar({
   const pathname = usePathname();
   const { signOut } = useClerk();
   const [searchQuery, setSearchQuery] = useState('');
+    // Initialize openMenus state based on the current path
+  const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() => {
+    const initialState: Record<string, boolean> = {};
+    
+    // Auto-expand any menu that contains the current path
+    sidebarLinks.forEach(link => {
+      if (link.subItems && (
+        pathname === link.href || 
+        link.subItems.some(subItem => pathname.startsWith(subItem.href))
+      )) {
+        initialState[link.label] = true;
+      }
+    });
+    
+    return initialState;
+  });
 
   const filteredLinks = sidebarLinks.filter(
     (link) =>
@@ -159,13 +183,19 @@ export function DashboardSidebar({
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               Main Menu
             </p>
-          </div>
-          <SidebarMenu>
+          </div>          <SidebarMenu className="space-y-1">
             {filteredLinks.map((link) => (
-              <SidebarMenuItem key={link.label}>
-                {link.subItems ? (
+              <SidebarMenuItem key={link.label} className="mb-2">                {link.subItems ? (
                   <>
-                    <SidebarMenuButton className="justify-between group hover:bg-accent/50 rounded-md">
+                    <SidebarMenuButton 
+                      className="justify-between group hover:bg-accent/50 rounded-md"
+                      onClick={() => {
+                        setOpenMenus(prev => ({
+                          ...prev,
+                          [link.label]: !prev[link.label]
+                        }));
+                      }}
+                    >
                       <div className="flex items-center">
                         <div
                           className={`mr-3 p-2 rounded-md ${
@@ -178,14 +208,23 @@ export function DashboardSidebar({
                         </div>
                         <span>{link.label}</span>
                       </div>
-                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                    </SidebarMenuButton>
-                    <SidebarMenuSub className="ml-10 mt-1">
+                      <ChevronDown 
+                        className={`h-4 w-4 text-muted-foreground transition-transform duration-200 ${
+                          openMenus[link.label] ? 'rotate-180' : ''
+                        }`} 
+                      />
+                    </SidebarMenuButton>                    <SidebarMenuSub 
+                      className={`ml-10 mt-1 overflow-hidden transition-all duration-200 ${
+                        openMenus[link.label] 
+                          ? 'max-h-40 opacity-100' 
+                          : 'max-h-0 opacity-0'
+                      }`}
+                    >
                       {link.subItems.map((subItem) => (
                         <SidebarMenuSubItem key={subItem.label}>
                           <SidebarMenuSubButton
                             asChild
-                            isActive={pathname === subItem.href}
+                            isActive={pathname === subItem.href || (pathname.includes(subItem.href) && subItem.href !== link.href)}
                             className="hover:bg-accent/50 py-2 px-4 rounded-md text-sm"
                           >
                             <Link href={subItem.href}>{subItem.label}</Link>
@@ -322,12 +361,17 @@ export function DashboardSidebar({
           </div>
           <div className="space-y-1 px-3">
             {filteredLinks.map((link) => (
-              <div key={link.label} className="mb-1">
-                {link.subItems ? (
+              <div key={link.label} className="mb-1">                {link.subItems ? (
                   <div className="space-y-1">
                     <Button
                       variant="ghost"
                       className="w-full justify-between text-left font-normal h-12 rounded-lg group"
+                      onClick={() => {
+                        setOpenMenus(prev => ({
+                          ...prev,
+                          [link.label]: !prev[link.label]
+                        }));
+                      }}
                     >
                       <div className="flex items-center">
                         <div
@@ -341,9 +385,15 @@ export function DashboardSidebar({
                         </div>
                         <span>{link.label}</span>
                       </div>
-                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                      <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${
+                        openMenus[link.label] ? 'rotate-180' : ''
+                      }`} />
                     </Button>
-                    <div className="pl-12 space-y-1">
+                    <div className={`pl-12 space-y-1 overflow-hidden transition-all duration-200 ${
+                      openMenus[link.label] || pathname.startsWith(link.href) 
+                        ? 'max-h-40 opacity-100' 
+                        : 'max-h-0 opacity-0'
+                    }`}>
                       {link.subItems.map((subItem) => (
                         <Button
                           key={subItem.label}
