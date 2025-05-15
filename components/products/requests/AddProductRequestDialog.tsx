@@ -55,7 +55,6 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-
   // Form state
   const [formData, setFormData] = useState({
     name: '',
@@ -65,6 +64,7 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
     material: '',
     customCategory: '',
     customMaterial: '',
+    costPrice: '',
     price: '',
     stock: '',
     supplier: '',
@@ -152,7 +152,6 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
     setImage(null);
     setImagePreview(null);
   };
-
   const resetForm = () => {
     setFormData({
       name: '',
@@ -162,6 +161,7 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
       material: '',
       customCategory: '',
       customMaterial: '',
+      costPrice: '',
       price: '',
       stock: '',
       supplier: '',
@@ -234,17 +234,26 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
         variant: 'destructive',
       });
       return;
-    }
-
-    // Price and stock validation
-    const priceValue = parseFloat(formData.price);
+    }    // Price and stock validation
+    const costPriceValue = parseFloat(formData.costPrice);
+    const sellingPriceValue = parseFloat(formData.price);
     const stockValue = parseInt(formData.stock);
 
-    if (isNaN(priceValue) || priceValue <= 0) {
-      setError('Valid price is required');
+    if (isNaN(costPriceValue) || costPriceValue <= 0) {
+      setError('Valid cost price is required');
       toast({
         title: 'Error',
-        description: 'Please enter a valid price',
+        description: 'Please enter a valid cost price',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (isNaN(sellingPriceValue) || sellingPriceValue <= 0) {
+      setError('Valid selling price is required');
+      toast({
+        title: 'Error',
+        description: 'Please enter a valid selling price',
         variant: 'destructive',
       });
       return;
@@ -272,15 +281,15 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
       
       // Add request type
       formDataToSubmit.append('requestType', 'add');
-      
-      // Convert fields to JSON for the details object
+        // Convert fields to JSON for the details object
       const details = {
         name: formData.name,
         sku: formData.sku,
         description: formData.description,
         category: finalCategory,
         material: finalMaterial,
-        price: parseFloat(formData.price),
+        costPrice: parseFloat(formData.costPrice),
+        price: parseFloat(formData.price), // Selling price
         stock: parseInt(formData.stock),
         supplier: formData.supplier || undefined
       };
@@ -465,12 +474,27 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
                 </div>
               )}
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          </div>          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="costPrice" className="font-medium">
+                Cost Price (₹) (Kharid Mulya) *
+              </Label>
+              <Input
+                id="costPrice"
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.costPrice}
+                onChange={(e) =>
+                  setFormData({ ...formData, costPrice: e.target.value })
+                }
+                className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                required
+              />
+            </div>
             <div className="space-y-2">
               <Label htmlFor="price" className="font-medium">
-                Price (₹) *
+                Selling Price (₹) (Bikri Mulya) *
               </Label>
               <Input
                 id="price"
@@ -485,6 +509,9 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
                 required
               />
             </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="stock" className="font-medium">
                 Stock *

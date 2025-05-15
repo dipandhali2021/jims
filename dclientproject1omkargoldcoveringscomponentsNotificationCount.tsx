@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Notification {
@@ -12,7 +12,7 @@ export function useNotificationCount() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const { toast } = useToast();
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const response = await fetch('/api/notifications');
       if (!response.ok) {
@@ -27,11 +27,11 @@ export function useNotificationCount() {
         variant: 'destructive',
       });
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     fetchNotifications();
-  }, []);
+  }, [fetchNotifications]);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;
   return unreadCount;

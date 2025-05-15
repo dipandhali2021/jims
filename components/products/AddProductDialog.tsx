@@ -65,7 +65,6 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
     
     loadKarigars();
   }, [isOpen, fetchKarigars]);
-
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
@@ -74,7 +73,8 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
     material: '',
     customCategory: '',
     customMaterial: '',
-    price: '',
+    costPrice: '',
+    sellingPrice: '',
     stock: '',
     supplier: '',
   });
@@ -88,7 +88,8 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       material: '',
       customCategory: '',
       customMaterial: '',
-      price: '',
+      costPrice: '',
+      sellingPrice: '',
       stock: '',
       supplier: '',
     });
@@ -161,12 +162,21 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
       });
       return;
     }
-    
-    if (!formData.price || isNaN(parseFloat(formData.price))) {
-      setError("Valid price is required");
+      if (!formData.costPrice || isNaN(parseFloat(formData.costPrice))) {
+      setError("Valid cost price is required");
       toast({
         title: 'Error',
-        description: 'Please enter a valid price',
+        description: 'Please enter a valid cost price',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!formData.sellingPrice || isNaN(parseFloat(formData.sellingPrice))) {
+      setError("Valid selling price is required");
+      toast({
+        title: 'Error',
+        description: 'Please enter a valid selling price',
         variant: 'destructive',
       });
       return;
@@ -218,15 +228,14 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
           ...dataToSend,
           imageUrl: DEFAULT_IMAGE_URL
         });
-      }
-
-      console.log('Submitting product data');
-        // Instead of directly creating the product, create a product request
+      }      console.log('Submitting product data');
+      // Instead of directly creating the product, create a product request
       const productDetails = {
         name: formData.name,
         sku: formData.sku,
         description: formData.description || '',
-        price: parseFloat(formData.price),
+        costPrice: parseFloat(formData.costPrice),
+        sellingPrice: parseFloat(formData.sellingPrice),
         stock: parseInt(formData.stock),
         category: finalCategory,
         material: finalMaterial,
@@ -457,24 +466,40 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
                 </div>
               )}
             </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          </div>          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="price" className="font-medium">Price (₹) *</Label>
+              <Label htmlFor="costPrice" className="font-medium">Cost Price (₹) (Kharid Mulya) *</Label>
               <Input
-                id="price"
+                id="costPrice"
                 type="number"
                 min="0"
                 step="0.01"
-                value={formData.price}
+                value={formData.costPrice}
                 onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
+                  setFormData({ ...formData, costPrice: e.target.value })
                 }
                 className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
                 required
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="sellingPrice" className="font-medium">Selling Price (₹) (Bikri Mulya) *</Label>
+              <Input
+                id="sellingPrice"
+                type="number"
+                min="0"
+                step="0.01"
+                value={formData.sellingPrice}
+                onChange={(e) =>
+                  setFormData({ ...formData, sellingPrice: e.target.value })
+                }
+                className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                required
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="stock" className="font-medium">Stock *</Label>
               <Input

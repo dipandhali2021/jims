@@ -65,7 +65,6 @@ export function EditProductRequestDialog({
   // Determine if product has custom category or material
   const isCustomCategory = !categories.includes(product.category);
   const isCustomMaterial = !materials.includes(product.material);
-
   // Form state
   const [formData, setFormData] = useState({
     name: product?.name || '',
@@ -75,7 +74,8 @@ export function EditProductRequestDialog({
     material: isCustomMaterial ? 'Other' : product.material,
     customCategory: isCustomCategory ? product.category : '',
     customMaterial: isCustomMaterial ? product.material : '',
-    price: product?.price?.toString() || '',
+    costPrice: product?.costPrice?.toString() || '',
+    price: product?.price?.toString() || '', // Selling price
     stock: product?.stock?.toString() || '',
     supplier: product?.supplier || '',
   });
@@ -83,7 +83,6 @@ export function EditProductRequestDialog({
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(product?.imageUrl || null);
   const [removeImage, setRemoveImage] = useState(false);
-
   // Reset form data when product changes
   useEffect(() => {
     if (product) {
@@ -99,7 +98,8 @@ export function EditProductRequestDialog({
         material: isCustomMaterial ? 'Other' : product.material,
         customCategory: isCustomCategory ? product.category : '',
         customMaterial: isCustomMaterial ? product.material : '',
-        price: product.price?.toString() || '',
+        costPrice: product.costPrice?.toString() || '',
+        price: product.price?.toString() || '', // Selling price
         stock: product.stock?.toString() || '',
         supplier: product.supplier || '',
       });
@@ -201,9 +201,7 @@ export function EditProductRequestDialog({
   const resetForm = () => {
     // Determine if product has custom category or material
     const isCustomCategory = !categories.includes(product.category);
-    const isCustomMaterial = !materials.includes(product.material);
-
-    setFormData({
+    const isCustomMaterial = !materials.includes(product.material);    setFormData({
       name: product.name || '',
       sku: product.sku || '',
       description: product.description || '',
@@ -211,7 +209,8 @@ export function EditProductRequestDialog({
       material: isCustomMaterial ? 'Other' : product.material,
       customCategory: isCustomCategory ? product.category : '',
       customMaterial: isCustomMaterial ? product.material : '',
-      price: product.price?.toString() || '',
+      costPrice: product.costPrice?.toString() || '',
+      price: product.price?.toString() || '', // Selling price
       stock: product.stock?.toString() || '',
       supplier: product.supplier || '',
     });
@@ -293,18 +292,27 @@ export function EditProductRequestDialog({
         variant: 'destructive',
       });
       return;
-    }
-
-    // Price and stock validation
-    const priceValue = parseFloat(formData.price);
+    }    // Price and stock validation
+    const costPriceValue = parseFloat(formData.costPrice);
+    const sellingPriceValue = parseFloat(formData.price);
     const stockAdjustmentValue = parseInt(stockAdjustment);
     const newStock = calculateNewStock();
 
-    if (isNaN(priceValue) || priceValue <= 0) {
-      setError('Valid price is required');
+    if (isNaN(costPriceValue) || costPriceValue <= 0) {
+      setError('Valid cost price is required');
       toast({
         title: 'Error',
-        description: 'Please enter a valid price',
+        description: 'Please enter a valid cost price',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (isNaN(sellingPriceValue) || sellingPriceValue <= 0) {
+      setError('Valid selling price is required');
+      toast({
+        title: 'Error',
+        description: 'Please enter a valid selling price',
         variant: 'destructive',
       });
       return;
@@ -322,14 +330,13 @@ export function EditProductRequestDialog({
 
     // Check if anything changed
     const finalCategory = formData.category === 'Other' ? formData.customCategory : formData.category;
-    const finalMaterial = formData.material === 'Other' ? formData.customMaterial : formData.material;
-
-    const isUnchanged = 
+    const finalMaterial = formData.material === 'Other' ? formData.customMaterial : formData.material;    const isUnchanged = 
       formData.name === product.name &&
       formData.sku === product.sku &&
       formData.description === (product.description || '') &&
       finalCategory === product.category &&
       finalMaterial === product.material &&
+      parseFloat(formData.costPrice) === (product.costPrice || 0) &&
       parseFloat(formData.price) === product.price &&
       stockAdjustmentValue === 0 &&
       formData.supplier === (product.supplier || '') &&
@@ -619,10 +626,27 @@ export function EditProductRequestDialog({
                   )}
                 </div>
               </div>
-              
+                <div className="space-y-2">
+                <Label htmlFor="costPrice" className="font-medium">
+                  Cost Price (₹) (Kharid Mulya) *
+                </Label>
+                <Input
+                  id="costPrice"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.costPrice}
+                  onChange={(e) =>
+                    setFormData({ ...formData, costPrice: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                  required
+                />
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="price" className="font-medium">
-                  Price (₹) *
+                  Selling Price (₹) (Bikri Mulya) *
                 </Label>
                 <Input
                   id="price"

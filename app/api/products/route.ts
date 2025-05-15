@@ -106,18 +106,7 @@ export async function POST(req: NextRequest) {
     }
 
 
-    // Check if SKU already exists
-    const existingProduct = await prisma.product.findUnique({
-      where: { sku },
-    });
-
-    if (existingProduct) {
-      console.error('Product ID already exists:', sku);
-      return NextResponse.json(
-        { error: 'Product ID already exists' },
-        { status: 409 }
-      );
-    }
+    
 
     // Create product in database
     console.log('Creating product in database...');

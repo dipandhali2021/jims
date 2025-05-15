@@ -42,7 +42,8 @@ model Product {
   description       String?
   category          String
   material          String
-  price             Float
+  price             Float            // Bikroy Mullo (Selling Price)
+  costPrice         Float?           // Kroy Mullo (Cost Price)
   stock             Int
   lowStockThreshold Int              @default(10)
   supplier          String?

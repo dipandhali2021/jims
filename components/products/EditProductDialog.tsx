@@ -76,7 +76,6 @@ export function EditProductDialog({
   // Determine if product has custom category or material
   const isCustomCategory = !categories.includes(product.category);
   const isCustomMaterial = !materials.includes(product.material);
-
   const [formData, setFormData] = useState({
     name: product.name,
     sku: product.sku,
@@ -85,11 +84,11 @@ export function EditProductDialog({
     material: isCustomMaterial ? 'Other' : product.material,
     customCategory: isCustomCategory ? product.category : '',
     customMaterial: isCustomMaterial ? product.material : '',
-    price: product.price.toString(),
+    price: product.price.toString(),      // Bikroy Mullo (Selling Price)
+    costPrice: product.costPrice?.toString() || '',  // Kroy Mullo (Cost Price)
     stock: product.stock.toString(),
     supplier: product.supplier || '',
-  });
-  useEffect(() => {
+  });  useEffect(() => {
     // Determine if product has custom category or material
     const isCustomCategory = !categories.includes(product.category);
     const isCustomMaterial = !materials.includes(product.material);
@@ -103,7 +102,8 @@ export function EditProductDialog({
       material: isCustomMaterial ? 'Other' : product.material,
       customCategory: isCustomCategory ? product.category : '',
       customMaterial: isCustomMaterial ? product.material : '',
-      price: product.price.toString(),
+      price: product.price.toString(),      // Bikroy Mullo (Selling Price)
+      costPrice: product.costPrice?.toString() || '',  // Kroy Mullo (Cost Price) 
       stock: product.stock.toString(),
       supplier: product.supplier || '',
     });
@@ -136,7 +136,6 @@ export function EditProductDialog({
     
     loadKarigars();
   }, [isOpen, fetchKarigars]);
-
   const resetForm = () => {
     // Determine if product has custom category or material
     const isCustomCategory = !categories.includes(product.category);
@@ -150,7 +149,8 @@ export function EditProductDialog({
       material: isCustomMaterial ? 'Other' : product.material,
       customCategory: isCustomCategory ? product.category : '',
       customMaterial: isCustomMaterial ? product.material : '',
-      price: product.price.toString(),
+      price: product.price.toString(),      // Bikroy Mullo (Selling Price)
+      costPrice: product.costPrice?.toString() || '',  // Kroy Mullo (Cost Price)
       stock: product.stock.toString(),
       supplier: product.supplier || '',
     });
@@ -337,13 +337,21 @@ export function EditProductDialog({
         variant: 'destructive',
       });
       return;
+    }    if (!formData.costPrice || isNaN(parseFloat(formData.costPrice))) {
+      setError('Valid cost price is required');
+      toast({
+        title: 'Error',
+        description: 'Please enter a valid cost price',
+        variant: 'destructive',
+      });
+      return;
     }
 
     if (!formData.price || isNaN(parseFloat(formData.price))) {
-      setError('Valid price is required');
+      setError('Valid selling price is required');
       toast({
         title: 'Error',
-        description: 'Please enter a valid price',
+        description: 'Please enter a valid selling price',
         variant: 'destructive',
       });
       return;
@@ -394,13 +402,13 @@ export function EditProductDialog({
       }
 
       // Add a flag to indicate if image should be removed
-      data.append('removeImage', removeImage.toString());      console.log(`Creating product update request for ID: ${product.id}`);
-        // Create product details for the request
+      data.append('removeImage', removeImage.toString());      console.log(`Creating product update request for ID: ${product.id}`);      // Create product details for the request
       const productDetails = {
         name: formData.name,
         sku: formData.sku,
         description: formData.description || '',
-        price: parseFloat(formData.price),
+        costPrice: parseFloat(formData.costPrice),
+        price: parseFloat(formData.price), // Selling price
         stock: calculateNewStock(),
         category: finalCategory,
         material: finalMaterial,
@@ -687,8 +695,26 @@ export function EditProductDialog({
               </div>
               
               <div className="space-y-2">
+                <Label htmlFor="costPrice" className="font-medium">
+                  Cost Price (₹) (Kharid Mulya) *
+                </Label>
+                <Input
+                  id="costPrice"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.costPrice}
+                  onChange={(e) =>
+                    setFormData({ ...formData, costPrice: e.target.value })
+                  }
+                  className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="price" className="font-medium">
-                  Price (₹) *
+                  Selling Price (₹) (Bikri Mulya) *
                 </Label>
                 <Input
                   id="price"

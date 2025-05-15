@@ -7,7 +7,8 @@ export interface Product {
   description: string;
   category: string;
   material: string;
-  price: number;
+  price: number;      // Bikroy Mullo (Selling Price)
+  costPrice?: number; // Kroy Mullo (Cost Price)
   stock: number;
   lowStockThreshold: number;
   imageUrl: string;

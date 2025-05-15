@@ -162,11 +162,7 @@ export async function DELETE(
           }
         }
 
-        // 12. Delete other user data that doesn't need special handling
-        await tx.todo.deleteMany({
-          where: { userId: targetUserId }
-        });
-
+    
         await tx.transaction.deleteMany({
           where: { userId: targetUserId }
         });

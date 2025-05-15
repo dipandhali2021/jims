@@ -7,7 +7,8 @@ import { Eye } from 'lucide-react';
 
 interface Product {
   name: string;
-  price: number;
+  price: number;        // Bikroy Mullo (Selling Price)
+  costPrice?: number;   // Kroy Mullo (Cost Price)
   sku: string;
   stock: number;
   category: string;
@@ -26,12 +27,19 @@ interface ProductPreviewDialogProps {
 
 export function ProductPreviewDialog({ product }: ProductPreviewDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
-
-  // Format the price as currency
+  // Format the selling price as currency
   const formattedPrice = new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'INR',
   }).format(product.price);
+  
+  // Format the cost price as currency (if available)
+  const formattedCostPrice = product.costPrice 
+    ? new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'INR',
+      }).format(product.costPrice)
+    : 'Not available';
 
   // Format the dates (with time)
   const createdAt = new Date(product.createdAt).toLocaleString('en-US', {
@@ -70,10 +78,12 @@ export function ProductPreviewDialog({ product }: ProductPreviewDialogProps) {
               <DialogTitle className="text-xl font-bold">{product.name}</DialogTitle>
               <p className="text-sm text-gray-500">Product ID: {product.sku}</p>
             </DialogHeader>
-            
-            <div className="space-y-4 flex-grow">
+              <div className="space-y-4 flex-grow">
               <div>
-                <h4 className="font-medium text-lg"> Price: {formattedPrice}</h4>
+                <h4 className="font-medium text-lg">Selling Price (Bikroy Mullo): {formattedPrice}</h4>
+                {product.costPrice && (
+                  <h4 className="font-medium">Cost Price (Kroy Mullo): {formattedCostPrice}</h4>
+                )}
                 <p className="text-sm text-gray-500">In Stock: {product.stock}</p>
               </div>
               
