@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import {
   Dialog,
@@ -13,8 +13,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { ShoppingBag, Loader2, Plus, Minus, X } from 'lucide-react';
+import { ShoppingBag, Plus, Minus, X, Loader2 } from 'lucide-react';
 import { Product } from '@/hooks/use-products';
+import { useVyapari } from '@/hooks/use-vyapari';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface CreateBulkSalesRequestDialogProps {
   products: Product[];
@@ -29,15 +37,18 @@ interface ProductSelection {
 export function CreateBulkSalesRequestDialog({
   products,
   onRequestCreated,
-}: CreateBulkSalesRequestDialogProps) {
+}: CreateBulkSalesRequestDialogProps) {  
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [customerName, setCustomerName] = useState('');
+  const [selectedTrader, setSelectedTrader] = useState('');
+  const [otherCustomerName, setOtherCustomerName] = useState('');
   const [selectedProducts, setSelectedProducts] = useState<ProductSelection[]>([]);
   const [filteredProductOptions, setFilteredProductOptions] = useState<Product[]>(products);
   const [searchTerm, setSearchTerm] = useState('');
+  const [traders, setTraders] = useState<any[]>([]);
+  const [loadingTraders, setLoadingTraders] = useState(false);
   const { toast } = useToast();
-
+  const { fetchVyaparis } = useVyapari();
   // Update filtered products when search term changes
   useMemo(() => {
     const term = searchTerm.toLowerCase();
@@ -47,6 +58,32 @@ export function CreateBulkSalesRequestDialog({
     );
     setFilteredProductOptions(filtered);
   }, [searchTerm, products]);
+  
+  // Fetch Traders/Vyaparis when dialog opens
+  useEffect(() => {
+    const loadTraders = async () => {
+      if (isOpen) {
+        try {
+          setLoadingTraders(true);
+          const data = await fetchVyaparis();
+          // Filter to only include approved traders
+          const approvedTraders = data.filter((trader: any) => trader.isApproved);
+          setTraders(approvedTraders);
+        } catch (error) {
+          console.error('Failed to load traders:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load traders',
+            variant: 'destructive',
+          });
+        } finally {
+          setLoadingTraders(false);
+        }
+      }
+    };
+    
+    loadTraders();
+  }, [isOpen, fetchVyaparis, toast]);
 
   const addProduct = (product: Product) => {
     const existing = selectedProducts.find(p => p.product.id === product.id);
@@ -80,12 +117,19 @@ export function CreateBulkSalesRequestDialog({
     return selectedProducts.reduce((total, { product, quantity }) => {
       return total + (product.price * quantity);
     }, 0);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  };  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!customerName.trim()) {
+    if (!selectedTrader) {
+      toast({
+        title: 'Error',
+        description: 'Please select a trader',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (selectedTrader === 'other' && !otherCustomerName.trim()) {
       toast({
         title: 'Error',
         description: 'Please enter customer name',
@@ -116,15 +160,13 @@ export function CreateBulkSalesRequestDialog({
     }
 
     try {
-      setIsLoading(true);
-
-      const response = await fetch('/api/sales-requests', {
+      setIsLoading(true);      const response = await fetch('/api/sales-requests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          customer: customerName,
+          customer: selectedTrader === 'other' ? otherCustomerName : selectedTrader,
           items: selectedProducts.map(({ product, quantity }) => ({
             productId: product.id,
             quantity: quantity,
@@ -140,11 +182,10 @@ export function CreateBulkSalesRequestDialog({
       toast({
         title: 'Success',
         description: 'Bulk sales request created successfully',
-      });
-
-      onRequestCreated();
+      });      onRequestCreated();
       setIsOpen(false);
-      setCustomerName('');
+      setSelectedTrader('');
+      setOtherCustomerName('');
       setSelectedProducts([]);
     } catch (error) {
       console.error('Error creating sales request:', error);
@@ -158,10 +199,9 @@ export function CreateBulkSalesRequestDialog({
     }
   };
 
-  return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+  return (    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline">
+        <Button variant="outline" onClick={() => setIsOpen(true)}>
           <ShoppingBag className="mr-2 h-4 w-4" />
           Bulk Request
         </Button>
@@ -172,20 +212,50 @@ export function CreateBulkSalesRequestDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           {/* Responsive grid - stacks on mobile, side-by-side on desktop */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-            {/* Customer Details & Product Search - Top section on mobile */}
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="customerName" className="text-sm font-medium text-gray-700">Customer Name</Label>
-                <Input
-                  id="customerName"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Enter customer name"
-                  className="w-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">            {/* Trader Details & Product Search - Top section on mobile */}
+            <div className="space-y-4">              <div>                <Label htmlFor="trader" className="text-sm font-medium text-gray-700">Trader</Label>
+                <Select
+                  value={selectedTrader}
+                  onValueChange={(value) => setSelectedTrader(value)}
+                >
+                  <SelectTrigger id="trader" className="w-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <SelectValue placeholder="Select trader" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingTraders ? (
+                      <div className="flex items-center justify-center p-2">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Loading...
+                      </div>
+                    ) : traders.length === 0 ? (
+                      <div className="p-2 text-sm text-gray-500">No traders found</div>
+                    ) : (
+                      <>
+                        {traders.map((trader) => (
+                          <SelectItem key={trader.id} value={trader.name}>
+                            {trader.name}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value="other">Other (Custom)</SelectItem>
+                      </>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
+              
+              {selectedTrader === 'other' && (
+                <div>
+                  <Label htmlFor="otherCustomerName" className="text-sm font-medium text-gray-700">Customer Name</Label>
+                  <Input
+                    id="otherCustomerName"
+                    value={otherCustomerName}
+                    onChange={(e) => setOtherCustomerName(e.target.value)}
+                    placeholder="Enter customer name"
+                    className="w-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+              )}
 
               <div>
                 <Label className="text-sm font-medium text-gray-700">Search Products</Label>

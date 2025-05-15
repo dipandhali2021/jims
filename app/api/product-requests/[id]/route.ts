@@ -125,14 +125,14 @@ export async function PUT(
     if (status === 'Approved') {
       switch (productRequest.requestType) {
         case 'add':
-          if (productRequest.details) {
-            // Create new product with details from the request
+          if (productRequest.details) {            // Create new product with details from the request
             await prisma.product.create({
               data: {
                 name: productRequest.details.name || '',
                 sku: productRequest.details.sku || '',
                 description: productRequest.details.description || '',
                 price: productRequest.details.price || 0,
+                costPrice: productRequest.details.costPrice || null,
                 stock: productRequest.details.stock || 0,
                 category: productRequest.details.category || '',
                 material: productRequest.details.material || '',
@@ -156,8 +156,7 @@ export async function PUT(
             ) {
               await deleteImageFromCloudinary(productRequest.product.imageUrl);
             }
-            
-            // Update existing product
+              // Update existing product
             await prisma.product.update({
               where: { id: productRequest.productId },
               data: {
@@ -165,6 +164,7 @@ export async function PUT(
                 ...(productRequest.details.sku && { sku: productRequest.details.sku }),
                 ...(productRequest.details.description !== null && { description: productRequest.details.description }),
                 ...(productRequest.details.price && { price: productRequest.details.price }),
+                ...(productRequest.details.costPrice !== undefined && { costPrice: productRequest.details.costPrice }),
                 ...(productRequest.details.stock !== null && { stock: productRequest.details.stock }),
                 ...(productRequest.details.category && { category: productRequest.details.category }),
                 ...(productRequest.details.material && { material: productRequest.details.material }),

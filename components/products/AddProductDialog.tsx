@@ -44,7 +44,6 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
   const [loadingKarigars, setLoadingKarigars] = useState(false);  const { toast } = useToast();
   const router = useRouter();  const { trackProductCreation } = useAdminProductActions();
   const { fetchKarigars } = useKarigar();
-
   // Fetch Karigars when dialog opens
   useEffect(() => {
     const loadKarigars = async () => {
@@ -52,9 +51,9 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
         try {
           setLoadingKarigars(true);
           const data = await fetchKarigars();
-          // Filter to only include approved karigars
-          const approvedKarigars = data.filter((k: any) => k.isApproved);
-          setKarigars(approvedKarigars);
+          console.log('Fetched karigars:', data);
+          // No need to filter for approval - API already does this for non-admin users
+          setKarigars(data);
         } catch (error) {
           console.error('Failed to load artisans:', error);
         } finally {
@@ -228,14 +227,13 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
           ...dataToSend,
           imageUrl: DEFAULT_IMAGE_URL
         });
-      }      console.log('Submitting product data');
-      // Instead of directly creating the product, create a product request
+      }      console.log('Submitting product data');      // Instead of directly creating the product, create a product request
       const productDetails = {
         name: formData.name,
         sku: formData.sku,
         description: formData.description || '',
         costPrice: parseFloat(formData.costPrice),
-        sellingPrice: parseFloat(formData.sellingPrice),
+        price: parseFloat(formData.sellingPrice), // price field is used for selling price in the database
         stock: parseInt(formData.stock),
         category: finalCategory,
         material: finalMaterial,

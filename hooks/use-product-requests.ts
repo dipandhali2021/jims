@@ -6,12 +6,14 @@ export type ProductRequestDetails = {
   sku: string;
   description?: string;
   price: number;
+  costPrice?: number | null;
   stock: number;
   category: string;
   material: string;
   imageUrl?: string;
   lowStockThreshold?: number;
   supplier?: string;
+  stockAdjustment?: number | null;
 };
 
 export type ProductRequest = {
@@ -29,13 +31,13 @@ export type ProductRequest = {
     firstName: string;
     lastName: string;
     email: string;
-  };
-  product?: {
+  };  product?: {
     id: string;
     name: string;
     sku: string;
     description?: string;
     price: number;
+    costPrice?: number | null;
     stock: number;
     category: string;
     material: string;

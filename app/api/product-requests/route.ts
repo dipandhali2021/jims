@@ -92,14 +92,14 @@ export async function POST(req: NextRequest) {
         }
       } else {
         // If not using JSON, handle fields individually
-        if (requestType === 'add' || requestType === 'edit') {
-          details = {
+        if (requestType === 'add' || requestType === 'edit') {          details = {
             name: formData.get('name') as string,
             sku: formData.get('sku') as string,
             description: formData.get('description') as string || '',
             category: formData.get('category') as string,
             material: formData.get('material') as string,
             price: parseFloat(formData.get('price') as string),
+            costPrice: formData.get('costPrice') ? parseFloat(formData.get('costPrice') as string) : null,
             stock: parseInt(formData.get('stock') as string),
             stockAdjustment: parseInt(formData.get('stockAdjustment') as string || '0'), // Add stockAdjustment field
             supplier: formData.get('supplier') as string || undefined, // Add supplier field
@@ -240,14 +240,15 @@ export async function POST(req: NextRequest) {
           requestType,
           status,
           requestDate: new Date(),
-          userId,
-          productId: productId || null,
+          userId,          productId: productId || null,
           adminAction, // Include adminAction flag
           details: {
-            create: {              name: details.name,
+            create: {              
+              name: details.name,
               sku: details.sku,
               description: details.description || '',
               price: details.price,
+              costPrice: details.costPrice !== undefined ? details.costPrice : null,
               stock: details.stock,
               stockAdjustment: details.stockAdjustment !== undefined ? 
                 (typeof details.stockAdjustment === 'string' ? 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
+import { useKarigar } from '@/hooks/use-karigar';
 import { Plus, Upload, Loader2, X } from 'lucide-react';
 
 const categories = [
@@ -69,9 +70,32 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
     stock: '',
     supplier: '',
   });
-
+  
+  const [karigars, setKarigars] = useState<any[]>([]);
+  const [loadingKarigars, setLoadingKarigars] = useState(false);
+  const { fetchKarigars } = useKarigar();
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  
+  // Fetch Karigars when dialog opens
+  useEffect(() => {
+    const loadKarigars = async () => {
+      if (isOpen) {
+        try {
+          setLoadingKarigars(true);
+          const data = await fetchKarigars();
+          console.log('Fetched karigars:', data);
+          setKarigars(data);
+        } catch (error) {
+          console.error('Failed to load artisans:', error);
+        } finally {
+          setLoadingKarigars(false);
+        }
+      }
+    };
+    
+    loadKarigars();
+  }, [isOpen, fetchKarigars]);
 
   // Handle image selection
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -528,21 +552,34 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
                 required
               />
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="supplier" className="font-medium">
-              Supplier
-            </Label>
-            <Input
-              id="supplier"
+          </div>          <div className="space-y-2">
+            <Label htmlFor="supplier" className="font-medium">Karigar/Artisan</Label>
+            <Select
               value={formData.supplier}
-              onChange={(e) =>
-                setFormData({ ...formData, supplier: e.target.value })
+              onValueChange={(value) =>
+                setFormData({ ...formData, supplier: value })
               }
-              className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50"
-              placeholder="Enter supplier name (optional)"
-            />
+            >
+              <SelectTrigger className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50">
+                <SelectValue placeholder="Select karigar/artisan" />
+              </SelectTrigger>
+              <SelectContent>                
+                {loadingKarigars ? (
+                  <div className="flex items-center justify-center p-2">
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    Loading...
+                  </div>
+                ) : karigars.length === 0 ? (
+                  <div className="p-2 text-sm text-gray-500">No karigars found</div>
+                ) : (
+                  karigars.map((karigar) => (
+                    <SelectItem key={karigar.id} value={karigar.name}>
+                      {karigar.name}
+                    </SelectItem>
+                  ))
+                )}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

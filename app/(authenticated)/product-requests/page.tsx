@@ -1134,11 +1134,9 @@ export default function ProductRequestsPage() {
                               <p className="text-xs text-gray-500">Material:</p>
                               <p>{selectedRequest.details.material}</p>
                             </div>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-4">
+                          </div>                          <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <p className="text-xs text-gray-500">Price:</p>
+                              <p className="text-xs text-gray-500">Selling Price:</p>
                               <p>
                                 ₹
                                 {selectedRequest.details.price?.toLocaleString()}
@@ -1147,10 +1145,21 @@ export default function ProductRequestsPage() {
 
                             <div>
                               <p className="text-xs text-gray-500">
-                                Initial Stock:
+                                Cost Price:
                               </p>
-                              <p>{selectedRequest.details.stock}</p>
+                              <p>
+                                {selectedRequest.details.costPrice 
+                                  ? `₹${selectedRequest.details.costPrice?.toLocaleString()}` 
+                                  : 'Not specified'}
+                              </p>
                             </div>
+                          </div>
+                          
+                          <div>
+                            <p className="text-xs text-gray-500">
+                              Initial Stock:
+                            </p>
+                            <p>{selectedRequest.details.stock}</p>
                           </div>
 
                           {selectedRequest.details.description && (
@@ -1220,12 +1229,19 @@ export default function ProductRequestsPage() {
                           <div>
                             <p className="text-xs text-gray-500">Material:</p>
                             <p>{selectedRequest.product.material}</p>
+                          </div>                          <div>
+                            <p className="text-xs text-gray-500">Selling Price:</p>
+                            <p>
+                              ₹{selectedRequest.product.price.toLocaleString()}
+                            </p>
                           </div>
 
                           <div>
-                            <p className="text-xs text-gray-500">Price:</p>
+                            <p className="text-xs text-gray-500">Cost Price:</p>
                             <p>
-                              ₹{selectedRequest.product.price.toLocaleString()}
+                              {selectedRequest.product.costPrice 
+                                ? `₹${selectedRequest.product.costPrice.toLocaleString()}` 
+                                : 'Not specified'}
                             </p>
                           </div>
 
@@ -1408,10 +1424,8 @@ export default function ProductRequestsPage() {
                                 )}
                               </p>
                             </div>
-                          </div>
-
-                          <div>
-                            <p className="text-xs text-gray-500">Price:</p>
+                          </div>                          <div>
+                            <p className="text-xs text-gray-500">Selling Price:</p>
                             <div
                               className={
                                 selectedRequest.product.price !==
@@ -1435,6 +1449,40 @@ export default function ProductRequestsPage() {
                                   <span className="ml-1 text-xs text-blue-600">
                                     (Changed from: ₹
                                     {selectedRequest.product.price?.toLocaleString()}
+                                    )
+                                  </span>
+                                )}
+                              </p>
+                            </div>
+                          </div>
+                          
+                          <div>
+                            <p className="text-xs text-gray-500">Cost Price:</p>
+                            <div
+                              className={
+                                selectedRequest.product.costPrice !==
+                                selectedRequest.details.costPrice
+                                  ? 'bg-blue-100 p-1 rounded'
+                                  : ''
+                              }
+                            >
+                              <p
+                                className={
+                                  selectedRequest.product.costPrice !==
+                                  selectedRequest.details.costPrice
+                                    ? 'font-medium text-blue-700'
+                                    : ''
+                                }
+                              >
+                                {selectedRequest.details.costPrice 
+                                  ? `₹${selectedRequest.details.costPrice.toLocaleString()}`
+                                  : 'Not specified'}
+                                {selectedRequest.product.costPrice !==
+                                  selectedRequest.details.costPrice && (
+                                  <span className="ml-1 text-xs text-blue-600">
+                                    (Changed from: {selectedRequest.product.costPrice 
+                                      ? `₹${selectedRequest.product.costPrice.toLocaleString()}`
+                                      : 'Not specified'}
                                     )
                                   </span>
                                 )}

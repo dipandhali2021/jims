@@ -62,13 +62,13 @@ export async function PUT(
     }
 
     const formData = await req.formData();
-    
-    const name = formData.get('name') as string;
+      const name = formData.get('name') as string;
     const sku = formData.get('sku') as string;
     const description = formData.get('description') as string;
     const category = formData.get('category') as string;
     const material = formData.get('material') as string;
     const price = parseFloat(formData.get('price') as string);
+    const costPrice = formData.get('costPrice') ? parseFloat(formData.get('costPrice') as string) : undefined;
     const stock = parseInt(formData.get('stock') as string);
     const image = formData.get('image');
     const removeImage = formData.get('removeImage') === 'true';
@@ -147,9 +147,7 @@ export async function PUT(
       console.log('Cloudinary upload successful:', result.secure_url);
       
       imageUrl = result.secure_url;
-    }
-
-    // Update product in database
+    }    // Update product in database
     console.log('Updating product in database...');
     const updatedProduct = await prisma.product.update({
       where: { id },
@@ -160,6 +158,7 @@ export async function PUT(
         category,
         material,
         price,
+        costPrice,
         stock,
         imageUrl,
         supplier, // Include supplier field in the update

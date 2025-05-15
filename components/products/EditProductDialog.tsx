@@ -115,17 +115,16 @@ export function EditProductDialog({
     setError(null);
     setShowAdvancedOptions(false);
   }, [product]);
-  
-  // Fetch Karigars when dialog opens
+    // Fetch Karigars when dialog opens
   useEffect(() => {
     const loadKarigars = async () => {
       if (isOpen) {
         try {
           setLoadingKarigars(true);
           const data = await fetchKarigars();
-          // Filter to only include approved karigars
-          const approvedKarigars = data.filter((k: any) => k.isApproved);
-          setKarigars(approvedKarigars);
+          console.log('Fetched karigars:', data);
+          // No need to filter for approval - API already does this for non-admin users
+          setKarigars(data);
         } catch (error) {
           console.error('Failed to load artisans:', error);
         } finally {
@@ -729,7 +728,36 @@ export function EditProductDialog({
                   required
                 />
               </div>
-              
+                <div className="space-y-2">
+                <Label htmlFor="supplier" className="font-medium">Karigar/Artisan</Label>
+                <Select
+                  value={formData.supplier}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, supplier: value })
+                  }
+                >
+                  <SelectTrigger className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50">
+                    <SelectValue placeholder="Select karigar/artisan" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingKarigars ? (
+                      <div className="flex items-center justify-center p-2">
+                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                        Loading...
+                      </div>
+                    ) : karigars.length === 0 ? (
+                      <div className="p-2 text-sm text-gray-500">No karigars found</div>
+                    ) : (
+                      karigars.map((karigar) => (
+                        <SelectItem key={karigar.id} value={karigar.name}>
+                          {karigar.name}
+                        </SelectItem>
+                      ))
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-2">
                 <Label className="font-medium">Product Image</Label>
                 <div 

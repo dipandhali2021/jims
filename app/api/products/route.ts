@@ -17,22 +17,20 @@ export async function POST(req: NextRequest) {
     }
 
     // Log the start of the request processing
-    console.log('Processing product creation request');
-
-    let name: string;
+    console.log('Processing product creation request');    let name: string;
     let sku: string;
     let description: string;
     let category: string;
     let material: string;
     let price: number;
+    let costPrice: number | undefined;
     let stock: number;
     let imageUrl: string | undefined;
     let supplier: string | undefined;
     let uploadedImage: File | Blob | null = null;
 
     const contentType = req.headers.get('content-type');
-    if (contentType?.includes('application/json')) {
-      // Handle JSON request
+    if (contentType?.includes('application/json')) {    // Handle JSON request
       const jsonData = await req.json();
       name = jsonData.name;
       sku = jsonData.sku;
@@ -40,6 +38,7 @@ export async function POST(req: NextRequest) {
       category = jsonData.category;
       material = jsonData.material;
       price = parseFloat(jsonData.price);
+      costPrice = jsonData.costPrice ? parseFloat(jsonData.costPrice) : undefined;
       stock = parseInt(jsonData.stock);
       imageUrl = jsonData.imageUrl;
       supplier = jsonData.supplier;
@@ -52,14 +51,13 @@ export async function POST(req: NextRequest) {
       const formDataEntries = Array.from(formData.entries())
         .filter(([key]) => key !== 'image')
         .map(([key, value]) => `${key}: ${value}`);
-      console.log('Form data received:', formDataEntries);
-      
-      name = formData.get('name') as string;
+      console.log('Form data received:', formDataEntries);      name = formData.get('name') as string;
       sku = formData.get('sku') as string;
       description = formData.get('description') as string || '';
       category = formData.get('category') as string;
       material = formData.get('material') as string;
       price = parseFloat(formData.get('price') as string);
+      costPrice = formData.get('costPrice') ? parseFloat(formData.get('costPrice') as string) : undefined;
       stock = parseInt(formData.get('stock') as string);
       supplier = formData.get('supplier') as string || undefined;
     }
@@ -106,9 +104,7 @@ export async function POST(req: NextRequest) {
     }
 
 
-    
-
-    // Create product in database
+        // Create product in database
     console.log('Creating product in database...');
     const product = await prisma.product.create({
       data: {
@@ -118,6 +114,7 @@ export async function POST(req: NextRequest) {
         category,
         material,
         price,
+        costPrice,
         stock,
         imageUrl,
         supplier,

@@ -166,6 +166,7 @@ model ProductRequestDetails {
   category        String?
   material        String?
   price           Float?
+  costPrice       Float?
   stock           Int?
   stockAdjustment Int?
   imageUrl        String?
