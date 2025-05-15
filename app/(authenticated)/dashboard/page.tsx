@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DateRange } from 'react-day-picker';
 import { addDays, startOfDay, endOfDay, format } from 'date-fns';
@@ -233,7 +233,7 @@ export default function AdminDashboard() {
     }
   }, [timeframe]);
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = useCallback(async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
@@ -272,11 +272,11 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [timeframe, date?.from, date?.to, toast]);
 
   useEffect(() => {
     fetchAnalytics();
-  }, [timeframe, date?.from, date?.to]);
+  }, [timeframe, date?.from, date?.to, fetchAnalytics]);
 
   if (isLoading || !analytics) {
     return (

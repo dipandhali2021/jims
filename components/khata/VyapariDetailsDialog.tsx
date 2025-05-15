@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -72,26 +72,17 @@ export function VyapariDetailsDialog({
     calculateVyapariBalance
   } = useVyapari();
 
-  useEffect(() => {
-    if (open && vyapariId) {
-      loadVyapariData();
-    }
-  }, [open, vyapariId]);
-
-  const loadVyapariData = async () => {
+  const loadVyapariData = useCallback(async () => {
     if (!vyapariId) return;
-    
     setIsLoading(true);
     try {
       const vyapariData = await fetchVyapariById(vyapariId);
       setVyapari(vyapariData);
-      
       const [transactionsData, paymentsData, balanceData] = await Promise.all([
         fetchVyapariTransactions(vyapariId),
         fetchVyapariPayments(vyapariId),
         calculateVyapariBalance(vyapariId)
       ]);
-      
       setTransactions(transactionsData || []);
       setPayments(paymentsData || []);
       setBalance(balanceData?.balance || 0);
@@ -99,13 +90,19 @@ export function VyapariDetailsDialog({
       console.error('Error loading vyapari details:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load trader details',
+        description: 'Failed to load vyapari details',
         variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [vyapariId, fetchVyapariById, fetchVyapariTransactions, fetchVyapariPayments, calculateVyapariBalance, toast]);
+
+  useEffect(() => {
+    if (open && vyapariId) {
+      loadVyapariData();
+    }
+  }, [open, vyapariId, loadVyapariData]);
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'MMM dd, yyyy h:mm a');

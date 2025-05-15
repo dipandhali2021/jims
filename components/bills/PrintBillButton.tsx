@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
 import { Bill, BillItem } from '@/hooks/use-bills';
@@ -750,7 +750,7 @@ const generateBillHtml = (bill: Bill) => {
 
 // Define the component AFTER all the helper functions
 export function PrintBillButton({ bill, triggerPrint = false, onPrint }: PrintBillButtonProps) {
-  const handlePrint = () => {
+  const handlePrint = useCallback(() => {
     const billHtml = generateBillHtml(bill);
     const printWin = window.open('', '_blank');
     if (printWin) {
@@ -764,14 +764,14 @@ export function PrintBillButton({ bill, triggerPrint = false, onPrint }: PrintBi
         onPrint();
       }
     }
-  };
-  
+  }, [bill, onPrint]);
+
   // If triggerPrint is true, run the print function immediately
   React.useEffect(() => {
     if (triggerPrint) {
       handlePrint();
     }
-  }, [triggerPrint, bill.id]);
+  }, [triggerPrint, bill.id, handlePrint]);
   
   // If this is used as a button component without display
   if (triggerPrint) {

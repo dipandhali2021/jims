@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -73,26 +73,17 @@ export function KarigarDetailsDialog({
     calculateKarigarBalance
   } = useKarigar();
 
-  useEffect(() => {
-    if (open && karigarId) {
-      loadKarigarData();
-    }
-  }, [open, karigarId]);
-
-  const loadKarigarData = async () => {
+  const loadKarigarData = useCallback(async () => {
     if (!karigarId) return;
-    
     setIsLoading(true);
     try {
       const karigarData = await fetchKarigarById(karigarId);
       setKarigar(karigarData);
-      
       const [transactionsData, paymentsData, balanceData] = await Promise.all([
         fetchKarigarTransactions(karigarId),
         fetchKarigarPayments(karigarId),
         calculateKarigarBalance(karigarId)
       ]);
-      
       setTransactions(transactionsData || []);
       setPayments(paymentsData || []);
       setBalance(balanceData?.balance || 0);
@@ -106,7 +97,13 @@ export function KarigarDetailsDialog({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [karigarId, fetchKarigarById, fetchKarigarTransactions, fetchKarigarPayments, calculateKarigarBalance, toast]);
+
+  useEffect(() => {
+    if (open && karigarId) {
+      loadKarigarData();
+    }
+  }, [open, karigarId, loadKarigarData]);
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'MMM dd, yyyy h:mm a');

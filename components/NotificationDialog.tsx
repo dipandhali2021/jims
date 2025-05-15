@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Popover,
@@ -27,7 +27,7 @@ export function NotificationDialog() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch('/api/notifications');
@@ -45,18 +45,16 @@ export function NotificationDialog() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [toast]);
 
   useEffect(() => {
     // Initial fetch when component mounts
     fetchNotifications();
-    
     // // Set up periodic refresh every 30 seconds
     // const intervalId = setInterval(fetchNotifications, 30000);
-    
     // // Cleanup interval on unmount
     // return () => clearInterval(intervalId);
-  }, []);
+  }, [fetchNotifications]);
 
   // Helper function to get notification background color based on type
   const getNotificationBgColor = (type: string, isRead: boolean, message?: string) => {

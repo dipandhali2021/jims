@@ -222,7 +222,7 @@ export async function POST(req: NextRequest) {
         );
       }
     }    // Determine status based on request parameters
-    let status = 'Pending';
+    const status = 'Pending';
     
     // Client wants all product actions to go through approval process, even admin actions
     // We'll keep this commented code for reference but not use auto-approval anymore

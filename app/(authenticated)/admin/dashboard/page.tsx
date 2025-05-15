@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { DateRange } from 'react-day-picker';
 import { addDays, startOfDay, endOfDay } from 'date-fns';
@@ -210,48 +210,36 @@ export default function AdminDashboard() {
           break;
       }
     }
-  }, [timeframe]);  const fetchAnalytics = async () => {
+  }, [timeframe]);  const fetchAnalytics = useCallback(async () => {
     try {
       setIsLoading(true);
       const params = new URLSearchParams();
-      
       if (timeframe === 'Custom' && date?.from && date?.to) {
         params.append('start', date.from.toISOString());
         params.append('end', date.to.toISOString());
       } else {
         params.append('timeframe', timeframe);
       }
-      
-      // Add billType filter to analytics if selected
       if (transactionType !== 'All') {
         params.append('billType', transactionType);
       }
-      
       const response = await fetch(`/api/sales/analytics?${params.toString()}`);
       if (!response.ok) throw new Error('Failed to fetch analytics');
       const data = await response.json();
-      // No need to convert timestamps as they're already localized by the API
       setAnalytics(data);
-
-      // Create params for transactions request
       const transParams = new URLSearchParams();
       if (transactionType !== 'All') {
         transParams.append('billType', transactionType);
       }
-      
       const transResponse = await fetch(`/api/sales?${transParams.toString()}`);
       if (!transResponse.ok) throw new Error('Failed to fetch transactions');
       let transData = await transResponse.json();
-      
-      // Convert transaction dates to IST
       transData = transData.map((transaction: any) => {
         if (transaction.date) {
           try {
-            // Handle both date string and timestamp formats
             const dateValue = transaction.date.includes ? 
               new Date(transaction.date) : 
               new Date(parseInt(transaction.date));
-              
             if (!isNaN(dateValue.getTime())) {
               const istDate = toZonedTime(dateValue, 'Asia/Kolkata');
               return {
@@ -260,13 +248,11 @@ export default function AdminDashboard() {
               };
             }
           } catch (e) {
-            // If date conversion fails, keep original
             console.error('Error converting date:', e);
           }
         }
         return transaction;
       });
-      
       setTransactions(transData);
     } catch (error) {
       toast({
@@ -277,10 +263,11 @@ export default function AdminDashboard() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [timeframe, date?.from, date?.to, transactionType, toast]);
+
   useEffect(() => {
     fetchAnalytics();
-  }, [timeframe, date?.from, date?.to, transactionType]);
+  }, [timeframe, date?.from, date?.to, transactionType, fetchAnalytics]);
 
   if (isLoading || !analytics) {
     return (
