@@ -32,6 +32,7 @@ interface CreateBulkSalesRequestDialogProps {
 interface ProductSelection {
   product: Product;
   quantity: number;
+  customPrice: number | null;
 }
 
 export function CreateBulkSalesRequestDialog({
@@ -84,11 +85,10 @@ export function CreateBulkSalesRequestDialog({
     
     loadTraders();
   }, [isOpen, fetchVyaparis, toast]);
-
   const addProduct = (product: Product) => {
     const existing = selectedProducts.find(p => p.product.id === product.id);
     if (!existing) {
-      setSelectedProducts([...selectedProducts, { product, quantity: 1 }]);
+      setSelectedProducts([...selectedProducts, { product, quantity: 1, customPrice: null }]);
     }
   };
 
@@ -106,21 +106,26 @@ export function CreateBulkSalesRequestDialog({
     newProducts[index] = { ...newProducts[index], product };
     setSelectedProducts(newProducts);
   };
-
   const updateQuantity = (index: number, quantity: number) => {
     const newProducts = [...selectedProducts];
     newProducts[index] = { ...newProducts[index], quantity };
     setSelectedProducts(newProducts);
   };
 
+  const updateCustomPrice = (index: number, price: number | null) => {
+    const newProducts = [...selectedProducts];
+    newProducts[index] = { ...newProducts[index], customPrice: price };
+    setSelectedProducts(newProducts);
+  };
+
   const calculateTotal = () => {
-    return selectedProducts.reduce((total, { product, quantity }) => {
-      return total + (product.price * quantity);
+    return selectedProducts.reduce((total, { product, quantity, customPrice }) => {
+      const price = customPrice !== null ? customPrice : product.price;
+      return total + (price * quantity);
     }, 0);
-  };  const handleSubmit = async (e: React.FormEvent) => {
+  };const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!selectedTrader) {
+      if (!selectedTrader) {
       toast({
         title: 'Error',
         description: 'Please select a trader',
@@ -128,11 +133,10 @@ export function CreateBulkSalesRequestDialog({
       });
       return;
     }
-    
-    if (selectedTrader === 'other' && !otherCustomerName.trim()) {
+      if (selectedTrader === 'custom-trader' && !otherCustomerName.trim()) {
       toast({
         title: 'Error',
-        description: 'Please enter customer name',
+        description: 'Please enter trader name',
         variant: 'destructive',
       });
       return;
@@ -164,12 +168,15 @@ export function CreateBulkSalesRequestDialog({
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          customer: selectedTrader === 'other' ? otherCustomerName : selectedTrader,
-          items: selectedProducts.map(({ product, quantity }) => ({
+        },        body: JSON.stringify({
+          customer: selectedTrader === 'custom-trader' ? otherCustomerName : 
+                    // Find trader name based on ID
+                    traders.find(t => t.id === selectedTrader)?.name || selectedTrader,
+          vyapariId: selectedTrader !== 'custom-trader' ? selectedTrader : undefined,
+          items: selectedProducts.map(({ product, quantity, customPrice }) => ({
             productId: product.id,
             quantity: quantity,
+            customPrice: customPrice !== null ? customPrice : undefined,
           })),
         }),
       });
@@ -230,27 +237,26 @@ export function CreateBulkSalesRequestDialog({
                     ) : traders.length === 0 ? (
                       <div className="p-2 text-sm text-gray-500">No traders found</div>
                     ) : (
-                      <>
-                        {traders.map((trader) => (
-                          <SelectItem key={trader.id} value={trader.name}>
+                      <>                        {traders.map((trader) => (
+                          <SelectItem key={trader.id} value={trader.id}>
                             {trader.name}
                           </SelectItem>
                         ))}
-                        <SelectItem value="other">Other (Custom)</SelectItem>
+                        <SelectItem value="custom-trader">+ Add Custom Trader</SelectItem>
                       </>
                     )}
                   </SelectContent>
                 </Select>
-              </div>
-              
-              {selectedTrader === 'other' && (
+              </div>              {selectedTrader === 'custom-trader' && (
                 <div>
-                  <Label htmlFor="otherCustomerName" className="text-sm font-medium text-gray-700">Customer Name</Label>
+                  <Label htmlFor="otherCustomerName" className="text-sm font-medium text-gray-700">
+                    Custom Trader Name
+                  </Label>
                   <Input
                     id="otherCustomerName"
                     value={otherCustomerName}
                     onChange={(e) => setOtherCustomerName(e.target.value)}
-                    placeholder="Enter customer name"
+                    placeholder="Enter trader name"
                     className="w-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
@@ -314,7 +320,7 @@ export function CreateBulkSalesRequestDialog({
                 </div>
 
                 <div className="space-y-3 max-h-[250px] md:max-h-[400px] overflow-y-auto">
-                  {selectedProducts.map(({ product, quantity }, index) => (
+                  {selectedProducts.map(({ product, quantity, customPrice }, index) => (
                     <div key={index} className="flex gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
                       <img
                         src={product.imageUrl}
@@ -366,22 +372,37 @@ export function CreateBulkSalesRequestDialog({
                           >
                             <X className="h-4 w-4" />
                           </Button>
+                        </div>                        <div className="mt-2">
+                          <Label htmlFor={`customPrice-${index}`} className="text-xs font-medium text-gray-700">Custom Price (Optional)</Label>
+                          <Input
+                            id={`customPrice-${index}`}
+                            type="number"
+                            min={0}
+                            step="0.01"
+                            placeholder={product.price.toString()}
+                            value={customPrice !== null ? customPrice : ''}
+                            onChange={(e) => updateCustomPrice(index, e.target.value ? parseFloat(e.target.value) : null)}
+                            className="w-full mt-1 text-sm"
+                          />
                         </div>
-                        <div className="text-right text-sm font-medium">
-                          Total: ₹{(product.price * quantity).toFixed(2)}
+                        <div className="text-right text-sm font-medium mt-2">
+                          Total: ₹{((customPrice !== null ? customPrice : product.price) * quantity).toFixed(2)}
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-
-              {selectedProducts.length > 0 ? (
+              </div>              {selectedProducts.length > 0 ? (
                 <div className="bg-gray-500 text-white p-4 rounded-lg">
                   <div className="text-lg">Order Summary</div>
-                  <div className="text-2xl">
+                  <div className="text-2xl mb-1">
                     Total: ₹{calculateTotal().toFixed(2)}
                   </div>
+                  {selectedProducts.some(p => p.customPrice !== null) && (
+                    <div className="text-xs text-gray-200">
+                      * Order includes custom pricing
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="text-center text-gray-500 p-4 border rounded-lg">

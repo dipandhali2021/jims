@@ -48,6 +48,72 @@ async function ensureUserExists(userId: string) {
   return user;
 }
 
+// Helper function to find karigar by name
+async function findKarigarByName(name: string) {
+  if (!name) return null;
+  
+  const karigar = await prisma.karigar.findFirst({
+    where: {
+      name: {
+        contains: name,
+        mode: 'insensitive'
+      },
+      isApproved: true
+    }
+  });
+  
+  return karigar;
+}
+
+// Helper function to create karigar transaction
+async function createKarigarTransaction(
+  karigarId: string, 
+  description: string, 
+  amount: number, 
+  productRequestId: string, 
+  productName: string, 
+  userId: string
+) {
+  try {
+    // Generate transaction ID: KT-YYYY-XXXX (KT for Karigar Transaction)
+    const currentYear = new Date().getFullYear();
+    const transactionCountForYear = await prisma.karigarTransaction.count({
+      where: {
+        transactionId: {
+          startsWith: `KT-${currentYear}-`
+        }
+      }
+    });
+    
+    const sequentialNumber = (transactionCountForYear + 1).toString().padStart(4, '0');
+    const transactionId = `KT-${currentYear}-${sequentialNumber}`;
+
+    const transaction = await prisma.karigarTransaction.create({
+      data: {
+        transactionId,
+        description,
+        amount,
+        items: {
+          requestId: productRequestId,
+          productName,
+          type: 'product_request'
+        },
+        karigar: {
+          connect: { id: karigarId }
+        },
+        createdBy: {
+          connect: { id: userId }
+        }
+      }
+    });
+    
+    return transaction;
+  } catch (error) {
+    console.error(`Error creating karigar transaction:`, error);
+    return null;
+  }
+}
+
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -142,6 +208,25 @@ export async function PUT(
                 userId: productRequest.userId // Associate with the requesting user
               }
             });
+
+            // If a supplier (karigar) is specified, add a transaction to their account
+            if (productRequest.details.supplier) {
+              const karigar = await findKarigarByName(productRequest.details.supplier);
+              if (karigar) {
+                const productCost = productRequest.details.costPrice || productRequest.details.price || 0;
+                const totalAmount = productCost * (productRequest.details.stock || 0);
+                
+                // Create transaction - positive amount means we owe money to karigar
+                await createKarigarTransaction(
+                  karigar.id,
+                  `New product added: ${productRequest.details.name}`,
+                  totalAmount,
+                  productRequest.requestId,
+                  productRequest.details.name || 'New product',
+                  userId
+                );
+              }
+            }
           }
           break;
         
@@ -173,6 +258,34 @@ export async function PUT(
                 ...(productRequest.details.supplier !== undefined && { supplier: productRequest.details.supplier })
               }
             });
+
+            // If a supplier (karigar) is specified and it's different or stock is added, add a transaction to their account
+            if (
+              productRequest.details.supplier && 
+              (productRequest.details.supplier !== productRequest.product.supplier ||
+              (productRequest.details.stockAdjustment && productRequest.details.stockAdjustment > 0))
+            ) {
+              const karigar = await findKarigarByName(productRequest.details.supplier);
+              if (karigar) {                const productCost = productRequest.details.costPrice !== undefined ? 
+                  productRequest.details.costPrice : 
+                  productRequest.product.costPrice || productRequest.product.price || 0;
+                  
+                const stockChange = productRequest.details.stockAdjustment || 0;
+                const totalAmount = (productCost || 0) * stockChange;
+                
+                if (totalAmount > 0) {
+                  // Create transaction - positive amount means we owe money to karigar
+                  await createKarigarTransaction(
+                    karigar.id,
+                    `Updated product: ${productRequest.product.name}`,
+                    totalAmount,
+                    productRequest.requestId,
+                    productRequest.product.name,
+                    userId
+                  );
+                }
+              }
+            }
           }
           break;
         

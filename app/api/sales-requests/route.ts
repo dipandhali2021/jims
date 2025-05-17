@@ -55,9 +55,7 @@ export async function POST(req: NextRequest) {
           role: clerkUser.publicMetadata?.role as string || 'user'
         }
       });
-    }
-
-    const { customer, items } = await req.json();
+    }    const { customer, vyapariId, items } = await req.json();
 
     if (!customer || !items || !Array.isArray(items) || items.length === 0) {
       return NextResponse.json(
@@ -90,21 +88,22 @@ export async function POST(req: NextRequest) {
           { error: `Insufficient stock for product: ${product.name}` },
           { status: 400 }
         );
-      }
-      totalValue += product.price * item.quantity;
-    }
-
-    // Create sales request with unique request ID
+      }      // Use custom price if provided, otherwise use default product price
+      const itemPrice = item.customPrice !== undefined ? item.customPrice : product.price;
+      totalValue += itemPrice * item.quantity;
+    }    // Create sales request with unique request ID
     const salesRequest = await prisma.salesRequest.create({
       data: {
         requestId: generateRequestId(),
         customer,
         totalValue,
         userId,
+        ...(vyapariId ? { vyapariId } : {}), // Only include vyapariId if it exists
         items: {
-          create: items.map(item => ({
-            quantity: item.quantity,
-            price: products.find(p => p.id === item.productId)!.price,
+          create: items.map(item => ({            quantity: item.quantity,
+            price: item.customPrice !== undefined 
+              ? item.customPrice 
+              : products.find(p => p.id === item.productId)!.price,
             productId: item.productId,
             productName: products.find(p => p.id === item.productId)!.name,
             productSku: products.find(p => p.id === item.productId)!.sku,

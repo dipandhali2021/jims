@@ -78,9 +78,7 @@ export async function PUT(
           });
         }
       }
-    }    
-
-    // Create transaction record if request is approved and there's no existing transaction
+    }        // Create transaction record if request is approved and there's no existing transaction
     if (status === 'Approved') {
       // Ensure user exists in database
       await ensureUserExists(salesRequest.userId);
@@ -88,7 +86,9 @@ export async function PUT(
       // Check if a transaction already exists for this sales request
       const existingTransaction = await prisma.transaction.findUnique({
         where: { orderId: salesRequest.requestId }
-      });      // Only create a transaction if one doesn't exist
+      });      
+      
+      // Only create a transaction if one doesn't exist
       if (!existingTransaction) {
         // Format items for transaction record with full product details
         const transactionItems = salesRequest.items.map(item => ({
@@ -113,6 +113,60 @@ export async function PUT(
             billType: billType || null, // Set billType from request (GST or Non-GST)
           }
         });
+          // Create a transaction in the khatabook for the vyapari if associated
+        if (salesRequest.vyapariId) {
+          try {
+            // First check if the vyapari exists and is approved
+            const vyapari = await prisma.vyapari.findFirst({
+              where: {
+                id: salesRequest.vyapariId,
+                isApproved: true
+              }
+            });
+            
+            if (!vyapari) {
+              console.warn(`Vyapari ${salesRequest.vyapariId} not found or not approved, skipping khatabook transaction`);
+            } else {
+              // Generate transaction ID in VT-YYYY-XXXX format for Vyapari Transaction
+              const currentYear = new Date().getFullYear();
+              const transactionCountForYear = await prisma.vyapariTransaction.count({
+                where: {
+                  transactionId: {
+                    startsWith: `VT-${currentYear}-`
+                  }
+                }
+              });
+              
+              const sequentialNumber = (transactionCountForYear + 1).toString().padStart(4, '0');
+              const transactionId = `VT-${currentYear}-${sequentialNumber}`;
+              
+              // Create vyapari transaction - negative amount means the trader owes us money
+              await prisma.vyapariTransaction.create({
+                data: {
+                  transactionId,
+                  description: `Sales Request ${salesRequest.requestId} approved`,
+                  amount: -salesRequest.totalValue, // Negative amount - trader owes us money
+                  items: {
+                    salesRequestId: salesRequest.requestId,
+                    items: transactionItems,
+                    billType: billType || 'Regular'
+                  },
+                  vyapari: {
+                    connect: { id: salesRequest.vyapariId }
+                  },
+                  createdBy: {
+                    connect: { id: userId }
+                  }
+                }
+              });
+              
+              console.log(`Khatabook transaction created for vyapari ${salesRequest.vyapariId} with ID ${transactionId}`);
+            }
+          } catch (error) {
+            // Log the error but don't fail the overall request - the main transaction is already created
+            console.error(`Error creating khatabook transaction for vyapari ${salesRequest.vyapariId}:`, error);
+          }
+        }
       }
       // Generate bill if billType is provided
       if (billType && ['GST', 'Non-GST'].includes(billType)) {

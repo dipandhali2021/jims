@@ -79,35 +79,55 @@ const generateGstBillHtml = (bill: Bill) => {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>Bill - ${bill.billNumber || "Manual Bill"}</title>
+        <title>GST Bill - ${bill.billNumber || "Invoice"}</title>
         <style>
+          @page {
+            size: A4;
+            margin: 0;
+          }
           body { 
             font-family: Arial, sans-serif; 
             margin: 0; 
-            padding: 5mm; 
+            padding: 0;
             box-sizing: border-box;
+            background-color: white;
           }
           .bill-container { 
-            width: 210mm; 
+            width: 210mm;
+            height: 297mm;
             margin: 0 auto;
-            border: 1px solid #99b;
-            padding: 5mm;
+            padding: 10mm;
             box-sizing: border-box;
+            position: relative;
+            border: 1px solid #ccc;
           }
           .bill-header { 
             position: relative;
-            margin-bottom: 5px; 
+            margin-bottom: 5px;
             padding-bottom: 5px;
-            height: 90px;
+            border-bottom: 1px solid #ddd;
           }
           .company-logo {
             position: absolute;
-            left: 5px;
-            top: 5px;
-            width: 50px;
+            left: 0;
+            top: 0;
+            width: 48px;
+            height: 48px;
+          }
+          .company-logo svg {
+            width: 100%;
+            height: 100%;
+          }
+          .contact-details {
+            position: absolute;
+            right: 0;
+            top: 0;
+            font-size: 11px;
+            text-align: right;
+            line-height: 1.2;
           }
           .bill-title { 
-            color: #d00000; 
+            color: #cc0000; 
             font-size: 26px; 
             font-weight: bold; 
             margin: 0;
@@ -121,23 +141,16 @@ const generateGstBillHtml = (bill: Bill) => {
             text-align: center;
             padding: 1px 0;
           }
-          .contact-details {
-            position: absolute;
-            right: 5px;
-            top: 0px;
-            font-size: 11px;
-            text-align: right;
-            line-height: 1.5;
-          }
           .bill-gstin {
             margin: 0;
             font-size: 11px;
             text-align: center;
-            padding-bottom: 0;
+            padding-bottom: 2px;
           }
           .invoice-box {
             width: 100%;
-            margin-top: 0;
+            margin-top: 2px;
+            margin-bottom: 2px;
           }
           .invoice-label {
             text-align: center;
@@ -145,28 +158,28 @@ const generateGstBillHtml = (bill: Bill) => {
             margin: 0;
             background-color: #000080;
             color: white;
-            padding: 3px 0;
+            padding: 4px 0;
             font-size: 13px;
           }
           .invoice-jurisdiction {
             text-align: center;
-            font-size: 10px;
+            font-size: 11px;
             margin: 0;
-            padding: 1px 0;
-            border-bottom: 1px solid #99b;
+            padding: 2px 0;
+            border-bottom: 1px solid #ddd;
           }
           .bill-info { 
             display: flex; 
             width: 100%; 
-            margin-top: 2px;
-            margin-bottom: 0;
-            border: 1px solid #99b;
+            margin-top: 5px;
+            margin-bottom: 5px;
+            border: 1px solid #000;
             border-collapse: collapse;
           }
           .bill-info-left {
             flex: 1;
             padding: 0;
-            border-right: 1px solid #99b;
+            border-right: 1px solid #000;
             vertical-align: top;
           }
           .bill-info-right {
@@ -176,21 +189,23 @@ const generateGstBillHtml = (bill: Bill) => {
           }
           .field-row {
             position: relative;
-            border-bottom: 1px solid #99b;
+            border-bottom: 1px solid #000;
             min-height: 20px;
-            padding: 3px 8px;
+            padding: 2px 2px;
           }
           .field-label {
             display: inline-block;
             font-weight: normal;
             font-size: 11px;
-            color: #006;
+            color: #000080;
             vertical-align: top;
+            margin-left: 2px;
+            margin-right: 2px;
           }
           .field-value {
             display: inline-block;
             font-size: 11px;
-            margin-left: 5px;
+            margin-left: 2px;
           }
           .no-border {
             border-bottom: none;
@@ -198,11 +213,12 @@ const generateGstBillHtml = (bill: Bill) => {
           .bill-table { 
             width: 100%; 
             border-collapse: collapse; 
-            margin-top: 0;
+            margin-top: 5px;
+            border: 1px solid #000;
           }
           .bill-table th, .bill-table td { 
-            border: 1px solid #99b; 
-            padding: 3px; 
+            border: 1px solid #000; 
+            padding: 2px; 
             text-align: center;
             font-size: 11px;
             height: 22px;
@@ -210,9 +226,11 @@ const generateGstBillHtml = (bill: Bill) => {
           .bill-table th { 
             background-color: white;
             text-align: center;
-            color: #006;
+            color: #000080;
             font-size: 11px;
-            height: 30px;
+            font-weight: normal;
+            height: 20px;
+            padding: 2px;
           }
           .sr-column {
             width: 5%;
@@ -235,18 +253,18 @@ const generateGstBillHtml = (bill: Bill) => {
           }
           .empty-row td {
             height: 22px;
-            border: 1px solid #99b;
+            border: 1px solid #000;
           }
           .totals-table {
             width: 100%;
             border-collapse: collapse;
           }
           .totals-table td {
-            border: 1px solid #99b;
-            padding: 5px;
+            border: 1px solid #000;
+            padding: 2px;
             text-align: right;
             font-size: 11px;
-            height: 20px;
+            height: 22px;
           }
           .totals-table .label {
             width: 85%;
@@ -255,41 +273,38 @@ const generateGstBillHtml = (bill: Bill) => {
             width: 15%;
           }
           .bank-details {
-            margin-top: 10px;
+            margin-top: 5px;
             font-size: 11px;
           }
           .signature-area {
             display: flex;
             justify-content: space-between;
-            margin-top: 20px;
+            margin-top: 15px;
           }
           .signature-box {
-            width: 45%;
-            text-align: center;
+            width: 33%;
+            font-size: 11px;
           }
           .customer-sign {
             text-align: left;
+          }
+          .center-sign {
+            text-align: center;
           }
           .auth-sign {
             text-align: right;
           }
           .note {
-            margin-top: 10px;
-            font-size: 10px;
+            margin-top: 5px;
+            font-size: 11px;
             text-align: right;
-            font-style: italic;
-          }
-          .footer-thanks {
-            font-size: 12px;
-            text-align: center;
-            margin-top: 10px;
           }
           @media print {
             body { margin: 0; padding: 0; }
             .bill-container { 
               width: 100%;
               border: none;
-              padding: 5mm;
+              padding: 10mm;
             }
           }
         </style>
@@ -298,14 +313,14 @@ const generateGstBillHtml = (bill: Bill) => {
         <div class="bill-container">
           <div class="bill-header">
             <div class="company-logo">
-              <svg width="50" height="50" viewBox="0 0 50 50">
-                <circle cx="25" cy="25" r="23" fill="white" stroke="#d00000" stroke-width="1.5"/>
-                <path d="M15,17 Q25,10 35,17 Q35,32 25,40 Q15,32 15,17" fill="white" stroke="#d00000" stroke-width="1.5"/>
+              <svg viewBox="0 0 50 50">
+                <circle cx="25" cy="25" r="23" fill="white" stroke="#cc0000" strokeWidth="1.5"/>
+                <path d="M15,17 Q25,10 35,17 Q35,32 25,40 Q15,32 15,17" fill="white" stroke="#cc0000" strokeWidth="1.5"/>
               </svg>
             </div>
             <div class="contact-details">
               Kanchan : 9699233831<br>
-              Office : 9702033831
+              Office : 9702833831
             </div>
             <h1 class="bill-title">OMKAR GOLD COVERING</h1>
             <p class="bill-address">Room No. C-7, Mamta Industrial Estate, Navghar Road, Near Sri Ram Jewellers, Bhayander (E), Thane - 401105.</p>
@@ -389,7 +404,7 @@ const generateGstBillHtml = (bill: Bill) => {
               ${getItemsArray(bill.items).map((item, idx) => `
                 <tr>
                   <td>${idx + 1}</td>
-                  <td class="particulars-column" style="text-align:left;padding-left:10px;">${item.name}</td>
+                  <td class="particulars-column" style="text-align:left;padding-left:5px;">${item.name}</td>
                   <td>${item.hsn || "7113"}</td>
                   <td>${item.quantity}</td>
                   <td>${item.rate?.toFixed(2)}</td>
@@ -436,14 +451,14 @@ const generateGstBillHtml = (bill: Bill) => {
           
           <div class="bank-details">
             <p>A/c. No.: 917020061582687&nbsp;&nbsp;&nbsp;&nbsp;IFSC CODE : UTIB0001842</p>
-            <p style="font-size:9px;">We hereby certify that original registration certificate under the CGST Act, 2017 is in force on the date on which the tax has been paid/payable by/to us on the goods specified in the Tax invoice & made as per the particulars given above.</p>
+            <p style="font-size:10px;">We hereby certify that original registration certificate under the CGST Act, 2017 is in force on the date on which the tax has been paid/payable by/to us on the goods specified in the Tax invoice & made as per the particulars given above.</p>
           </div>
           
           <div class="signature-area">
             <div class="signature-box customer-sign">
               <p>Customer Sign</p>
             </div>
-            <div class="signature-box">
+            <div class="signature-box center-sign">
               <p>E. & O.E.<br>Thank You !</p>
             </div>
             <div class="signature-box auth-sign">
@@ -485,101 +500,107 @@ const generateNonGstBillHtml = (bill: Bill) => {
         }
         .bill-container { 
           width: 210mm;
-          min-height: 297mm;
+          height: 297mm;
           margin: 0 auto;
           padding: 10mm;
           box-sizing: border-box;
           position: relative;
+          border: 1px solid #ccc;
         }
         .bill-header { 
           position: relative;
-          margin-bottom: 15px;
+          margin-bottom: 6px;
           border-bottom: 1px solid #ddd;
-          padding-bottom: 5px;
+          padding-bottom: 4px;
         }
         .company-logo {
           position: absolute;
-          left: 5px;
-          top: 5px;
-          width: 60px;
+          left: 0;
+          top: 0;
+          width: 48px;
         }
         .om-sai-ram {
           position: absolute;
-          top: 5px;
+          top: 0;
           left: 50%;
           transform: translateX(-50%);
-          background-color: #d00000;
+          background-color: #cc0000;
           color: white;
-          padding: 2px 15px;
-          border-radius: 15px;
+          padding: 1px 12px;
+          border-radius: 12px;
           font-weight: bold;
-          font-size: 12px;
+          font-size: 10px;
         }
         .bill-title { 
-          color: #d00000; 
-          font-size: 28px; 
+          color: #cc0000; 
+          font-size: 26px; 
           font-weight: bold; 
           margin: 0;
           text-align: center;
-          padding-top: 30px;
-          letter-spacing: 2px;
+          padding-top: 20px;
+          letter-spacing: 1px;
           text-transform: uppercase;
         }
         .bill-address {
-          margin: 5px 0;
+          margin: 2px 0;
           font-size: 11px; 
           text-align: center;
         }
         .bill-specialty {
-          margin: 10px 0;
-          font-size: 14px;
+          margin: 2px 0;
+          font-size: 11px;
           text-align: center;
           font-style: italic;
           font-weight: bold;
         }
         .contact-details {
           position: absolute;
-          right: 5px;
-          top: 10px;
+          right: 0;
+          top: 0;
           font-size: 11px;
           text-align: right;
-          line-height: 1.5;
+          line-height: 1.2;
         }
         .bill-details {
-          margin: 20px 0;
+          margin: 5px 0;
+        }
+        .buyer-row {
+          display: flex;
+          margin-bottom: 4px;
         }
         .bill-row {
           display: flex;
-          margin-bottom: 10px;
+          margin-bottom: 4px;
+          justify-content: space-between;
         }
         .bill-label {
           font-weight: bold;
-          margin-right: 10px;
-          font-size: 13px;
+          margin-right: 4px;
+          font-size: 11px;
         }
         .bill-value {
           flex: 1;
           border-bottom: 1px solid #000;
-          font-size: 13px;
-          min-height: 18px;
+          font-size: 11px;
+          min-height: 16px;
         }
         .bill-inline {
           display: inline-block;
-          margin-right: 30px;
         }
         .bill-table {
           width: 100%;
           border-collapse: collapse;
-          margin-top: 20px;
+          margin-top: 5px;
         }
         .bill-table th, .bill-table td {
           border: 1px solid #000;
-          padding: 8px;
+          padding: 2px 4px;
           text-align: center;
-          font-size: 12px;
+          font-size: 11px;
         }
         .bill-table th {
           font-weight: bold;
+          padding: 1px 2px;
         }
         .bill-table .particulars-col {
           width: 50%;
@@ -599,7 +620,7 @@ const generateNonGstBillHtml = (bill: Bill) => {
           width: 15%;
         }
         .empty-row td {
-          height: 25px;
+          height: 22px;
         }
         .total-row {
           font-weight: bold;
@@ -611,14 +632,16 @@ const generateNonGstBillHtml = (bill: Bill) => {
           transform: translate(-50%, -50%);
           opacity: 0.05;
           z-index: -1;
-          width: 300px;
-          height: 300px;
+          width: 200px;
+          height: 200px;
+          pointer-events: none;
         }
         .signature {
-          margin-top: 30px;
+          margin-top: 20px;
           text-align: right;
-          color: #d00000;
+          color: #cc0000;
           font-weight: bold;
+          font-size: 11px;
         }
         @media print {
           body { margin: 0; padding: 0; }
@@ -633,29 +656,23 @@ const generateNonGstBillHtml = (bill: Bill) => {
       <div class="bill-container">
         <!-- Watermark -->
         <div class="watermark">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300">
-            <path d="M150,20 C80,60 60,150 100,250 C120,210 150,190 180,210 C240,150 220,60 150,20 Z" 
-                  fill="none" stroke="#000" stroke-width="2"/>
-            <path d="M100,90 C130,70 170,70 200,90 C220,120 220,180 200,210 C170,230 130,230 100,210 C80,180 80,120 100,90 Z" 
-                  fill="none" stroke="#000" stroke-width="2"/>
-            <circle cx="150" cy="150" r="10" fill="#000"/>
+          <svg viewBox="0 0 200 200">
+            <path d="M100,20 C60,40 40,80 50,150 C80,120 100,110 120,120 C160,100 140,40 100,20 Z" 
+                 fill="none" stroke="#000" strokeWidth="1"/>
           </svg>
         </div>
 
         <div class="bill-header">
           <div class="company-logo">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="60" height="60">
-              <circle cx="50" cy="50" r="48" stroke="#d00000" stroke-width="1.5" fill="none" />
-              <path d="M50,10 C30,20 20,40 20,55 C20,70 30,85 50,90 C70,85 80,70 80,55 C80,40 70,20 50,10 Z" fill="none" stroke="#d00000" stroke-width="1.5" />
-              <path d="M30,35 Q50,25 70,35" stroke="#d00000" stroke-width="1.5" fill="none" />
-              <path d="M30,55 Q50,45 70,55" stroke="#d00000" stroke-width="1.5" fill="none" />
-              <ellipse cx="50" cy="30" rx="5" ry="3" stroke="#d00000" stroke-width="1" fill="none" />
+            <svg viewBox="0 0 48 48" width="48" height="48">
+              <circle cx="24" cy="24" r="23" fill="white" stroke="#cc0000" strokeWidth="1.5"/>
+              <path d="M15,17 Q25,10 35,17 Q35,32 25,40 Q15,32 15,17" fill="white" stroke="#cc0000" strokeWidth="1.5"/>
             </svg>
           </div>
           <div class="om-sai-ram">OM SAI RAM</div>
           <div class="contact-details">
             Kanchan : 9699233831<br>
-            Office : 9702033831
+            Office : 9702833831
           </div>
           <h1 class="bill-title">OMKAR GOLD COVERING</h1>
           <p class="bill-address">Room No. C-7, Mamta Industrial Estate, Navghar Road, Near Sri Ram Jewellers, Bhayander (E), Thane - 401105.</p>
@@ -663,22 +680,24 @@ const generateNonGstBillHtml = (bill: Bill) => {
         </div>
         
         <div class="bill-details">
-          <div class="bill-row">
+          <div class="buyer-row">
             <div class="bill-label">Buyer's Name :</div>
             <div class="bill-value">${bill.customerName || ""}</div>
           </div>
           <div class="bill-row">
             <div class="bill-inline">
               <span class="bill-label">No. :</span>
-              <span class="bill-value" style="min-width: 100px; display: inline-block;">${bill.billNumber || ""}</span>
+              <span class="bill-value" style="min-width: 80px; display: inline-block; padding: 0 4px;">${bill.billNumber || ""}</span>
             </div>
-            <div class="bill-inline" style="float:right;">
+            <div class="bill-inline">
               <span class="bill-label">Date :</span>
-              <span class="bill-value" style="min-width: 150px; display: inline-block;">${new Date(bill.date || "2025-05-10").toLocaleDateString('en-IN', {
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-              })}</span>
+              <span class="bill-value" style="min-width: 120px; display: inline-block; padding: 0 4px;">
+                ${new Date(bill.date || new Date()).toLocaleDateString('en-IN', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric'
+                })}
+              </span>
             </div>
           </div>
         </div>

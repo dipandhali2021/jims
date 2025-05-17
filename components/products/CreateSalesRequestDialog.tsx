@@ -34,8 +34,10 @@ export function CreateSalesRequestDialog({
 }: CreateSalesRequestDialogProps) {  const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [customPrice, setCustomPrice] = useState<number | null>(null);
   const [vyaparis, setVyaparis] = useState<Vyapari[]>([]);
   const [selectedVyapariId, setSelectedVyapariId] = useState<string>('');
+  const [customTraderName, setCustomTraderName] = useState<string>('');
   const [isVyaparisLoading, setIsVyaparisLoading] = useState(false);
   const { toast } = useToast();
   const { fetchVyaparis } = useVyapari();
@@ -67,11 +69,19 @@ export function CreateSalesRequestDialog({
   }, [isOpen, fetchVyaparis, toast]);
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!selectedVyapariId || selectedVyapariId === 'none') {
+      if (!selectedVyapariId || selectedVyapariId === 'none') {
       toast({
         title: 'Error',
         description: 'Please select a trader',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (selectedVyapariId === 'custom' && !customTraderName.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Please enter a custom trader name',
         variant: 'destructive',
       });
       return;
@@ -84,23 +94,30 @@ export function CreateSalesRequestDialog({
         variant: 'destructive',
       });
       return;
-    }    try {      setIsLoading(true);
-
-      // Find the selected trader to get the name
-      const selectedVyapari = vyaparis.find(v => v.id === selectedVyapariId);
-      const traderName = selectedVyapari ? selectedVyapari.name : '';
-
+    }    try {      setIsLoading(true);      // Determine trader name - either from selected vyapari or custom input
+      let traderName = '';
+      let vyapariId = selectedVyapariId;
+      
+      if (selectedVyapariId === 'custom') {
+        traderName = customTraderName;
+        vyapariId = ''; // Don't associate with any existing vyapari
+      } else {
+        const selectedVyapari = vyaparis.find(v => v.id === selectedVyapariId);
+        traderName = selectedVyapari ? selectedVyapari.name : '';
+      }
+      
       const response = await fetch('/api/sales-requests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },        body: JSON.stringify({
           customer: traderName, // Use trader name as customer name
-          vyapariId: selectedVyapariId,
+          vyapariId, // Already handled vyapariId logic above
           items: [
             {
               productId: product.id,
               quantity: quantity,
+              customPrice: customPrice !== null ? customPrice : undefined,
             },
           ],
         }),
@@ -114,10 +131,11 @@ export function CreateSalesRequestDialog({
       toast({
         title: 'Success',
         description: 'Sales request created successfully',
-      });      onRequestCreated();
-      setIsOpen(false);
+      });      onRequestCreated();      setIsOpen(false);
       setQuantity(1);
       setSelectedVyapariId('');
+      setCustomTraderName('');
+      setCustomPrice(null);
     } catch (error) {
       console.error('Error creating sales request:', error);
       toast({
@@ -149,8 +167,7 @@ export function CreateSalesRequestDialog({
           <DialogTitle className="text-lg font-semibold text-gray-800">Create Sales Request</DialogTitle>
         </DialogHeader>        <form onSubmit={handleSubmit} className="space-y-4 mt-4">
           <div className="space-y-2">
-            <Label htmlFor="vyapari" className="text-sm font-medium text-gray-700">Trader Name</Label>
-            <Select
+            <Label htmlFor="vyapari" className="text-sm font-medium text-gray-700">Trader Name</Label>            <Select
               value={selectedVyapariId}
               onValueChange={(value) => setSelectedVyapariId(value)}
             >
@@ -163,11 +180,29 @@ export function CreateSalesRequestDialog({
                     {vyapari.name}
                   </SelectItem>
                 ))}
+                <SelectItem key="custom" value="custom">
+                  + Add Custom Trader
+                </SelectItem>
               </SelectContent>
             </Select>
             {isVyaparisLoading && <p className="text-sm text-gray-500">Loading traders...</p>}
-          </div>
-            <div className="space-y-2">
+            
+            {selectedVyapariId === 'custom' && (
+              <div className="mt-2">
+                <Label htmlFor="customTraderName" className="text-sm font-medium text-gray-700">
+                  Custom Trader Name
+                </Label>
+                <Input
+                  id="customTraderName"
+                  placeholder="Enter trader name"
+                  value={customTraderName}
+                  onChange={(e) => setCustomTraderName(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  required
+                />
+              </div>
+            )}
+          </div>            <div className="space-y-2">
             <Label htmlFor="quantity" className="text-sm font-medium text-gray-700">Quantity</Label>
             <Input
               id="quantity"
@@ -181,14 +216,33 @@ export function CreateSalesRequestDialog({
             />
             <p className={`text-sm ${quantity > product.stock ? 'text-red-500' : 'text-gray-500'}`}>
               Available stock: {product.stock}
-            </p>            </div>
+            </p>            
+            </div>
+
+            <div className="space-y-2">
+            <Label htmlFor="customPrice" className="text-sm font-medium text-gray-700">Custom Price (Optional)</Label>
+            <Input
+              id="customPrice"
+              type="number"
+              min={0}
+              step="0.01"
+              placeholder={product.price.toString()}
+              value={customPrice !== null ? customPrice : ''}
+              onChange={(e) => setCustomPrice(e.target.value ? parseFloat(e.target.value) : null)}
+              className="w-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+            <p className="text-sm text-gray-500">
+              Default price: ₹{product.price.toFixed(2)} - Enter custom amount for this sale
+            </p>
+            </div>
+
           <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-700">Product Details</Label>
             <div className="p-4 rounded-lg bg-gray-50 border border-gray-200">
               <p className="font-medium text-gray-800">{product.name}</p>
               <p className="text-sm text-gray-500">Product ID: {product.sku}</p>
               <p className="text-sm font-medium mt-2 text-gray-800">
-                Total: ₹{(product.price * quantity).toFixed(2)}
+                Total: ₹{((customPrice !== null ? customPrice : product.price) * quantity).toFixed(2)}
               </p>
             </div>
           </div>
