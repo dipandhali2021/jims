@@ -1,0 +1,299 @@
+import { NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
+import prisma from '@/lib/prisma';
+import { startOfDay, endOfDay, subDays, startOfMonth, endOfMonth, format } from 'date-fns';
+
+export async function GET(req: Request) {
+  try {
+    const { userId } = auth();
+
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const url = new URL(req.url);
+    const days = url.searchParams.get('days') || '30';
+    const type = url.searchParams.get('type') || 'all'; // 'karigar', 'vyapari', or 'all'
+    
+    const daysNum = parseInt(days, 10);
+    const endDate = endOfDay(new Date());
+    const startDate = startOfDay(subDays(endDate, daysNum));
+
+    // Get current month range for monthly summary
+    const currentMonthStart = startOfMonth(new Date());
+    const currentMonthEnd = endOfMonth(new Date());
+
+    // Base query filters for time range
+    const timeRangeFilter = {
+      createdAt: {
+        gte: startDate,
+        lte: endDate,
+      }
+    };
+
+    // Prepare data objects
+    let karigarData = null;
+    let vyapariData = null;
+
+    // Fetch Karigar data if requested
+    if (type === 'karigar' || type === 'all') {
+      // Get total count of karigars
+      const totalKarigars = await prisma.karigar.count({
+        where: {
+          isApproved: true
+        }
+      });
+
+      // Get recent transactions
+      const karigarTransactions = await prisma.karigarTransaction.findMany({
+        where: timeRangeFilter,
+        include: {
+          karigar: {
+            select: {
+              name: true,
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: 10
+      });
+
+      // Get total transaction amount in the period
+      const karigarTransactionSum = await prisma.karigarTransaction.aggregate({
+        where: timeRangeFilter,
+        _sum: {
+          amount: true
+        }
+      });
+
+      // Get monthly transaction count
+      const monthlyTransactionCount = await prisma.karigarTransaction.count({
+        where: {
+          createdAt: {
+            gte: currentMonthStart,
+            lte: currentMonthEnd
+          }
+        }
+      });
+
+      // Calculate positive (amounts we owe to karigars) and negative amounts (karigars owe us)
+      const positiveTransactions = await prisma.karigarTransaction.aggregate({
+        where: {
+          ...timeRangeFilter,
+          amount: { gt: 0 }
+        },
+        _sum: {
+          amount: true
+        }
+      });
+
+      const negativeTransactions = await prisma.karigarTransaction.aggregate({
+        where: {
+          ...timeRangeFilter,
+          amount: { lt: 0 }
+        },
+        _sum: {
+          amount: true
+        }
+      });
+
+      // Get summary by karigar (top 5 with highest transaction amounts)
+      const topKarigars = await prisma.karigarTransaction.groupBy({
+        by: ['karigarId'],
+        where: timeRangeFilter,
+        _sum: {
+          amount: true
+        },
+        orderBy: {
+          _sum: {
+            amount: 'desc'
+          }
+        },
+        take: 5
+      });
+
+      // Fetch karigar names for the top karigars
+      const topKarigarDetails = await Promise.all(
+        topKarigars.map(async (k) => {
+          const karigar = await prisma.karigar.findUnique({
+            where: { id: k.karigarId },
+            select: { name: true }
+          });
+          return {
+            id: k.karigarId,
+            name: karigar?.name || 'Unknown',
+            totalAmount: k._sum.amount
+          };
+        })
+      );      // Format transaction data for charts      const transactionsByDate = await prisma.$queryRaw`
+        SELECT 
+          TO_CHAR("createdAt", 'YYYY-MM-DD') as date,
+          SUM("amount") as totalAmount,
+          COUNT(*) as count
+        FROM "KarigarTransaction"
+        WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+        GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
+        ORDER BY date
+      `;
+
+      karigarData = {
+        totalKarigars,
+        recentTransactions: karigarTransactions.map(t => ({
+          id: t.id,
+          transactionId: t.transactionId,
+          karigarName: t.karigar.name,
+          description: t.description,
+          amount: t.amount,
+          createdAt: format(t.createdAt, 'MMM dd, yyyy'),
+        })),
+        totalTransactionAmount: karigarTransactionSum._sum.amount || 0,
+        monthlyTransactionCount,
+        amountWeOwe: positiveTransactions._sum.amount || 0,
+        amountOwedToUs: Math.abs(negativeTransactions._sum.amount || 0),
+        topKarigars: topKarigarDetails,
+        transactionChart: transactionsByDate,
+      };
+    }
+
+    // Fetch Vyapari data if requested
+    if (type === 'vyapari' || type === 'all') {
+      // Get total count of vyaparis
+      const totalVyaparis = await prisma.vyapari.count({
+        where: {
+          isApproved: true
+        }
+      });
+
+      // Get recent transactions
+      const vyapariTransactions = await prisma.vyapariTransaction.findMany({
+        where: timeRangeFilter,
+        include: {
+          vyapari: {
+            select: {
+              name: true,
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: 10
+      });
+
+      // Get total transaction amount in the period
+      const vyapariTransactionSum = await prisma.vyapariTransaction.aggregate({
+        where: timeRangeFilter,
+        _sum: {
+          amount: true
+        }
+      });
+
+      // Get monthly transaction count
+      const monthlyTransactionCount = await prisma.vyapariTransaction.count({
+        where: {
+          createdAt: {
+            gte: currentMonthStart,
+            lte: currentMonthEnd
+          }
+        }
+      });
+
+      // Calculate positive (amounts we owe to vyaparis) and negative amounts (vyaparis owe us)
+      const positiveTransactions = await prisma.vyapariTransaction.aggregate({
+        where: {
+          ...timeRangeFilter,
+          amount: { gt: 0 }
+        },
+        _sum: {
+          amount: true
+        }
+      });
+
+      const negativeTransactions = await prisma.vyapariTransaction.aggregate({
+        where: {
+          ...timeRangeFilter,
+          amount: { lt: 0 }
+        },
+        _sum: {
+          amount: true
+        }
+      });
+
+      // Get summary by vyapari (top 5 with highest transaction amounts)
+      const topVyaparis = await prisma.vyapariTransaction.groupBy({
+        by: ['vyapariId'],
+        where: timeRangeFilter,
+        _sum: {
+          amount: true
+        },
+        orderBy: {
+          _sum: {
+            amount: 'desc'
+          }
+        },
+        take: 5
+      });
+
+      // Fetch vyapari names for the top vyaparis
+      const topVyapariDetails = await Promise.all(
+        topVyaparis.map(async (v) => {
+          const vyapari = await prisma.vyapari.findUnique({
+            where: { id: v.vyapariId },
+            select: { name: true }
+          });
+          return {
+            id: v.vyapariId,
+            name: vyapari?.name || 'Unknown',
+            totalAmount: v._sum.amount
+          };
+        })
+      );      // Format transaction data for charts
+      const transactionsByDate = await prisma.$queryRaw`
+        SELECT 
+          TO_CHAR(createdAt, 'YYYY-MM-DD') as date,
+          SUM(amount) as totalAmount,
+          COUNT(*) as count
+        FROM "VyapariTransaction"
+        WHERE createdAt >= ${startDate} AND createdAt <= ${endDate}
+        GROUP BY TO_CHAR(createdAt, 'YYYY-MM-DD')
+        ORDER BY date
+      `;
+
+      vyapariData = {
+        totalVyaparis,
+        recentTransactions: vyapariTransactions.map(t => ({
+          id: t.id,
+          transactionId: t.transactionId,
+          vyapariName: t.vyapari.name,
+          description: t.description,
+          amount: t.amount,
+          createdAt: format(t.createdAt, 'MMM dd, yyyy'),
+        })),
+        totalTransactionAmount: vyapariTransactionSum._sum.amount || 0,
+        monthlyTransactionCount,
+        amountWeOwe: positiveTransactions._sum.amount || 0,
+        amountOwedToUs: Math.abs(negativeTransactions._sum.amount || 0),
+        topVyaparis: topVyapariDetails,
+        transactionChart: transactionsByDate,
+      };
+    }
+
+    return NextResponse.json({
+      karigar: karigarData,
+      vyapari: vyapariData,
+      timeRange: {
+        start: format(startDate, 'yyyy-MM-dd'),
+        end: format(endDate, 'yyyy-MM-dd'),
+        days: daysNum,
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching Khata analytics:', error);
+    return NextResponse.json(
+      { error: 'Failed to fetch analytics data' },
+      { status: 500 }
+    );
+  }
+}

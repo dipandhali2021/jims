@@ -24,15 +24,24 @@ export default function KhataPage() {
   const { user } = useClerk();
   const isAdmin = user?.publicMetadata?.role === 'admin';
   const [activeTab, setActiveTab] = useState('vyapari');
-
   return (
     <div className="container mx-auto py-6 max-w-7xl">
       <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Khata Book</h1>
-          <p className="text-muted-foreground">
-            Manage your traders (VYAPARI) and artisans (KARIGAR) records, transactions, and payments.
-          </p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Khata Book</h1>
+            <p className="text-muted-foreground">
+              Manage your traders (VYAPARI) and artisans (KARIGAR) records, transactions, and payments.
+            </p>
+          </div>
+          <Button 
+            className="flex items-center gap-2" 
+            variant="outline"
+            onClick={() => window.location.href = '/khata/dashboard'}
+          >
+            <FileText className="h-4 w-4" />
+            <span>View Dashboard</span>
+          </Button>
         </div>
 
         <Tabs defaultValue="vyapari" className="w-full" onValueChange={setActiveTab}>

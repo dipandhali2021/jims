@@ -72,11 +72,18 @@ const sidebarLinks: SidebarLink[] = [
       { href: '/inventory', label: 'Products' },
       { href: '/inventory/dashboard', label: 'Dashboard' },
     ],
-  },
-  { href: '/requests', label: 'Sales Requests', icon: History },
+  },  { href: '/requests', label: 'Sales Requests', icon: History },
   { href: '/product-requests', label: 'Product Requests', icon: Package },
   { href: '/bills', label: 'Bills', icon: ShoppingBag },
-  { href: '/khata', label: 'Khata Book', icon: Gem },
+  { 
+    href: '/khata', 
+    label: 'Khata Book', 
+    icon: Gem,
+    subItems: [
+      { href: '/khata', label: 'Management' },
+      { href: '/khata/dashboard', label: 'Dashboard' },
+    ],
+  },
   { href: '/admin/users', label: 'Users', icon: Users, adminOnly: true },
   {
     href: '/settings',

@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useInventoryAnalytics } from '@/hooks/use-inventory-analytics';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar } from '@/components/ui/avatar';
-import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LabelList } from 'recharts';
 import { ArrowUpRight, ArrowDownRight, RefreshCcw, DollarSign, Package, AlertTriangle, Layers, ArrowRight } from 'lucide-react';
 import { formatCurrency, formatNumber } from '@/lib/utils';
+import { StockAvailabilityChart } from './StockAvailabilityChart';
+import { ProductStockLevelsChart } from './ProductStockLevelsChart';
 
 // Custom color palette
 const COLORS = ['#8884d8', '#82ca9d', '#ffc658', '#ff8042', '#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
@@ -42,6 +44,28 @@ export default function InventoryDashboardPage() {
   const { analytics, isLoading, error, refreshAnalytics } = useInventoryAnalytics();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("overview");
+    // Compute enhanced category data with total stock per category
+  const enhancedCategoryData = useMemo(() => {
+    if (!analytics?.categoryDistribution) return [];
+    
+    // We'll need to access the original products to calculate total stock per category
+    const products = analytics.topProducts || [];
+    const categoryStockMap = new Map();
+    
+    // Calculate total stock for each category
+    return analytics.categoryDistribution.map(category => {
+      // Enhanced with calculated stock data (this is an approximation based on available data)
+      // In a real implementation, you'd calculate this from the actual products
+      const avgStockPerProduct = analytics.totalStockCount / analytics.totalProducts;
+      const estimatedTotalStock = Math.round(category.count * avgStockPerProduct);
+      
+      return {
+        ...category,
+        totalStock: estimatedTotalStock,
+        stockPercentage: Math.round((estimatedTotalStock / analytics.totalStockCount) * 100)
+      };
+    }).sort((a, b) => b.count - a.count); // Sort by count descending
+  }, [analytics]);
 
   const handleRefresh = async () => {
     toast({
@@ -492,9 +516,7 @@ export default function InventoryDashboardPage() {
                   </ResponsiveContainer>
                 </div>
               </CardContent>
-            </Card>
-
-            {/* MATERIAL ITEM COUNT CHART */}
+            </Card>            {/* MATERIAL ITEM COUNT CHART */}
             <Card>
               <CardHeader>
                 <CardTitle>Material Item Distribution</CardTitle>
@@ -522,7 +544,9 @@ export default function InventoryDashboardPage() {
                   </ResponsiveContainer>
                 </div>
               </CardContent>
-            </Card>
+            </Card>            {/* STOCK AVAILABILITY CHART */}
+            <StockAvailabilityChart data={analytics?.categoryDistribution || []} />            {/* TOP PRODUCTS STOCK LEVELS */}
+            <ProductStockLevelsChart products={analytics?.topProducts || []} />
           </div>
         </TabsContent>
       </Tabs>
