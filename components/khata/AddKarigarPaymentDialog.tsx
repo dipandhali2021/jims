@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,7 +14,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useUser } from '@clerk/nextjs';
 import { useKarigar, Karigar, CreatePaymentDto } from '@/hooks/use-karigar';
 import {
   Select,
@@ -39,13 +41,21 @@ export function AddKarigarPaymentDialog({
   karigar,
 }: AddKarigarPaymentDialogProps) {
   const [amount, setAmount] = useState('');
-  const [paymentMode, setPaymentMode] = useState('Cash');
-  const [referenceNumber, setReferenceNumber] = useState('');
+  const [paymentMode, setPaymentMode] = useState('Cash');  const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   const { toast } = useToast();
   const { createKarigarPayment } = useKarigar();
+  
+  // Check if user is admin on component mount
+  const { user } = useUser();
+  
+  useEffect(() => {
+    const userRole = user?.publicMetadata?.role as string;
+    setIsAdmin(userRole === 'admin');
+  }, [user]);
 
   const paymentModes = [
     'Cash',
@@ -102,11 +112,18 @@ export function AddKarigarPaymentDialog({
       // Reset form
       setAmount('');
       setPaymentMode('Cash');
-      setReferenceNumber('');
-      setNotes('');
+      setReferenceNumber('');      setNotes('');
       
       onPaymentAdded();
       onClose();
+      
+      // Show appropriate toast message based on admin status
+      if (!isAdmin) {
+        toast({
+          title: 'Payment Submitted',
+          description: 'Your payment has been submitted and is awaiting admin approval',
+        });
+      }
       
     } catch (error: any) {
       console.error('Failed to add payment:', error);
@@ -122,13 +139,22 @@ export function AddKarigarPaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[425px]">        <DialogHeader>
           <DialogTitle>Add Payment for {karigar?.name || 'Artisan'}</DialogTitle>
           <DialogDescription>
             Record a payment made to or received from this artisan.
           </DialogDescription>
         </DialogHeader>
+        
+        {!isAdmin && (
+          <Alert className="bg-yellow-50 border-yellow-200 text-yellow-800 mt-2">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Admin Approval Required</AlertTitle>
+            <AlertDescription>
+              This payment will require admin approval before it's reflected in the balance.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">

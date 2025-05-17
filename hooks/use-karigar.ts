@@ -27,6 +27,7 @@ export interface KarigarTransaction {
   description: string;
   amount: number;
   items?: any;
+  isApproved: boolean;
   createdAt: string;
 }
 
@@ -37,6 +38,7 @@ export interface KarigarPayment {
   paymentMode: string;
   referenceNumber?: string;
   notes?: string;
+  isApproved: boolean;
   createdAt: string;
 }
 
@@ -372,6 +374,113 @@ export function useKarigar() {
       return { balance: 0 };
     }
   }, [toast]);
+  // Fetch pending karigar transactions
+  const fetchPendingKarigarTransactions = useCallback(async () => {
+    try {
+      const response = await fetch('/api/khata/karigars/transactions/pending');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch pending transactions');
+      }
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error('Error fetching pending karigar transactions:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to fetch pending transactions',
+        variant: 'destructive',
+      });
+      return [];
+    }
+  }, [toast]);
+
+  // Fetch pending karigar payments
+  const fetchPendingKarigarPayments = useCallback(async () => {
+    try {
+      const response = await fetch('/api/khata/karigars/payments/pending');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch pending payments');
+      }
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error('Error fetching pending karigar payments:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to fetch pending payments',
+        variant: 'destructive',
+      });
+      return [];
+    }
+  }, [toast]);
+
+  // Approve or reject karigar transaction
+  const approveKarigarTransaction = useCallback(async (id: string, approve: boolean) => {
+    try {
+      const response = await fetch(`/api/khata/karigars/transactions/${id}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ approve }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to ${approve ? 'approve' : 'reject'} transaction`);
+      }
+      
+      toast({
+        title: 'Success',
+        description: `Transaction ${approve ? 'approved' : 'rejected'} successfully`,
+      });
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error(`Error approving/rejecting transaction ${id}:`, error);
+      toast({
+        title: 'Error',
+        description: error.message || `Failed to ${approve ? 'approve' : 'reject'} transaction`,
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [toast]);
+
+  // Approve or reject karigar payment
+  const approveKarigarPayment = useCallback(async (id: string, approve: boolean) => {
+    try {
+      const response = await fetch(`/api/khata/karigars/payments/${id}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ approve }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to ${approve ? 'approve' : 'reject'} payment`);
+      }
+      
+      toast({
+        title: 'Success',
+        description: `Payment ${approve ? 'approved' : 'rejected'} successfully`,
+      });
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error(`Error approving/rejecting payment ${id}:`, error);
+      toast({
+        title: 'Error',
+        description: error.message || `Failed to ${approve ? 'approve' : 'reject'} payment`,
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [toast]);
 
   return {
     fetchKarigars,
@@ -384,6 +493,10 @@ export function useKarigar() {
     createKarigarTransaction,
     fetchKarigarPayments,
     createKarigarPayment,
-    calculateKarigarBalance
+    calculateKarigarBalance,
+    fetchPendingKarigarTransactions,
+    fetchPendingKarigarPayments,
+    approveKarigarTransaction,
+    approveKarigarPayment
   };
 }

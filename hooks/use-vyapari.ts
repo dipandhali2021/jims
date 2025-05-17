@@ -26,6 +26,7 @@ export interface VyapariTransaction {
   description: string;
   amount: number;
   items?: any;
+  isApproved: boolean;
   createdAt: string;
 }
 
@@ -36,6 +37,7 @@ export interface VyapariPayment {
   paymentMode: string;
   referenceNumber?: string;
   notes?: string;
+  isApproved: boolean;
   createdAt: string;
 }
 
@@ -370,6 +372,113 @@ export function useVyapari() {
       return { balance: 0 };
     }
   }, [toast]);
+  // Fetch pending vyapari transactions
+  const fetchPendingVyapariTransactions = useCallback(async () => {
+    try {
+      const response = await fetch('/api/khata/vyaparis/transactions/pending');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch pending transactions');
+      }
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error('Error fetching pending vyapari transactions:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to fetch pending transactions',
+        variant: 'destructive',
+      });
+      return [];
+    }
+  }, [toast]);
+
+  // Fetch pending vyapari payments
+  const fetchPendingVyapariPayments = useCallback(async () => {
+    try {
+      const response = await fetch('/api/khata/vyaparis/payments/pending');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch pending payments');
+      }
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error('Error fetching pending vyapari payments:', error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to fetch pending payments',
+        variant: 'destructive',
+      });
+      return [];
+    }
+  }, [toast]);
+
+  // Approve or reject vyapari transaction
+  const approveVyapariTransaction = useCallback(async (id: string, approve: boolean) => {
+    try {
+      const response = await fetch(`/api/khata/vyaparis/transactions/${id}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ approve }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to ${approve ? 'approve' : 'reject'} transaction`);
+      }
+      
+      toast({
+        title: 'Success',
+        description: `Transaction ${approve ? 'approved' : 'rejected'} successfully`,
+      });
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error(`Error approving/rejecting transaction ${id}:`, error);
+      toast({
+        title: 'Error',
+        description: error.message || `Failed to ${approve ? 'approve' : 'reject'} transaction`,
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [toast]);
+
+  // Approve or reject vyapari payment
+  const approveVyapariPayment = useCallback(async (id: string, approve: boolean) => {
+    try {
+      const response = await fetch(`/api/khata/vyaparis/payments/${id}/approve`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ approve }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Failed to ${approve ? 'approve' : 'reject'} payment`);
+      }
+      
+      toast({
+        title: 'Success',
+        description: `Payment ${approve ? 'approved' : 'rejected'} successfully`,
+      });
+      
+      return await response.json();
+    } catch (error: any) {
+      console.error(`Error approving/rejecting payment ${id}:`, error);
+      toast({
+        title: 'Error',
+        description: error.message || `Failed to ${approve ? 'approve' : 'reject'} payment`,
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [toast]);
 
   return {
     fetchVyaparis,
@@ -382,6 +491,10 @@ export function useVyapari() {
     createVyapariTransaction,
     fetchVyapariPayments,
     createVyapariPayment,
-    calculateVyapariBalance
+    calculateVyapariBalance,
+    fetchPendingVyapariTransactions,
+    fetchPendingVyapariPayments,
+    approveVyapariTransaction,
+    approveVyapariPayment
   };
 }

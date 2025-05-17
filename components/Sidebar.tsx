@@ -50,7 +50,7 @@ export type SidebarLink = {
   icon: React.ElementType;
   adminOnly?: boolean;
   shopkeeperOnly?: boolean;
-  subItems?: { href: string; label: string }[];
+  subItems?: { href: string; label: string; adminOnly?: boolean; shopkeeperOnly?: boolean }[];
   badge?: string;
 };
 
@@ -70,7 +70,7 @@ const sidebarLinks: SidebarLink[] = [
     icon: Package,
     subItems: [
       { href: '/inventory', label: 'Products' },
-      { href: '/inventory/dashboard', label: 'Dashboard' },
+      { href: '/inventory/dashboard', label: 'Dashboard',adminOnly: true },
     ],
   },  { href: '/requests', label: 'Sales Requests', icon: History },
   { href: '/product-requests', label: 'Product Requests', icon: Package },
@@ -81,7 +81,7 @@ const sidebarLinks: SidebarLink[] = [
     icon: Gem,
     subItems: [
       { href: '/khata', label: 'Management' },
-      { href: '/khata/dashboard', label: 'Dashboard' },
+      { href: '/khata/dashboard', label: 'Dashboard', adminOnly: true },
     ],
   },
   { href: '/admin/users', label: 'Users', icon: Users, adminOnly: true },

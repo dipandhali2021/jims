@@ -33,24 +33,28 @@ export async function GET(req: Request, { params }: RouteParams) {
         { error: 'Trader not found' },
         { status: 404 }
       );
-    }
-
-    // Calculate balance from transactions
+    }    // Get user role from metadata
+    const userRole = auth().sessionClaims?.metadata?.role as string || 'user';
+    const isAdmin = userRole === 'admin';
+    
+    // Calculate balance from approved transactions
     // Positive transactions represent money we owe to vyapari
     // Negative transactions represent money vyapari owes us
     const transactionsSum = await prisma.vyapariTransaction.aggregate({
       where: {
-        vyapariId: id
+        vyapariId: id,
+        isApproved: true // Only include approved transactions
       },
       _sum: {
         amount: true
       }
     });
 
-    // Get sum of all payments
+    // Get sum of all approved payments
     const paymentsSum = await prisma.vyapariPayment.aggregate({
       where: {
-        vyapariId: id
+        vyapariId: id,
+        isApproved: true // Only include approved payments
       },
       _sum: {
         amount: true

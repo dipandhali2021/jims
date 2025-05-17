@@ -139,8 +139,7 @@ export async function PUT(
               
               const sequentialNumber = (transactionCountForYear + 1).toString().padStart(4, '0');
               const transactionId = `VT-${currentYear}-${sequentialNumber}`;
-              
-              // Create vyapari transaction - negative amount means the trader owes us money
+                // Create vyapari transaction - negative amount means the trader owes us money
               await prisma.vyapariTransaction.create({
                 data: {
                   transactionId,
@@ -150,6 +149,10 @@ export async function PUT(
                     salesRequestId: salesRequest.requestId,
                     items: transactionItems,
                     billType: billType || 'Regular'
+                  },
+                  isApproved: true, // Auto-approve the transaction since it's from an approved sales request
+                  approvedBy: {
+                    connect: { id: userId } // The admin who approved the sales request also approves this transaction
                   },
                   vyapari: {
                     connect: { id: salesRequest.vyapariId }

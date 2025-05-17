@@ -25,14 +25,18 @@ model User {
   bills            Bill[]
 
   // Khata (Book Record) feature relations
-  createdVyaparis     Vyapari[]            @relation("createdVyapari")
-  approvedVyaparis    Vyapari[]            @relation("approvedVyapari")
-  createdKarigars     Karigar[]            @relation("createdKarigar")
-  approvedKarigars    Karigar[]            @relation("approvedKarigar")
-  vyapariTransactions VyapariTransaction[]
-  karigarTransactions KarigarTransaction[]
-  vyapariPayments     VyapariPayment[]
-  karigarPayments     KarigarPayment[]
+  createdVyaparis              Vyapari[]                @relation("createdVyapari")
+  approvedVyaparis             Vyapari[]                @relation("approvedVyapari")
+  createdKarigars              Karigar[]                @relation("createdKarigar")
+  approvedKarigars             Karigar[]                @relation("approvedKarigar")
+  vyapariTransactions          VyapariTransaction[]
+  karigarTransactions          KarigarTransaction[]
+  vyapariPayments              VyapariPayment[]
+  karigarPayments              KarigarPayment[]
+  approvedVyapariTransactions  VyapariTransaction[]     @relation("approvedVyapariTransaction")
+  approvedKarigarTransactions  KarigarTransaction[]     @relation("approvedKarigarTransaction")
+  approvedVyapariPayments      VyapariPayment[]         @relation("approvedVyapariPayment")
+  approvedKarigarPayments      KarigarPayment[]         @relation("approvedKarigarPayment")
 }
 
 model Product {
@@ -273,6 +277,9 @@ model VyapariTransaction {
   description   String
   amount        Float // Positive for credit to trader (we owe them), negative for debit (they owe us)
   items         Json? // Optional items details in transaction
+  isApproved    Boolean  @default(false) // Admin approval status
+  approvedBy    User?    @relation("approvedVyapariTransaction", fields: [approvedById], references: [id])
+  approvedById  String?
   createdBy     User     @relation(fields: [createdById], references: [id])
   createdById   String
   createdAt     DateTime @default(now())
@@ -281,6 +288,7 @@ model VyapariTransaction {
   @@index([vyapariId])
   @@index([createdById])
   @@index([createdAt])
+  @@index([isApproved])
 }
 
 // Model for artisan transactions (KARIGAR transactions)
@@ -292,6 +300,9 @@ model KarigarTransaction {
   description   String
   amount        Float // Positive for credit to artisan (we owe them), negative for debit (they owe us)
   items         Json? // Optional items details in transaction
+  isApproved    Boolean  @default(false) // Admin approval status
+  approvedBy    User?    @relation("approvedKarigarTransaction", fields: [approvedById], references: [id])
+  approvedById  String?
   createdBy     User     @relation(fields: [createdById], references: [id])
   createdById   String
   createdAt     DateTime @default(now())
@@ -300,6 +311,7 @@ model KarigarTransaction {
   @@index([karigarId])
   @@index([createdById])
   @@index([createdAt])
+  @@index([isApproved])
 }
 
 // Model for trader payments (VYAPARI payments)
@@ -312,6 +324,9 @@ model VyapariPayment {
   paymentMode     String // Cash, UPI, Bank Transfer, etc.
   referenceNumber String? // For online transactions
   notes           String?
+  isApproved      Boolean  @default(false) // Admin approval status
+  approvedBy      User?    @relation("approvedVyapariPayment", fields: [approvedById], references: [id])
+  approvedById    String?
   createdBy       User     @relation(fields: [createdById], references: [id])
   createdById     String
   createdAt       DateTime @default(now())
@@ -320,6 +335,7 @@ model VyapariPayment {
   @@index([vyapariId])
   @@index([createdById])
   @@index([createdAt])
+  @@index([isApproved])
 }
 
 // Model for artisan payments (KARIGAR payments)
@@ -332,6 +348,9 @@ model KarigarPayment {
   paymentMode     String // Cash, UPI, Bank Transfer, etc.
   referenceNumber String? // For online transactions
   notes           String?
+  isApproved      Boolean  @default(false) // Admin approval status
+  approvedBy      User?    @relation("approvedKarigarPayment", fields: [approvedById], references: [id])
+  approvedById    String?
   createdBy       User     @relation(fields: [createdById], references: [id])
   createdById     String
   createdAt       DateTime @default(now())
@@ -340,4 +359,5 @@ model KarigarPayment {
   @@index([karigarId])
   @@index([createdById])
   @@index([createdAt])
+  @@index([isApproved])
 }

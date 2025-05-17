@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,8 +14,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { useKarigar, Karigar, CreateTransactionDto } from '@/hooks/use-karigar';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useUser } from '@clerk/nextjs';
 
 interface AddKarigarTransactionDialogProps {
   open: boolean;
@@ -31,13 +33,20 @@ export function AddKarigarTransactionDialog({
   karigar,
 }: AddKarigarTransactionDialogProps) {
   const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');
-  const [isCredit, setIsCredit] = useState(true); // true = we owe artisan, false = artisan owes us
+  const [amount, setAmount] = useState('');  const [isCredit, setIsCredit] = useState(true); // true = we owe artisan, false = artisan owes us
   const [items, setItems] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   
   const { toast } = useToast();
   const { createKarigarTransaction } = useKarigar();
+    // Check if user is admin on component mount
+  const { user } = useUser();
+  
+  useEffect(() => {
+    const userRole = user?.publicMetadata?.role as string;
+    setIsAdmin(userRole === 'admin');
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,8 +101,7 @@ export function AddKarigarTransactionDialog({
         amount: finalAmount,
         items: parsedItems || undefined
       };
-      
-      await createKarigarTransaction(karigar.id, transactionData);
+        await createKarigarTransaction(karigar.id, transactionData);
       
       // Reset form
       setDescription('');
@@ -103,6 +111,14 @@ export function AddKarigarTransactionDialog({
       
       onTransactionAdded();
       onClose();
+      
+      // Show appropriate toast message based on admin status
+      if (!isAdmin) {
+        toast({
+          title: 'Transaction Submitted',
+          description: 'Your transaction has been submitted and is awaiting admin approval',
+        });
+      }
       
     } catch (error: any) {
       console.error('Failed to add transaction:', error);
@@ -118,13 +134,22 @@ export function AddKarigarTransactionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[425px]">        <DialogHeader>
           <DialogTitle>Add Transaction for {karigar?.name || 'Artisan'}</DialogTitle>
           <DialogDescription>
             Add a new transaction to the artisan's account.
           </DialogDescription>
         </DialogHeader>
+        
+        {!isAdmin && (
+          <Alert className="bg-yellow-50 border-yellow-200 text-yellow-800 mt-2">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Admin Approval Required</AlertTitle>
+            <AlertDescription>
+              This transaction will require admin approval before it's reflected in the balance.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">

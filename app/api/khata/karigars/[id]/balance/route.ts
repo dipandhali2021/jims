@@ -33,24 +33,28 @@ export async function GET(req: Request, { params }: RouteParams) {
         { error: 'Artisan not found' },
         { status: 404 }
       );
-    }
-
-    // Calculate balance from transactions
+    }    // Get user role from metadata
+    const userRole = auth().sessionClaims?.metadata?.role as string || 'user';
+    const isAdmin = userRole === 'admin';
+    
+    // Calculate balance from approved transactions
     // Positive transactions represent money we owe to karigar
     // Negative transactions represent money karigar owes us
     const transactionsSum = await prisma.karigarTransaction.aggregate({
       where: {
-        karigarId: id
+        karigarId: id,
+        isApproved: true // Only include approved transactions
       },
       _sum: {
         amount: true
       }
     });
 
-    // Get sum of all payments
+    // Get sum of all approved payments
     const paymentsSum = await prisma.karigarPayment.aggregate({
       where: {
-        karigarId: id
+        karigarId: id,
+        isApproved: true // Only include approved payments
       },
       _sum: {
         amount: true

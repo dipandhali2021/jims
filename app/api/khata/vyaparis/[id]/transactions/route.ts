@@ -107,22 +107,28 @@ export async function POST(req: Request, { params }: RouteParams) {
     });
     
     const sequentialNumber = (transactionCountForYear + 1).toString().padStart(4, '0');
-    const transactionId = `VT-${currentYear}-${sequentialNumber}`;
-
-    // Create transaction
-    const transaction = await prisma.vyapariTransaction.create({
-      data: {
-        transactionId,
-        description: data.description.trim(),
-        amount: data.amount,
-        items: data.items || null,
-        vyapari: {
-          connect: { id }
-        },
-        createdBy: {
-          connect: { id: userId }
-        }
+    const transactionId = `VT-${currentYear}-${sequentialNumber}`;    // Get user role from metadata
+    const userRole = auth().sessionClaims?.metadata?.role as string || 'user';
+    const isAdmin = userRole === 'admin';
+      // Create transaction - auto approve if admin, pending approval otherwise
+    const transactionData: any = {
+      transactionId,
+      description: data.description.trim(),
+      amount: data.amount,
+      items: data.items || null,
+      isApproved: isAdmin, // Auto-approve if admin, otherwise requires approval
+      // Use the correct approvedBy relation structure
+      ...(isAdmin ? { approvedBy: { connect: { id: userId } } } : {}),
+      vyapari: {
+        connect: { id }
+      },
+      createdBy: {
+        connect: { id: userId }
       }
+    };
+
+    const transaction = await prisma.vyapariTransaction.create({
+      data: transactionData
     });
 
     return NextResponse.json(transaction, { status: 201 });

@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useKhataAnalytics, KhataAnalytics } from '@/hooks/use-khata-analytics';
 import { TransactionCalendar } from '@/components/khata/TransactionCalendar';
+import { ApprovalCounter } from '@/components/khata/ApprovalCounter';
 import { 
   UserCircle, 
   Users, 
@@ -332,9 +333,13 @@ export default function KhataDashboard() {
             <TabsTrigger value="vyapari">Vyapari</TabsTrigger>
           </TabsList>
           
-          <div className="mt-6">
-            {/* Overview Tab */}
+          <div className="mt-6">            {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-6">
+              {/* Approvals Counter */}
+              <div className="w-full">
+                <ApprovalCounter />
+              </div>
+              
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {/* Summary Cards */}
                 <Card>

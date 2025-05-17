@@ -63,13 +63,12 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showTransactionDialog, setShowTransactionDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);  const [selectedKarigar, setSelectedKarigar] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [karigars, setKarigars] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);  const [karigars, setKarigars] = useState<any[]>([]);
+  const [balances, setBalances] = useState<Record<string, number>>({});
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
   const [loadingStates, setLoadingStates] = useState<Record<string, { approving: boolean, rejecting: boolean }>>({});
 
-  const { fetchKarigars, updateKarigarStatus, fetchPendingKarigars } = useKarigar();
-
+  const { fetchKarigars, updateKarigarStatus, fetchPendingKarigars, calculateKarigarBalance } = useKarigar();
   // Fetch Karigars
   useEffect(() => {
     const loadData = async () => {
@@ -77,6 +76,14 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
         setIsLoading(true);
         const data = await fetchKarigars();
         setKarigars(data);
+        
+        // Fetch balances for each karigar
+        const balanceData: Record<string, number> = {};
+        for (const karigar of data) {
+          const result = await calculateKarigarBalance(karigar.id);
+          balanceData[karigar.id] = result.balance;
+        }
+        setBalances(balanceData);
         
         if (isAdmin) {
           const pendingData = await fetchPendingKarigars();
@@ -94,8 +101,22 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
       }
     };
     
-    loadData();
-  }, [fetchKarigars, fetchPendingKarigars, toast, isAdmin]);
+    loadData();  }, [fetchKarigars, fetchPendingKarigars, calculateKarigarBalance, toast, isAdmin]);
+
+  // Function to refresh balances after transactions or payments
+  const refreshBalances = async () => {
+    try {
+      const balanceData: Record<string, number> = {};
+      for (const karigar of karigars) {
+        const result = await calculateKarigarBalance(karigar.id);
+        balanceData[karigar.id] = result.balance;
+      }
+      setBalances(balanceData);
+    } catch (error) {
+      console.error('Failed to refresh balances:', error);
+    }
+  };
+  
   const handleApproveReject = async (id: string, approve: boolean) => {
     // Set the appropriate loading state
     setLoadingStates(prev => ({
@@ -184,10 +205,16 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                       <TableHead>Date</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                  </TableHeader>                  <TableBody>
                     {pendingApprovals.map((karigar) => (
-                      <TableRow key={karigar.id}>
+                      <TableRow 
+                        key={karigar.id}
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => {
+                          setSelectedKarigar(karigar);
+                          setShowDetailsDialog(true);
+                        }}
+                      >
                         <TableCell>{karigar.name}</TableCell>
                         <TableCell>
                           {karigar.phone && <div>{karigar.phone}</div>}
@@ -200,7 +227,8 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                         <TableCell>
                           {new Date(karigar.createdAt).toLocaleDateString()}
                         </TableCell>
-                        <TableCell>                        <div className="flex items-center gap-2">
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2">
                             <Button
                               variant="outline"
                               size="icon"
@@ -311,10 +339,16 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                       <TableHead>Balance</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                  </TableHeader>                  <TableBody>
                     {filteredKarigars.map((karigar) => (
-                      <TableRow key={karigar.id}>
+                      <TableRow 
+                        key={karigar.id} 
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => {
+                          setSelectedKarigar(karigar);
+                          setShowDetailsDialog(true);
+                        }}
+                      >
                         <TableCell className="font-medium">{karigar.name}</TableCell>
                         <TableCell>
                           {karigar.phone && <div>{karigar.phone}</div>}
@@ -327,14 +361,12 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                           ) : (
                             <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending</Badge>
                           )}
-                        </TableCell>
-                        <TableCell>
+                        </TableCell>                        <TableCell>
                           <span className="font-semibold">
-                            {/* This would come from a real calculation of transactions and payments */}
-                            ₹0.00
+                            ₹{balances[karigar.id] !== undefined ? balances[karigar.id].toFixed(2) : '...'}
                           </span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -394,8 +426,7 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
         </Card>
       </div>
 
-      {/* Dialogs */}
-      {showCreateDialog && (
+      {/* Dialogs */}      {showCreateDialog && (
         <CreateKarigarDialog
           open={showCreateDialog}
           onClose={() => setShowCreateDialog(false)}
@@ -403,11 +434,10 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
             setShowCreateDialog(false);
             const data = await fetchKarigars();
             setKarigars(data);
+            refreshBalances();
           }}
         />
-      )}
-
-      {showEditDialog && selectedKarigar && (
+      )}      {showEditDialog && selectedKarigar && (
         <EditKarigarDialog
           open={showEditDialog}
           karigar={selectedKarigar}
@@ -416,38 +446,53 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
             setShowEditDialog(false);
             const data = await fetchKarigars();
             setKarigars(data);
+            refreshBalances();
           }}
         />
-      )}
-
-      {showDetailsDialog && selectedKarigar && (
+      )}      {showDetailsDialog && selectedKarigar && (
         <KarigarDetailsDialog
           open={showDetailsDialog}
           karigarId={selectedKarigar.id}
-          onClose={() => setShowDetailsDialog(false)}
+          onClose={() => {
+            setShowDetailsDialog(false);
+            // Refresh the balance for this karigar when details dialog is closed
+            calculateKarigarBalance(selectedKarigar.id).then(result => {
+              setBalances(prev => ({
+                ...prev,
+                [selectedKarigar.id]: result.balance
+              }));
+            });
+          }}
         />
-      )}
-
-      {showTransactionDialog && selectedKarigar && (
+      )}      {showTransactionDialog && selectedKarigar && (
         <AddKarigarTransactionDialog
           open={showTransactionDialog}
           karigar={selectedKarigar}
           onClose={() => setShowTransactionDialog(false)}
-          onTransactionAdded={() => {
+          onTransactionAdded={async () => {
             setShowTransactionDialog(false);
-            // Could refresh karigar details here if needed
+            // Refresh the balance for this karigar
+            const result = await calculateKarigarBalance(selectedKarigar.id);
+            setBalances(prev => ({
+              ...prev,
+              [selectedKarigar.id]: result.balance
+            }));
           }}
         />
       )}
-      
-      {showPaymentDialog && selectedKarigar && (
+        {showPaymentDialog && selectedKarigar && (
         <AddKarigarPaymentDialog
           open={showPaymentDialog}
           karigar={selectedKarigar}
           onClose={() => setShowPaymentDialog(false)}
-          onPaymentAdded={() => {
+          onPaymentAdded={async () => {
             setShowPaymentDialog(false);
-            // Could refresh karigar details here if needed
+            // Refresh the balance for this karigar
+            const result = await calculateKarigarBalance(selectedKarigar.id);
+            setBalances(prev => ({
+              ...prev,
+              [selectedKarigar.id]: result.balance
+            }));
           }}
         />
       )}

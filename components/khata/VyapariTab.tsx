@@ -63,13 +63,15 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showTransactionDialog, setShowTransactionDialog] = useState(false);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);  const [selectedVyapari, setSelectedVyapari] = useState<any>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);  
+  const [selectedVyapari, setSelectedVyapari] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [vyaparis, setVyaparis] = useState<any[]>([]);
+  const [balances, setBalances] = useState<Record<string, number>>({});
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
   const [loadingStates, setLoadingStates] = useState<Record<string, { approving: boolean, rejecting: boolean }>>({});
 
-  const { fetchVyaparis, updateVyapariStatus, fetchPendingVyaparis } = useVyapari();
+  const { fetchVyaparis, updateVyapariStatus, fetchPendingVyaparis, calculateVyapariBalance } = useVyapari();
 
   // Fetch Vyaparis
   useEffect(() => {
@@ -78,6 +80,14 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
         setIsLoading(true);
         const data = await fetchVyaparis();
         setVyaparis(data);
+        
+        // Fetch balances for each vyapari
+        const balanceData: Record<string, number> = {};
+        for (const vyapari of data) {
+          const result = await calculateVyapariBalance(vyapari.id);
+          balanceData[vyapari.id] = result.balance;
+        }
+        setBalances(balanceData);
         
         if (isAdmin) {
           const pendingData = await fetchPendingVyaparis();
@@ -96,7 +106,22 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
     };
     
     loadData();
-  }, [fetchVyaparis, fetchPendingVyaparis, toast, isAdmin]);
+  }, [fetchVyaparis, fetchPendingVyaparis, calculateVyapariBalance, toast, isAdmin]);
+
+  // Function to refresh balances after transactions or payments
+  const refreshBalances = async () => {
+    try {
+      const balanceData: Record<string, number> = {};
+      for (const vyapari of vyaparis) {
+        const result = await calculateVyapariBalance(vyapari.id);
+        balanceData[vyapari.id] = result.balance;
+      }
+      setBalances(balanceData);
+    } catch (error) {
+      console.error('Failed to refresh balances:', error);
+    }
+  };
+  
   const handleApproveReject = async (id: string, approve: boolean) => {
     // Set the appropriate loading state
     setLoadingStates(prev => ({
@@ -183,10 +208,16 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                       <TableHead>Date</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                  </TableHeader>                  <TableBody>
                     {pendingApprovals.map((vyapari) => (
-                      <TableRow key={vyapari.id}>
+                      <TableRow 
+                        key={vyapari.id} 
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => {
+                          setSelectedVyapari(vyapari);
+                          setShowDetailsDialog(true);
+                        }}
+                      >
                         <TableCell>{vyapari.name}</TableCell>
                         <TableCell>
                           {vyapari.phone && <div>{vyapari.phone}</div>}
@@ -198,7 +229,8 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                         <TableCell>
                           {new Date(vyapari.createdAt).toLocaleDateString()}
                         </TableCell>
-                        <TableCell>                        <div className="flex items-center gap-2">
+                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2">
                             <Button
                               variant="outline"
                               size="icon"
@@ -308,10 +340,16 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                       <TableHead>Balance</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                  </TableHeader>                  <TableBody>
                     {filteredVyaparis.map((vyapari) => (
-                      <TableRow key={vyapari.id}>
+                      <TableRow 
+                        key={vyapari.id} 
+                        className="cursor-pointer hover:bg-muted/50"
+                        onClick={() => {
+                          setSelectedVyapari(vyapari);
+                          setShowDetailsDialog(true);
+                        }}
+                      >
                         <TableCell className="font-medium">{vyapari.name}</TableCell>
                         <TableCell>
                           {vyapari.phone && <div>{vyapari.phone}</div>}
@@ -326,11 +364,10 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                         </TableCell>
                         <TableCell>
                           <span className="font-semibold">
-                            {/* This would come from a real calculation of transactions and payments */}
-                            ₹0.00
+                            ₹{balances[vyapari.id] !== undefined ? balances[vyapari.id].toFixed(2) : '...'}
                           </span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -399,11 +436,10 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
             setShowCreateDialog(false);
             const data = await fetchVyaparis();
             setVyaparis(data);
+            refreshBalances();
           }}
         />
-      )}
-
-      {showEditDialog && selectedVyapari && (
+      )}      {showEditDialog && selectedVyapari && (
         <EditVyapariDialog
           open={showEditDialog}
           vyapari={selectedVyapari}
@@ -412,15 +448,23 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
             setShowEditDialog(false);
             const data = await fetchVyaparis();
             setVyaparis(data);
+            refreshBalances();
           }}
         />
-      )}
-
-      {showDetailsDialog && selectedVyapari && (
+      )}      {showDetailsDialog && selectedVyapari && (
         <VyapariDetailsDialog
           open={showDetailsDialog}
           vyapariId={selectedVyapari.id}
-          onClose={() => setShowDetailsDialog(false)}
+          onClose={() => {
+            setShowDetailsDialog(false);
+            // Refresh the balance for this vyapari when details dialog is closed
+            calculateVyapariBalance(selectedVyapari.id).then(result => {
+              setBalances(prev => ({
+                ...prev,
+                [selectedVyapari.id]: result.balance
+              }));
+            });
+          }}
         />
       )}
 
@@ -429,9 +473,14 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
           open={showTransactionDialog}
           vyapari={selectedVyapari}
           onClose={() => setShowTransactionDialog(false)}
-          onTransactionAdded={() => {
+          onTransactionAdded={async () => {
             setShowTransactionDialog(false);
-            // Could refresh vyapari details here if needed
+            // Refresh the balance for this vyapari
+            const result = await calculateVyapariBalance(selectedVyapari.id);
+            setBalances(prev => ({
+              ...prev,
+              [selectedVyapari.id]: result.balance
+            }));
           }}
         />
       )}
@@ -441,9 +490,14 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
           open={showPaymentDialog}
           vyapari={selectedVyapari}
           onClose={() => setShowPaymentDialog(false)}
-          onPaymentAdded={() => {
+          onPaymentAdded={async () => {
             setShowPaymentDialog(false);
-            // Could refresh vyapari details here if needed
+            // Refresh the balance for this vyapari
+            const result = await calculateVyapariBalance(selectedVyapari.id);
+            setBalances(prev => ({
+              ...prev,
+              [selectedVyapari.id]: result.balance
+            }));
           }}
         />
       )}

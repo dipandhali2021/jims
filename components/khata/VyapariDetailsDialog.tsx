@@ -42,6 +42,7 @@ import {
   ArrowUpIcon,
   ArrowDownIcon,
   AlertCircle,
+  AlarmClock,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { useVyapari, Vyapari, VyapariTransaction, VyapariPayment } from '@/hooks/use-vyapari';
@@ -188,6 +189,10 @@ export function VyapariDetailsDialog({
                   </Badge>
                 </div>
               </div>
+              
+              <div className="mt-3 text-xs text-muted-foreground">
+                <p className="italic">Note: Only approved transactions and payments are included in the balance calculation.</p>
+              </div>
             </div>
 
             <Tabs defaultValue="transactions" className="flex-1 overflow-hidden flex flex-col" onValueChange={setActiveTab}>
@@ -216,6 +221,8 @@ export function VyapariDetailsDialog({
                           <TableHead>Transaction ID</TableHead>
                           <TableHead>Date</TableHead>
                           <TableHead>Description</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Added By</TableHead>
                           <TableHead className="text-right">Amount</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -225,6 +232,19 @@ export function VyapariDetailsDialog({
                             <TableCell className="font-medium">{transaction.transactionId}</TableCell>
                             <TableCell>{formatDate(transaction.createdAt)}</TableCell>
                             <TableCell>{transaction.description}</TableCell>
+                            <TableCell>
+                              {transaction.isApproved ? (
+                                <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Approved</Badge>
+                              ) : (
+                                <div className="flex items-center">
+                                  <AlarmClock className="h-3 w-3 mr-1 text-yellow-500" />
+                                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-50">Pending</Badge>
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {transaction.createdBy?.firstName} {transaction.createdBy?.lastName}
+                            </TableCell>
                             <TableCell className="text-right">
                               <span className={transaction.amount > 0 ? "text-red-500" : "text-green-500"}>
                                 {transaction.amount > 0 ? "+" : "-"}
@@ -251,7 +271,9 @@ export function VyapariDetailsDialog({
                           <TableHead>Payment ID</TableHead>
                           <TableHead>Date</TableHead>
                           <TableHead>Payment Mode</TableHead>
+                          <TableHead>Status</TableHead>
                           <TableHead>Reference</TableHead>
+                          <TableHead>Added By</TableHead>
                           <TableHead className="text-right">Amount</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -261,6 +283,16 @@ export function VyapariDetailsDialog({
                             <TableCell className="font-medium">{payment.paymentId}</TableCell>
                             <TableCell>{formatDate(payment.createdAt)}</TableCell>
                             <TableCell>{payment.paymentMode}</TableCell>
+                            <TableCell>
+                              {payment.isApproved ? (
+                                <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Approved</Badge>
+                              ) : (
+                                <div className="flex items-center">
+                                  <AlarmClock className="h-3 w-3 mr-1 text-yellow-500" />
+                                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-50">Pending</Badge>
+                                </div>
+                              )}
+                            </TableCell>
                             <TableCell>{payment.referenceNumber || '-'}</TableCell>
                             <TableCell className="text-right">
                               {formatCurrency(payment.amount)}

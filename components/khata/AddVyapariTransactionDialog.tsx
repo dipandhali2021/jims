@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -14,8 +14,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
 import { useVyapari, Vyapari, CreateTransactionDto } from '@/hooks/use-vyapari';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useUser } from '@clerk/nextjs';
 
 interface AddVyapariTransactionDialogProps {
   open: boolean;
@@ -34,10 +36,17 @@ export function AddVyapariTransactionDialog({
   const [amount, setAmount] = useState('');
   const [isCredit, setIsCredit] = useState(true); // true = we owe trader, false = trader owes us
   const [items, setItems] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);  const [isAdmin, setIsAdmin] = useState(false);
   
   const { toast } = useToast();
   const { createVyapariTransaction } = useVyapari();
+    // Check if user is admin on component mount
+  const { user } = useUser();
+  
+  useEffect(() => {
+    const userRole = user?.publicMetadata?.role as string;
+    setIsAdmin(userRole === 'admin');
+  }, [user]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,6 +113,13 @@ export function AddVyapariTransactionDialog({
       onTransactionAdded();
       onClose();
       
+      // Show appropriate toast message based on admin status
+      if (!isAdmin) {
+        toast({
+          title: 'Transaction Submitted',
+          description: 'Your transaction has been submitted and is awaiting admin approval',
+        });
+      }
     } catch (error: any) {
       console.error('Failed to add transaction:', error);
       toast({
@@ -125,6 +141,16 @@ export function AddVyapariTransactionDialog({
             Add a new transaction to the trader's account.
           </DialogDescription>
         </DialogHeader>
+        
+        {!isAdmin && (
+          <Alert className="bg-yellow-50 border-yellow-200 text-yellow-800 mt-2">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertTitle>Admin Approval Required</AlertTitle>
+            <AlertDescription>
+              This transaction will require admin approval before it's reflected in the balance.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">

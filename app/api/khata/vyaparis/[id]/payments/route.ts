@@ -106,9 +106,10 @@ export async function POST(req: Request, { params }: RouteParams) {
     });
     
     const sequentialNumber = (paymentCountForYear + 1).toString().padStart(4, '0');
-    const paymentId = `VP-${currentYear}-${sequentialNumber}`;
-
-    // Create payment
+    const paymentId = `VP-${currentYear}-${sequentialNumber}`;    // Get user role from metadata
+    const userRole = auth().sessionClaims?.metadata?.role as string || 'user';
+    const isAdmin = userRole === 'admin';
+      // Create payment - auto approve if admin, pending approval otherwise
     const payment = await prisma.vyapariPayment.create({
       data: {
         paymentId,
@@ -116,6 +117,9 @@ export async function POST(req: Request, { params }: RouteParams) {
         paymentMode: data.paymentMode,
         referenceNumber: data.referenceNumber || null,
         notes: data.notes || null,
+        isApproved: isAdmin, // Auto-approve if admin, otherwise requires approval
+        // Use the correct approvedBy relation structure
+        ...(isAdmin ? { approvedBy: { connect: { id: userId } } } : {}),
         vyapari: {
           connect: { id }
         },

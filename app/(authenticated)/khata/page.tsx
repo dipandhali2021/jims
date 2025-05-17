@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { 
@@ -22,6 +23,7 @@ import { KarigarTab } from '@/components/khata/KarigarTab';
 
 export default function KhataPage() {
   const { user } = useClerk();
+  const router = useRouter();
   const isAdmin = user?.publicMetadata?.role === 'admin';
   const [activeTab, setActiveTab] = useState('vyapari');
   return (
@@ -33,15 +35,26 @@ export default function KhataPage() {
             <p className="text-muted-foreground">
               Manage your traders (VYAPARI) and artisans (KARIGAR) records, transactions, and payments.
             </p>
+          </div>          <div className="flex flex-col sm:flex-row gap-2">
+            {isAdmin && (
+              <Button 
+                className="flex items-center gap-2" 
+                variant="default"
+                onClick={() => router.push('/khata/approvals')}
+              >
+                <CheckCircle className="h-4 w-4" />
+                <span>Pending Approvals</span>
+              </Button>
+            )}
+            <Button 
+              className="flex items-center gap-2" 
+              variant="outline"
+              onClick={() => router.push('/khata/dashboard')}
+            >
+              <FileText className="h-4 w-4" />
+              <span>View Dashboard</span>
+            </Button>
           </div>
-          <Button 
-            className="flex items-center gap-2" 
-            variant="outline"
-            onClick={() => window.location.href = '/khata/dashboard'}
-          >
-            <FileText className="h-4 w-4" />
-            <span>View Dashboard</span>
-          </Button>
         </div>
 
         <Tabs defaultValue="vyapari" className="w-full" onValueChange={setActiveTab}>
