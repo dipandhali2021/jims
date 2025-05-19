@@ -87,8 +87,7 @@ export async function PUT(
       const existingTransaction = await prisma.transaction.findUnique({
         where: { orderId: salesRequest.requestId }
       });      
-      
-      // Only create a transaction if one doesn't exist
+        // Only create a transaction if one doesn't exist
       if (!existingTransaction) {
         // Format items for transaction record with full product details
         const transactionItems = salesRequest.items.map(item => ({
@@ -101,14 +100,42 @@ export async function PUT(
           material: item?.product?.material,
           imageUrl: item?.product?.imageUrl || item.productImageUrl
         }));
+        
+        // Get the taxable status from billDetails or default to true for GST bills
+        const isTaxable = billDetails?.isTaxable !== undefined ? billDetails.isTaxable : (billType === 'GST');
+        
+        // Calculate GST components if GST bill and taxable
+        let sgst = 0, cgst = 0, igst = 0;
+        
+        if (billType === 'GST' && isTaxable) {
+          // Get the GST percentages from billDetails or use defaults
+          const cgstPercentage = billDetails?.cgstPercentage || 9;
+          const sgstPercentage = billDetails?.sgstPercentage || 9;
+          const igstPercentage = billDetails?.igstPercentage || 0;
+          
+          // Calculate GST amounts
+          const totalAmount = salesRequest.totalValue;
+          cgst = totalAmount * (cgstPercentage / 100);
+          sgst = totalAmount * (sgstPercentage / 100);
+          igst = totalAmount * (igstPercentage / 100);
+        }
+        
+        // Calculate total amount including GST for GST bills
+        const transactionAmount = billType === 'GST' && isTaxable 
+          ? salesRequest.totalValue + (sgst || 0) + (cgst || 0) + (igst || 0) 
+          : salesRequest.totalValue;
 
         // Create transaction record with billType information
         await prisma.transaction.create({
           data: {
             orderId: salesRequest.requestId,
             customer: salesRequest.customer,
-            totalAmount: salesRequest.totalValue,
-            items: transactionItems,
+            totalAmount: transactionAmount, // Include GST in the total amount for GST bills
+            items: {
+              ...transactionItems,
+              originalValue: salesRequest.totalValue,
+              gstAmount: billType === 'GST' && isTaxable ? (sgst || 0) + (cgst || 0) + (igst || 0) : 0
+            },
             userId: salesRequest.userId,
             billType: billType || null, // Set billType from request (GST or Non-GST)
           }
@@ -138,17 +165,22 @@ export async function PUT(
               });
               
               const sequentialNumber = (transactionCountForYear + 1).toString().padStart(4, '0');
-              const transactionId = `VT-${currentYear}-${sequentialNumber}`;
-                // Create vyapari transaction - negative amount means the trader owes us money
+              const transactionId = `VT-${currentYear}-${sequentialNumber}`;              // Create vyapari transaction - negative amount means the trader owes us money
+              // We can reuse the GST values and taxable status already calculated above
+              const vyapariTransactionAmount = billType === 'GST' && isTaxable
+                ? salesRequest.totalValue + (sgst || 0) + (cgst || 0) + (igst || 0) 
+                : salesRequest.totalValue;
+              
               await prisma.vyapariTransaction.create({
                 data: {
                   transactionId,
-                  description: `Sales Request ${salesRequest.requestId} approved`,
-                  amount: -salesRequest.totalValue, // Negative amount - trader owes us money
+                  description: `Sales Request ${salesRequest.requestId} approved`,                  amount: -vyapariTransactionAmount, // Negative amount - trader owes us money
                   items: {
                     salesRequestId: salesRequest.requestId,
                     items: transactionItems,
-                    billType: billType || 'Regular'
+                    billType: billType || 'Regular',
+                    originalValue: salesRequest.totalValue,
+                    gstAmount: billType === 'GST' && isTaxable ? (sgst || 0) + (cgst || 0) + (igst || 0) : 0
                   },
                   isApproved: true, // Auto-approve the transaction since it's from an approved sales request
                   approvedBy: {
@@ -170,15 +202,23 @@ export async function PUT(
             console.error(`Error creating khatabook transaction for vyapari ${salesRequest.vyapariId}:`, error);
           }
         }
-      }
-      // Generate bill if billType is provided
+      }      // Generate bill if billType is provided
       if (billType && ['GST', 'Non-GST'].includes(billType)) {
         // Generate bill number
         const billNumber = `BILL-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-          // Get the HSN code from billDetails or use default
+        // Get the HSN code from billDetails or use default
         const hsnCode = billDetails?.hsnCode || '7113';
-        // Get the taxable status from billDetails or default to true for GST bills
-        const isTaxable = billDetails?.isTaxable !== undefined ? billDetails.isTaxable : (billType === 'GST');
+        
+        // If we haven't yet set these variables in the transaction code above, define them now
+        // This is to avoid duplicate variable declarations
+        let isTaxable, cgst, sgst, igst;
+        
+        // Check if these variables are already defined in the transaction section
+        if (typeof isTaxable === 'undefined') {
+          // Get the taxable status from billDetails or default to true for GST bills
+          isTaxable = billDetails?.isTaxable !== undefined ? billDetails.isTaxable : (billType === 'GST');
+        }
+        
         // Get the GST percentages from billDetails or use defaults
         const cgstPercentage = billDetails?.cgstPercentage || 9;
         const sgstPercentage = billDetails?.sgstPercentage || 9;
@@ -197,7 +237,11 @@ export async function PUT(
         }));
         
         const totalAmount = salesRequest.totalValue;
-        let sgst = 0, cgst = 0, igst = 0;
+        
+        // Only set these if they haven't been set in the transaction section
+        if (typeof sgst === 'undefined') sgst = 0;
+        if (typeof cgst === 'undefined') cgst = 0;
+        if (typeof igst === 'undefined') igst = 0;
         
         if (billType === 'GST' && isTaxable) {
           // Calculate GST components using the provided percentages
