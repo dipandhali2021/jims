@@ -103,13 +103,20 @@ export function CreateBillFromSalesDialog({
           }
         }),
       });
-      
-      if (!response.ok) {
+        if (!response.ok) {
         throw new Error("Failed to approve request and create bill");
       }
       
+      // First call onSuccess to signal successful completion to the parent component
       onSuccess();
-      onClose();
+      
+      // After notifying parent about success, close the dialog
+      // We wrap this in setTimeout(0) to ensure the parent component's state updates
+      // have a chance to execute before this dialog tries to close itself
+      setTimeout(() => {
+        onClose();
+      }, 0);
+      
     } catch (error) {
       console.error("Error creating bill:", error);
       toast({
@@ -119,9 +126,13 @@ export function CreateBillFromSalesDialog({
       });
     }
   };
-
   return (
-    <Dialog open={open} onOpenChange={onClose}>
+    <Dialog 
+      open={open} 
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+    >
       <DialogContent className="max-w-md md:max-w-lg">
         <DialogHeader>
           <DialogTitle>Create Bill for Sales Request #{salesRequest?.requestId}</DialogTitle>

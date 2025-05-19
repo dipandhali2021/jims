@@ -1140,8 +1140,7 @@ export default function RequestsPage() {
           </DialogContent>
         </Dialog>
       )}
-      
-      {/* GST Bill Form Dialog */}
+        {/* GST Bill Form Dialog */}
       {requestForBill && (
         <CreateBillFromSalesDialog
           open={showGSTBillDialog}
@@ -1159,7 +1158,11 @@ export default function RequestsPage() {
           onSuccess={() => {
             // On successful bill creation, refresh the list
             fetchSalesRequests();
+            
+            // Close both dialogs to ensure neither remains visible
             setShowGSTBillDialog(false);
+            setShowBillDialog(false);
+            setRequestForBill(null);
             
             // Reset loading state
             setLoadingStates(prev => ({

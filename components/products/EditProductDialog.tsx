@@ -37,6 +37,7 @@ const categories = [
 ];
 
 const materials = [
+  'Copper',
   'Gold',
   'Silver',
   'Platinum',

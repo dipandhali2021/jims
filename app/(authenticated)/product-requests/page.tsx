@@ -598,14 +598,14 @@ export default function ProductRequestsPage() {
                     {request.requestType === 'add' && request.details?.supplier && (
                       <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
                         <span className="flex h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
-                        Supplier: {request.details.supplier}
+                        Trader: {request.details.supplier}
                       </div>
                     )}
 
                     {request.requestType === 'delete' && request.product?.supplier && (
                       <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
                         <span className="flex h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
-                        Supplier: {request.product.supplier}
+                        Trader: {request.product.supplier}
                       </div>
                     )}
 
@@ -614,13 +614,13 @@ export default function ProductRequestsPage() {
                         {request.product.supplier !== request.details.supplier ? (
                           <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
                             <span className="flex h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
-                            Supplier: {(request.product.supplier || '(None)')} → {(request.details.supplier || '(None)')}
+                            Trader: {(request.product.supplier || '(None)')} → {(request.details.supplier || '(None)')}
                           </div>
                         ) : (
                           request.product.supplier && (
                             <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
                               <span className="flex h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
-                              Supplier: {request.product.supplier.length > 15 ? request.product.supplier.substring(0, 15) + '...' : request.product.supplier}
+                              Trader: {request.product.supplier.length > 15 ? request.product.supplier.substring(0, 15) + '...' : request.product.supplier}
                             </div>
                           )
                         )}
@@ -790,7 +790,7 @@ export default function ProductRequestsPage() {
                                   <div className="flex items-center">
                                     <span className="inline-flex h-2 w-2 bg-purple-600 rounded-full mr-1"></span>
                                     <span className="text-xs text-purple-700 font-medium whitespace-nowrap">
-                                      Supplier change
+                                      Trader change
                                     </span>
                                   </div>
                                 )}
@@ -1177,7 +1177,7 @@ export default function ProductRequestsPage() {
                           {selectedRequest.details.supplier && (
                             <div>
                               <p className="text-xs text-gray-500">
-                                Supplier:
+                                Trader:
                               </p>
                               <p className="text-sm">
                                 {selectedRequest.details.supplier}
@@ -1265,7 +1265,7 @@ export default function ProductRequestsPage() {
                           {selectedRequest.product.supplier && (
                             <div>
                               <p className="text-xs text-gray-500">
-                                Supplier:
+                                Trader:
                               </p>
                               <p className="text-xs">
                                 {selectedRequest.product.supplier}
@@ -1566,7 +1566,7 @@ export default function ProductRequestsPage() {
                             selectedRequest.product.supplier) && (
                             <div>
                               <p className="text-xs text-gray-500">
-                                Supplier:
+                                Trader:
                               </p>
                               <div
                                 className={

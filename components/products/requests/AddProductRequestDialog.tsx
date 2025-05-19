@@ -34,6 +34,7 @@ const categories = [
 ];
 
 const materials = [
+  'Copper',
   'Gold',
   'Silver',
   'Platinum',
@@ -55,14 +56,13 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  // Form state
+  const [isDragging, setIsDragging] = useState(false);  // Form state
   const [formData, setFormData] = useState({
     name: '',
     sku: '',
     description: '',
-    category: '',
-    material: '',
+    category: 'Necklaces', // Default to Necklaces
+    material: 'Copper', // Default to Copper
     customCategory: '',
     customMaterial: '',
     costPrice: '',
@@ -175,14 +175,13 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
   const handleRemoveImage = () => {
     setImage(null);
     setImagePreview(null);
-  };
-  const resetForm = () => {
+  };  const resetForm = () => {
     setFormData({
       name: '',
       sku: '',
       description: '',
-      category: '',
-      material: '',
+      category: 'Necklaces', // Default to Necklaces
+      material: 'Copper', // Default to Copper
       customCategory: '',
       customMaterial: '',
       costPrice: '',

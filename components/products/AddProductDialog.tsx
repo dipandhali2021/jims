@@ -24,6 +24,7 @@ const categories = [
 ];
 
 const materials = [
+  'Copper',
   'Gold',
   'Silver',
   'Platinum',
@@ -63,28 +64,25 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
     };
     
     loadKarigars();
-  }, [isOpen, fetchKarigars]);
-  const [formData, setFormData] = useState({
+  }, [isOpen, fetchKarigars]);  const [formData, setFormData] = useState({
     name: '',
     sku: '',
     description: '',
-    category: '',
-    material: '',
+    category: 'Necklaces', // Default to Necklaces
+    material: 'Copper', // Default to Copper
     customCategory: '',
     customMaterial: '',
     costPrice: '',
     sellingPrice: '',
     stock: '',
     supplier: '',
-  });
-
-  const resetForm = () => {
+  });  const resetForm = () => {
     setFormData({
       name: '',
       sku: '',
       description: '',
-      category: '',
-      material: '',
+      category: 'Necklaces', // Default to Necklaces
+      material: 'Copper', // Default to Copper
       customCategory: '',
       customMaterial: '',
       costPrice: '',
