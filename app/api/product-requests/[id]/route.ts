@@ -86,9 +86,7 @@ async function createKarigarTransaction(
     });
     
     const sequentialNumber = (transactionCountForYear + 1).toString().padStart(4, '0');
-    const transactionId = `KT-${currentYear}-${sequentialNumber}`;
-
-    const transaction = await prisma.karigarTransaction.create({
+    const transactionId = `KT-${currentYear}-${sequentialNumber}`;    const transaction = await prisma.karigarTransaction.create({
       data: {
         transactionId,
         description,
@@ -96,7 +94,8 @@ async function createKarigarTransaction(
         items: {
           requestId: productRequestId,
           productName,
-          type: 'product_request'
+          type: 'product_request',
+          autoApproved: true
         },
         karigar: {
           connect: { id: karigarId }
@@ -215,9 +214,8 @@ export async function PUT(
               if (karigar) {
                 const productCost = productRequest.details.costPrice || productRequest.details.price || 0;
                 const totalAmount = productCost * (productRequest.details.stock || 0);
-                
-                // Create transaction - positive amount means we owe money to karigar
-                await createKarigarTransaction(
+                  // Create automatically approved transaction - positive amount means we owe money to karigar
+                const transaction = await createKarigarTransaction(
                   karigar.id,
                   `New product added: ${productRequest.details.name}`,
                   totalAmount,
@@ -225,6 +223,19 @@ export async function PUT(
                   productRequest.details.name || 'New product',
                   userId
                 );
+                
+                // Auto-approve the transaction for add request
+                if (transaction) {
+                  console.log(`Auto-approving karigar transaction ${transaction.transactionId} for product add request ${productRequest.requestId}`);
+                  await prisma.karigarTransaction.update({
+                    where: { id: transaction.id },
+                    data: {
+                      isApproved: true,
+                      approvedById: userId
+                    }
+                  });
+                  console.log(`Add request transaction ${transaction.transactionId} auto-approved successfully`);
+                }
               }
             }
           }
@@ -273,9 +284,8 @@ export async function PUT(
                 const stockChange = productRequest.details.stockAdjustment || 0;
                 const totalAmount = (productCost || 0) * stockChange;
                 
-                if (totalAmount > 0) {
-                  // Create transaction - positive amount means we owe money to karigar
-                  await createKarigarTransaction(
+                if (totalAmount > 0) {                  // Create transaction - positive amount means we owe money to karigar
+                  const transaction = await createKarigarTransaction(
                     karigar.id,
                     `Updated product: ${productRequest.product.name}`,
                     totalAmount,
@@ -283,6 +293,19 @@ export async function PUT(
                     productRequest.product.name,
                     userId
                   );
+                  
+                  // Auto-approve the transaction for edit request
+                  if (transaction) {
+                    console.log(`Auto-approving karigar transaction ${transaction.transactionId} for product edit request ${productRequest.requestId}`);
+                    await prisma.karigarTransaction.update({
+                      where: { id: transaction.id },
+                      data: {
+                        isApproved: true,
+                        approvedById: userId
+                      }
+                    });
+                    console.log(`Edit request transaction ${transaction.transactionId} auto-approved successfully`);
+                  }
                 }
               }
             }
@@ -325,15 +348,23 @@ export async function PUT(
     if (productRequest.userId) {
       let notificationMessage = '';
       switch (productRequest.requestType) {
-        case 'add':
-          notificationMessage = `Your product add request (${productRequest.requestId}) has been ${status.toLowerCase()}.`;
-          if (status === 'Approved' && productRequest.details)
+        case 'add':          notificationMessage = `Your product add request (${productRequest.requestId}) has been ${status.toLowerCase()}.`;
+          if (status === 'Approved' && productRequest.details) {
             notificationMessage += ` Product "${productRequest.details.name}" has been added to inventory.`;
+            if (productRequest.details.supplier) {
+              notificationMessage += ` Related transactions with supplier ${productRequest.details.supplier} have been automatically approved.`;
+            }
+          }
           break;
-        case 'edit':
-          notificationMessage = `Your product edit request (${productRequest.requestId}) has been ${status.toLowerCase()}.`;
-          if (status === 'Approved' && productRequest.product)
+        case 'edit':          notificationMessage = `Your product edit request (${productRequest.requestId}) has been ${status.toLowerCase()}.`;
+          if (status === 'Approved' && productRequest.product) {
             notificationMessage += ` Changes to product "${productRequest.product.name}" have been applied.`;
+            if (productRequest.details?.supplier && 
+              (productRequest.details.supplier !== productRequest.product.supplier ||
+              (productRequest.details.stockAdjustment && productRequest.details.stockAdjustment > 0))) {
+              notificationMessage += ` Related transactions with supplier ${productRequest.details.supplier} have been automatically approved.`;
+            }
+          }
           break;
         case 'delete':
           notificationMessage = `Your product delete request (${productRequest.requestId}) has been ${status.toLowerCase()}.`;

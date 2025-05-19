@@ -162,18 +162,109 @@ export async function DELETE(
           }
         }
 
-    
+        // 12. Handle Vyapari relationships - this is causing the foreign key constraint error
+        if (newOwnerId) {
+          // Transfer created Vyapari records to admin
+          await tx.vyapari.updateMany({
+            where: { createdById: targetUserId },
+            data: { createdById: newOwnerId }
+          });
+          console.log("Transferred created Vyapari records to admin");
+          
+          // Remove approvedBy references or transfer them
+          await tx.vyapari.updateMany({
+            where: { approvedById: targetUserId },
+            data: { approvedById: newOwnerId }
+          });
+          console.log("Transferred approved Vyapari records to admin");
+        }
+        
+        // 13. Handle Karigar relationships
+        if (newOwnerId) {
+          // Transfer created Karigar records to admin
+          await tx.karigar.updateMany({
+            where: { createdById: targetUserId },
+            data: { createdById: newOwnerId }
+          });
+          console.log("Transferred created Karigar records to admin");
+          
+          // Remove approvedBy references or transfer them
+          await tx.karigar.updateMany({
+            where: { approvedById: targetUserId },
+            data: { approvedById: newOwnerId }
+          });
+          console.log("Transferred approved Karigar records to admin");
+        }
+        
+        // 14. Handle VyapariTransaction relationships
+        if (newOwnerId) {
+          await tx.vyapariTransaction.updateMany({
+            where: { createdById: targetUserId },
+            data: { createdById: newOwnerId }
+          });
+          
+          await tx.vyapariTransaction.updateMany({
+            where: { approvedById: targetUserId },
+            data: { approvedById: newOwnerId }
+          });
+          console.log("Transferred Vyapari transactions to admin");
+        }
+        
+        // 15. Handle KarigarTransaction relationships
+        if (newOwnerId) {
+          await tx.karigarTransaction.updateMany({
+            where: { createdById: targetUserId },
+            data: { createdById: newOwnerId }
+          });
+          
+          await tx.karigarTransaction.updateMany({
+            where: { approvedById: targetUserId },
+            data: { approvedById: newOwnerId }
+          });
+          console.log("Transferred Karigar transactions to admin");
+        }
+        
+        // 16. Handle VyapariPayment relationships
+        if (newOwnerId) {
+          await tx.vyapariPayment.updateMany({
+            where: { createdById: targetUserId },
+            data: { createdById: newOwnerId }
+          });
+          
+          await tx.vyapariPayment.updateMany({
+            where: { approvedById: targetUserId },
+            data: { approvedById: newOwnerId }
+          });
+          console.log("Transferred Vyapari payments to admin");
+        }
+        
+        // 17. Handle KarigarPayment relationships
+        if (newOwnerId) {
+          await tx.karigarPayment.updateMany({
+            where: { createdById: targetUserId },
+            data: { createdById: newOwnerId }
+          });
+          
+          await tx.karigarPayment.updateMany({
+            where: { approvedById: targetUserId },
+            data: { approvedById: newOwnerId }
+          });
+          console.log("Transferred Karigar payments to admin");
+        }
+
+        // 18. Handle other transactions
         await tx.transaction.deleteMany({
           where: { userId: targetUserId }
         });
         console.log("Deleted transactions");
 
+        // 19. Delete notifications
         await tx.notification.deleteMany({
           where: { userId: targetUserId }
         });
         console.log("Deleted notifications");
 
-        // 13. Finally delete the user record
+        // 20. Finally delete the user record
         await tx.user.delete({
           where: { id: targetUserId }
         });

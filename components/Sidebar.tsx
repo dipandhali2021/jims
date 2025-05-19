@@ -23,6 +23,7 @@ import {
   HelpCircle,
   Search,
   Gem,
+  Book,
 } from 'lucide-react';
 
 import {
@@ -78,7 +79,7 @@ const sidebarLinks: SidebarLink[] = [
   { 
     href: '/khata', 
     label: 'Khata Book', 
-    icon: Gem,
+    icon: Book,
     subItems: [
       { href: '/khata', label: 'Management' },
       { href: '/khata/dashboard', label: 'Dashboard', adminOnly: true },

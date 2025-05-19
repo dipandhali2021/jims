@@ -362,9 +362,26 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                             <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending</Badge>
                           )}
                         </TableCell>                        <TableCell>
-                          <span className="font-semibold">
-                            ₹{balances[karigar.id] !== undefined ? balances[karigar.id].toFixed(2) : '...'}
+                          <span className={`font-semibold ${
+                            balances[karigar.id] !== undefined 
+                              ? balances[karigar.id] < 0
+                                ? 'text-green-600'
+                                : balances[karigar.id] > 0
+                                  ? 'text-red-600'
+                                  : ''
+                              : ''
+                          }`}>
+                            ₹{balances[karigar.id] !== undefined ? Math.abs(balances[karigar.id]).toFixed(2) : '...'}
                           </span>
+                          {balances[karigar.id] !== undefined && (
+                            <div className="text-xs text-muted-foreground">
+                              {balances[karigar.id] < 0
+                                ? 'They owe you'
+                                : balances[karigar.id] > 0
+                                  ? 'You owe them'
+                                  : 'No balance'}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>

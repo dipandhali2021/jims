@@ -372,6 +372,39 @@ export function useVyapari() {
       return { balance: 0 };
     }
   }, [toast]);
+
+  // Delete vyapari forcefully (ignoring foreign key constraints)
+  const deleteVyapari = useCallback(async (id: string) => {
+    try {
+      const response = await fetch(`/api/khata/vyaparis/${id}/force-delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete trader');
+      }
+      
+      toast({
+        title: 'Success',
+        description: 'Trader deleted successfully',
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error(`Error deleting vyapari ${id}:`, error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete trader',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [toast]);
+  
   // Fetch pending vyapari transactions
   const fetchPendingVyapariTransactions = useCallback(async () => {
     try {
@@ -495,6 +528,7 @@ export function useVyapari() {
     fetchPendingVyapariTransactions,
     fetchPendingVyapariPayments,
     approveVyapariTransaction,
-    approveVyapariPayment
+    approveVyapariPayment,
+    deleteVyapari
   };
 }

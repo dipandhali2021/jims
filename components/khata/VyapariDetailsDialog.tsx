@@ -222,7 +222,6 @@ export function VyapariDetailsDialog({
                           <TableHead>Date</TableHead>
                           <TableHead>Description</TableHead>
                           <TableHead>Status</TableHead>
-                          <TableHead>Added By</TableHead>
                           <TableHead className="text-right">Amount</TableHead>
                         </TableRow>
                       </TableHeader>
@@ -242,9 +241,7 @@ export function VyapariDetailsDialog({
                                 </div>
                               )}
                             </TableCell>
-                            <TableCell>
-                              {transaction.createdBy?.firstName} {transaction.createdBy?.lastName}
-                            </TableCell>
+                            
                             <TableCell className="text-right">
                               <span className={transaction.amount > 0 ? "text-red-500" : "text-green-500"}>
                                 {transaction.amount > 0 ? "+" : "-"}
@@ -273,7 +270,6 @@ export function VyapariDetailsDialog({
                           <TableHead>Payment Mode</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Reference</TableHead>
-                          <TableHead>Added By</TableHead>
                           <TableHead className="text-right">Amount</TableHead>
                         </TableRow>
                       </TableHeader>

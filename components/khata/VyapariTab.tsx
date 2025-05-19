@@ -49,6 +49,7 @@ import { EditVyapariDialog } from './EditVyapariDialog';
 import { VyapariDetailsDialog } from './VyapariDetailsDialog';
 import { AddVyapariTransactionDialog } from './AddVyapariTransactionDialog';
 import { AddVyapariPaymentDialog } from './AddVyapariPaymentDialog';
+import { DeleteVyapariDialog } from './DeleteVyapariDialog';
 import { useVyapari } from '@/hooks/use-vyapari';
 
 interface VyapariTabProps {
@@ -64,6 +65,7 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showTransactionDialog, setShowTransactionDialog] = useState(false);
   const [showPaymentDialog, setShowPaymentDialog] = useState(false);  
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [selectedVyapari, setSelectedVyapari] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [vyaparis, setVyaparis] = useState<any[]>([]);
@@ -361,11 +363,27 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                           ) : (
                             <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending</Badge>
                           )}
-                        </TableCell>
-                        <TableCell>
-                          <span className="font-semibold">
-                            ₹{balances[vyapari.id] !== undefined ? balances[vyapari.id].toFixed(2) : '...'}
+                        </TableCell>                        <TableCell>
+                          <span className={`font-semibold ${
+                            balances[vyapari.id] !== undefined 
+                              ? balances[vyapari.id] < 0
+                                ? 'text-green-600'
+                                : balances[vyapari.id] > 0
+                                  ? 'text-red-600'
+                                  : ''
+                              : ''
+                          }`}>
+                            ₹{balances[vyapari.id] !== undefined ? Math.abs(balances[vyapari.id]).toFixed(2) : '...'}
                           </span>
+                          {balances[vyapari.id] !== undefined && (
+                            <div className="text-xs text-muted-foreground">
+                              {balances[vyapari.id] < 0
+                                ? 'They owe you'
+                                : balances[vyapari.id] > 0
+                                  ? 'You owe them'
+                                  : 'No balance'}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell onClick={(e) => e.stopPropagation()}>
                           <DropdownMenu>
@@ -413,6 +431,17 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                               >
                                 <CreditCard className="mr-2 h-4 w-4" />
                                 Add Payment
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSelectedVyapari(vyapari);
+                                  setShowDeleteDialog(true);
+                                }}
+                                className="text-red-600"
+                              >
+                                <Trash className="mr-2 h-4 w-4" />
+                                Delete Trader
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -498,6 +527,20 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
               ...prev,
               [selectedVyapari.id]: result.balance
             }));
+          }}
+        />
+      )}
+
+      {showDeleteDialog && selectedVyapari && (
+        <DeleteVyapariDialog
+          open={showDeleteDialog}
+          vyapariId={selectedVyapari.id}
+          vyapariName={selectedVyapari.name}
+          onClose={() => setShowDeleteDialog(false)}
+          onDelete={async () => {
+            setShowDeleteDialog(false);
+            // Remove the vyapari from the list
+            setVyaparis(prev => prev.filter(v => v.id !== selectedVyapari.id));
           }}
         />
       )}
