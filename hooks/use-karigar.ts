@@ -482,6 +482,38 @@ export function useKarigar() {
     }
   }, [toast]);
 
+  // Delete karigar forcefully (ignoring foreign key constraints)
+  const deleteKarigar = useCallback(async (id: string) => {
+    try {
+      const response = await fetch(`/api/khata/karigars/${id}/force-delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to delete artisan');
+      }
+      
+      toast({
+        title: 'Success',
+        description: 'Artisan deleted successfully',
+      });
+      
+      return true;
+    } catch (error: any) {
+      console.error(`Error deleting karigar ${id}:`, error);
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to delete artisan',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [toast]);
+
   return {
     fetchKarigars,
     fetchPendingKarigars,
@@ -497,6 +529,7 @@ export function useKarigar() {
     fetchPendingKarigarTransactions,
     fetchPendingKarigarPayments,
     approveKarigarTransaction,
-    approveKarigarPayment
+    approveKarigarPayment,
+    deleteKarigar
   };
 }

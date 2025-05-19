@@ -384,67 +384,61 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                                   : 'No balance'}
                             </div>
                           )}
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Open menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedVyapari(vyapari);
-                                  setShowDetailsDialog(true);
-                                }}
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedVyapari(vyapari);
-                                  setShowEditDialog(true);
-                                }}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedVyapari(vyapari);
-                                  setShowTransactionDialog(true);
-                                }}
-                              >
-                                <FileText className="mr-2 h-4 w-4" />
-                                Add Transaction
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedVyapari(vyapari);
-                                  setShowPaymentDialog(true);
-                                }}
-                              >
-                                <CreditCard className="mr-2 h-4 w-4" />
-                                Add Payment
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedVyapari(vyapari);
-                                  setShowDeleteDialog(true);
-                                }}
-                                className="text-red-600"
-                              >
-                                <Trash className="mr-2 h-4 w-4" />
-                                Delete Trader
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        </TableCell>                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Edit"
+                              onClick={() => {
+                                setSelectedVyapari(vyapari);
+                                setShowEditDialog(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Add Transaction"
+                              onClick={() => {
+                                setSelectedVyapari(vyapari);
+                                setShowTransactionDialog(true);
+                              }}
+                            >
+                              <FileText className="h-4 w-4" />
+                              <span className="sr-only">Add Transaction</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Add Payment"
+                              onClick={() => {
+                                setSelectedVyapari(vyapari);
+                                setShowPaymentDialog(true);
+                              }}
+                            >
+                              <CreditCard className="h-4 w-4" />
+                              <span className="sr-only">Add Payment</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 text-red-600"
+                              title="Delete Trader"
+                              onClick={() => {
+                                setSelectedVyapari(vyapari);
+                                setShowDeleteDialog(true);
+                              }}
+                            >
+                              <Trash className="h-4 w-4" />
+                              <span className="sr-only">Delete Trader</span>
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}

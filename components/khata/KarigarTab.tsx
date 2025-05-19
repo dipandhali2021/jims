@@ -48,6 +48,7 @@ import { EditKarigarDialog } from './EditKarigarDialog';
 import { KarigarDetailsDialog } from './KarigarDetailsDialog';
 import { AddKarigarTransactionDialog } from './AddKarigarTransactionDialog';
 import { AddKarigarPaymentDialog } from './AddKarigarPaymentDialog';
+import { DeleteKarigarDialog } from './DeleteKarigarDialog';
 import { useKarigar } from '@/hooks/use-karigar';
 
 interface KarigarTabProps {
@@ -57,12 +58,13 @@ interface KarigarTabProps {
 export function KarigarTab({ isAdmin }: KarigarTabProps) {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('all');  const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [showEditDialog, setShowEditDialog] = useState(false);
   const [showDetailsDialog, setShowDetailsDialog] = useState(false);
   const [showTransactionDialog, setShowTransactionDialog] = useState(false);
-  const [showPaymentDialog, setShowPaymentDialog] = useState(false);  const [selectedKarigar, setSelectedKarigar] = useState<any>(null);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);  
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedKarigar, setSelectedKarigar] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);  const [karigars, setKarigars] = useState<any[]>([]);
   const [balances, setBalances] = useState<Record<string, number>>({});
   const [pendingApprovals, setPendingApprovals] = useState<any[]>([]);
@@ -382,56 +384,61 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                                   : 'No balance'}
                             </div>
                           )}
-                        </TableCell>
-                        <TableCell onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="h-4 w-4" />
-                                <span className="sr-only">Open menu</span>
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedKarigar(karigar);
-                                  setShowDetailsDialog(true);
-                                }}
-                              >
-                                <Eye className="mr-2 h-4 w-4" />
-                                View Details
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedKarigar(karigar);
-                                  setShowEditDialog(true);
-                                }}
-                              >
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedKarigar(karigar);
-                                  setShowTransactionDialog(true);
-                                }}
-                              >
-                                <FileText className="mr-2 h-4 w-4" />
-                                Add Transaction
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSelectedKarigar(karigar);
-                                  setShowPaymentDialog(true);
-                                }}
-                              >
-                                <CreditCard className="mr-2 h-4 w-4" />
-                                Add Payment
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        </TableCell>                        <TableCell onClick={(e) => e.stopPropagation()}>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Edit"
+                              onClick={() => {
+                                setSelectedKarigar(karigar);
+                                setShowEditDialog(true);
+                              }}
+                            >
+                              <Edit className="h-4 w-4" />
+                              <span className="sr-only">Edit</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Add Transaction"
+                              onClick={() => {
+                                setSelectedKarigar(karigar);
+                                setShowTransactionDialog(true);
+                              }}
+                            >
+                              <FileText className="h-4 w-4" />
+                              <span className="sr-only">Add Transaction</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8"
+                              title="Add Payment"
+                              onClick={() => {
+                                setSelectedKarigar(karigar);
+                                setShowPaymentDialog(true);
+                              }}
+                            >
+                              <CreditCard className="h-4 w-4" />
+                              <span className="sr-only">Add Payment</span>
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              className="h-8 w-8 text-red-600"
+                              title="Delete Artisan"
+                              onClick={() => {
+                                setSelectedKarigar(karigar);
+                                setShowDeleteDialog(true);
+                              }}
+                            >
+                              <Trash className="h-4 w-4" />
+                              <span className="sr-only">Delete Artisan</span>
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -510,6 +517,19 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
               ...prev,
               [selectedKarigar.id]: result.balance
             }));
+          }}
+        />
+      )}
+        {showDeleteDialog && selectedKarigar && (
+        <DeleteKarigarDialog
+          open={showDeleteDialog}
+          karigarId={selectedKarigar.id}
+          karigarName={selectedKarigar.name}
+          onClose={() => setShowDeleteDialog(false)}
+          onDelete={async () => {
+            setShowDeleteDialog(false);
+            // Remove the karigar from the list
+            setKarigars(prev => prev.filter(v => v.id !== selectedKarigar.id));
           }}
         />
       )}
