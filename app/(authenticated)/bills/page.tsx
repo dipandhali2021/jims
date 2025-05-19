@@ -540,8 +540,19 @@ export default function BillsPage() {
               Delete Expired Bills
             </AlertDialogAction>
           </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        </AlertDialogContent>      </AlertDialog>
+      
+      {/* Print After Create Dialog */}
+      {newlyCreatedBill && (
+        <PrintAfterCreateDialog
+          bill={newlyCreatedBill}
+          open={showPrintDialog}
+          onClose={() => {
+            setShowPrintDialog(false);
+            setNewlyCreatedBill(null);
+          }}
+        />
+      )}
     </div>
   );
 }
