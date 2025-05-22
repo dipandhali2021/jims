@@ -313,10 +313,7 @@ const generateGstBillHtml = (bill: Bill) => {
         <div class="bill-container">
           <div class="bill-header">
             <div class="company-logo">
-              <svg viewBox="0 0 50 50">
-                <circle cx="25" cy="25" r="23" fill="white" stroke="#cc0000" strokeWidth="1.5"/>
-                <path d="M15,17 Q25,10 35,17 Q35,32 25,40 Q15,32 15,17" fill="white" stroke="#cc0000" strokeWidth="1.5"/>
-              </svg>
+              <img src="/assets/logo.png" width="50" height="50" alt="Omkar Gold Covering Logo" />
             </div>
             <div class="contact-details">
               Kanchan : 9699233831<br>
@@ -664,10 +661,7 @@ const generateNonGstBillHtml = (bill: Bill) => {
 
         <div class="bill-header">
           <div class="company-logo">
-            <svg viewBox="0 0 48 48" width="48" height="48">
-              <circle cx="24" cy="24" r="23" fill="white" stroke="#cc0000" strokeWidth="1.5"/>
-              <path d="M15,17 Q25,10 35,17 Q35,32 25,40 Q15,32 15,17" fill="white" stroke="#cc0000" strokeWidth="1.5"/>
-            </svg>
+            <img src="/assets/logo.png" width="52" height="52" alt="Omkar Gold Covering Logo" />
           </div>
           <div class="om-sai-ram">OM SAI RAM</div>
           <div class="contact-details">

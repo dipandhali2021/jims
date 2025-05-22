@@ -19,6 +19,19 @@ interface Product {
   imageUrl: string;
   supplier?: string;
   lowStockThreshold: number;
+  isLongSet?: boolean;
+  longSetProduct?: {
+    id: string;
+    parts: {
+      partName: string;
+      partDescription?: string;
+      costPrice?: number;
+      karigar?: {
+        id: string;
+        name: string;
+      } | null;
+    }[];
+  };
 }
 
 interface ProductPreviewDialogProps {
@@ -115,12 +128,38 @@ export function ProductPreviewDialog({ product }: ProductPreviewDialogProps) {
                     </span>
                   )}
                 </span>
-              </div>
-
-              {product.supplier && (
-                <div className="flex space-x-2 text-gray-600">
+              </div>              {product.supplier && (                <div className="flex space-x-2 text-gray-600">
                   <span className="font-medium w-24">Supplier:</span>
                   <span className="flex-1">{product.supplier}</span>
+                </div>
+              )}
+              
+              {/* Long Set Product Parts */}
+              {(product.isLongSet || product.longSetProduct) && product.longSetProduct?.parts && (
+                <div className="mt-2">
+                  <h4 className="font-medium text-md mb-2">Long Set Product Parts</h4>
+                  <div className="bg-gray-50 p-3 rounded-md space-y-2 text-sm max-h-40 overflow-y-auto">
+                    {product.longSetProduct.parts.map((part, index) => (
+                      <div key={index} className="border-b pb-2 last:border-0 last:pb-0">
+                        <div className="flex justify-between">
+                          <span className="font-medium">{part.partName}</span>
+                          {part.costPrice && (
+                            <span className="text-gray-600">
+                              ₹{part.costPrice.toLocaleString()}
+                            </span>
+                          )}
+                        </div>
+                        {part.partDescription && (
+                          <p className="text-gray-500 text-xs">{part.partDescription}</p>
+                        )}
+                        {part.karigar && (
+                          <p className="text-purple-600 text-xs mt-1">
+                            Made by: {part.karigar.name}
+                          </p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
               

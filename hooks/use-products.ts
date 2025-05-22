@@ -16,6 +16,20 @@ export interface Product {
   supplier?: string;
   createdAt: string;
   updatedAt: string;
+  // Long Set Product related fields
+  isLongSet?: boolean;
+  longSetProduct?: {
+    id: string;
+    parts: {
+      partName: string;
+      partDescription?: string;
+      costPrice?: number;
+      karigar?: {
+        id: string;
+        name: string;
+      } | null;
+    }[];
+  };
 }
 
 interface UseProductsReturn {

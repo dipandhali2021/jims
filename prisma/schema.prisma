@@ -25,29 +25,30 @@ model User {
   bills            Bill[]
 
   // Khata (Book Record) feature relations
-  createdVyaparis              Vyapari[]                @relation("createdVyapari")
-  approvedVyaparis             Vyapari[]                @relation("approvedVyapari")
-  createdKarigars              Karigar[]                @relation("createdKarigar")
-  approvedKarigars             Karigar[]                @relation("approvedKarigar")
-  vyapariTransactions          VyapariTransaction[]
-  karigarTransactions          KarigarTransaction[]
-  vyapariPayments              VyapariPayment[]
-  karigarPayments              KarigarPayment[]
-  approvedVyapariTransactions  VyapariTransaction[]     @relation("approvedVyapariTransaction")
-  approvedKarigarTransactions  KarigarTransaction[]     @relation("approvedKarigarTransaction")
-  approvedVyapariPayments      VyapariPayment[]         @relation("approvedVyapariPayment")
-  approvedKarigarPayments      KarigarPayment[]         @relation("approvedKarigarPayment")
+  createdVyaparis             Vyapari[]            @relation("createdVyapari")
+  approvedVyaparis            Vyapari[]            @relation("approvedVyapari")
+  createdKarigars             Karigar[]            @relation("createdKarigar")
+  approvedKarigars            Karigar[]            @relation("approvedKarigar")
+  vyapariTransactions         VyapariTransaction[]
+  karigarTransactions         KarigarTransaction[]
+  vyapariPayments             VyapariPayment[]
+  karigarPayments             KarigarPayment[]
+  approvedVyapariTransactions VyapariTransaction[] @relation("approvedVyapariTransaction")
+  approvedKarigarTransactions KarigarTransaction[] @relation("approvedKarigarTransaction")
+  approvedVyapariPayments     VyapariPayment[]     @relation("approvedVyapariPayment")
+  approvedKarigarPayments     KarigarPayment[]     @relation("approvedKarigarPayment")
+  LongSetProduct              LongSetProduct[]
 }
 
 model Product {
   id                String           @id @default(cuid())
   name              String
-  sku               String           
+  sku               String
   description       String?
   category          String
   material          String
-  price             Float            // Bikroy Mullo (Selling Price)
-  costPrice         Float?           // Kroy Mullo (Cost Price)
+  price             Float // Bikroy Mullo (Selling Price)
+  costPrice         Float? // Kroy Mullo (Cost Price)
   stock             Int
   lowStockThreshold Int              @default(10)
   supplier          String?
@@ -58,6 +59,7 @@ model Product {
   userId            String
   salesItems        SalesItem[]
   productRequests   ProductRequest[]
+  LongSetProduct    LongSetProduct?
 }
 
 model SalesRequest {
@@ -148,6 +150,7 @@ model ProductRequest {
   requestType String // Add, Edit, Delete
   status      String                 @default("Pending") // Pending, Approved, Rejected
   adminAction Boolean                @default(false) // Flag to indicate if this was a direct admin action
+  isLongSet   Boolean                @default(false) // Flag to indicate if this is a long set product request
   details     ProductRequestDetails?
   product     Product?               @relation(fields: [productId], references: [id], onDelete: SetNull)
   productId   String? // For Edit and Delete requests
@@ -175,6 +178,7 @@ model ProductRequestDetails {
   stockAdjustment Int?
   imageUrl        String?
   supplier        String?
+  longSetParts    String?        // JSON string for long set product parts
   request         ProductRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   requestId       String         @unique
 }
@@ -246,22 +250,23 @@ model Vyapari {
 
 // Model for artisans (KARIGAR)
 model Karigar {
-  id             String               @id @default(cuid())
-  name           String
-  phone          String?
-  email          String?
-  address        String?
-  specialization String? // Type of work they specialize in
-  status         String               @default("Active") // Active, Inactive
-  isApproved     Boolean              @default(false)
-  createdBy      User                 @relation("createdKarigar", fields: [createdById], references: [id])
-  createdById    String
-  approvedBy     User?                @relation("approvedKarigar", fields: [approvedById], references: [id])
-  approvedById   String?
-  transactions   KarigarTransaction[]
-  payments       KarigarPayment[]
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  id                 String               @id @default(cuid())
+  name               String
+  phone              String?
+  email              String?
+  address            String?
+  specialization     String? // Type of work they specialize in
+  status             String               @default("Active") // Active, Inactive
+  isApproved         Boolean              @default(false)
+  createdBy          User                 @relation("createdKarigar", fields: [createdById], references: [id])
+  createdById        String
+  approvedBy         User?                @relation("approvedKarigar", fields: [approvedById], references: [id])
+  approvedById       String?
+  transactions       KarigarTransaction[]
+  payments           KarigarPayment[]
+  createdAt          DateTime             @default(now())
+  updatedAt          DateTime             @updatedAt
+  LongSetProductPart LongSetProductPart[]
 
   @@index([name])
   @@index([status])
@@ -360,4 +365,47 @@ model KarigarPayment {
   @@index([createdById])
   @@index([createdAt])
   @@index([isApproved])
+}
+
+model LongSetProduct {
+  id                String               @id @default(cuid())
+  name              String
+  sku               String // Main product SKU
+  description       String?
+  category          String
+  material          String
+  price             Float // Total price of the long set product
+  costPrice         Float? // Total cost price
+  stock             Int
+  lowStockThreshold Int                  @default(10)
+  imageUrl          String
+  user              User                 @relation(fields: [userId], references: [id])
+  userId            String
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  parts             LongSetProductPart[]
+  // Relation to regular Product for inventory tracking
+  product           Product?             @relation(fields: [productId], references: [id])
+  productId         String?              @unique
+
+  @@index([userId])
+  @@index([sku])
+}
+
+model LongSetProductPart {
+  id               String         @id @default(cuid())
+  partName         String
+  partDescription  String?
+  costPrice        Float?
+  // Relation to LongSetProduct
+  longSetProduct   LongSetProduct @relation(fields: [longSetProductId], references: [id], onDelete: Cascade)
+  longSetProductId String
+  // Relation to Karigar who made this part
+  karigar          Karigar?       @relation(fields: [karigarId], references: [id])
+  karigarId        String?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([longSetProductId])
+  @@index([karigarId])
 }

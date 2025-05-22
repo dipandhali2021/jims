@@ -64,6 +64,7 @@ export default function ProductRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [sourceFilter, setSourceFilter] = useState<string>('all'); // Filter for admin vs shopkeeper actions
+  const [longSetFilter, setLongSetFilter] = useState<string>('all'); // Filter for long set products
   const [selectedRequest, setSelectedRequest] = useState<ProductRequest | null>(
     null
   );
@@ -133,6 +134,7 @@ export default function ProductRequestsPage() {
       setStatusFilter('all');
       setTypeFilter('all');
       setSourceFilter('all');
+      setLongSetFilter('all');
     } catch (error) {
       console.error('Error deleting all product requests:', error);
     } finally {
@@ -209,8 +211,14 @@ export default function ProductRequestsPage() {
       sourceFilter === 'all' || 
       (sourceFilter === 'admin' && request.adminAction === true) || 
       (sourceFilter === 'shopkeeper' && request.adminAction !== true);
+    
+    // Filter by long set product type
+    const matchesLongSet = 
+      longSetFilter === 'all' || 
+      (longSetFilter === 'longSet' && request.isLongSet === true) || 
+      (longSetFilter === 'regular' && request.isLongSet !== true);
 
-    return matchesSearch && matchesStatus && matchesType && matchesSource;
+    return matchesSearch && matchesStatus && matchesType && matchesSource && matchesLongSet;
   });
 
   // Calculate stats
@@ -410,6 +418,18 @@ export default function ProductRequestsPage() {
             </SelectContent>
           </Select>
 
+          {/* Long Set Filter */}
+          <Select value={longSetFilter} onValueChange={setLongSetFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Product Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Products</SelectItem>
+              <SelectItem value="longSet">Long Set Products</SelectItem>
+              <SelectItem value="regular">Regular Products</SelectItem>
+            </SelectContent>
+          </Select>
+
           <div className="relative w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
@@ -491,6 +511,11 @@ export default function ProductRequestsPage() {
                         </span>
                       </span>
                       {request.adminAction && <AdminActionBadge adminAction={request.adminAction} />}
+                      {request.isLongSet && (
+                        <span className="px-2 py-1 rounded-full text-xs flex items-center bg-teal-100 text-teal-800">
+                          <span className="ml-1">Long Set</span>
+                        </span>
+                      )}
                     </div>
                     {request.user && (
                       <p className="text-xs mt-1 text-blue-600 break-words">
@@ -598,14 +623,14 @@ export default function ProductRequestsPage() {
                     {request.requestType === 'add' && request.details?.supplier && (
                       <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
                         <span className="flex h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
-                        Trader: {request.details.supplier}
+                        Karigar: {request.details.supplier}
                       </div>
                     )}
 
                     {request.requestType === 'delete' && request.product?.supplier && (
                       <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
                         <span className="flex h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
-                        Trader: {request.product.supplier}
+                        Karigar: {request.product.supplier}
                       </div>
                     )}
 
@@ -614,13 +639,13 @@ export default function ProductRequestsPage() {
                         {request.product.supplier !== request.details.supplier ? (
                           <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
                             <span className="flex h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
-                            Trader: {(request.product.supplier || '(None)')} → {(request.details.supplier || '(None)')}
+                            Karigar: {(request.product.supplier || '(None)')} → {(request.details.supplier || '(None)')}
                           </div>
                         ) : (
                           request.product.supplier && (
                             <div className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-purple-50 text-purple-700 border border-purple-100">
                               <span className="flex h-2 w-2 rounded-full bg-purple-500 mr-1.5"></span>
-                              Trader: {request.product.supplier.length > 15 ? request.product.supplier.substring(0, 15) + '...' : request.product.supplier}
+                              Karigar: {request.product.supplier.length > 15 ? request.product.supplier.substring(0, 15) + '...' : request.product.supplier}
                             </div>
                           )
                         )}
@@ -743,6 +768,11 @@ export default function ProductRequestsPage() {
                             {request.requestType}
                           </span>
                         </span>
+                        {request.isLongSet && (
+                          <span className="px-2 py-1 rounded-full text-xs inline-flex items-center justify-center bg-teal-100 text-teal-800 ml-2">
+                            Long Set
+                          </span>
+                        )}
                       </td>
                       <td className="p-3 sm:p-4 text-xs sm:text-sm">
                         <div className="flex items-center">
@@ -790,7 +820,7 @@ export default function ProductRequestsPage() {
                                   <div className="flex items-center">
                                     <span className="inline-flex h-2 w-2 bg-purple-600 rounded-full mr-1"></span>
                                     <span className="text-xs text-purple-700 font-medium whitespace-nowrap">
-                                      Trader change
+                                      Karigar change
                                     </span>
                                   </div>
                                 )}
@@ -1055,6 +1085,11 @@ export default function ProductRequestsPage() {
                       </span>
                     </span>
                     {selectedRequest.adminAction && <AdminActionBadge adminAction={selectedRequest.adminAction} />}
+                    {selectedRequest.isLongSet && (
+                      <span className="px-2 py-1 rounded-full text-xs flex items-center bg-teal-100 text-teal-800">
+                        <span className="ml-1">Long Set</span>
+                      </span>
+                    )}
                   </div>
                 </div>
 
@@ -1177,11 +1212,42 @@ export default function ProductRequestsPage() {
                           {selectedRequest.details.supplier && (
                             <div>
                               <p className="text-xs text-gray-500">
-                                Trader:
+                                Karigar:
                               </p>
                               <p className="text-sm">
                                 {selectedRequest.details.supplier}
                               </p>
+                            </div>
+                          )}
+
+                          {/* Display Long Set Parts if this is a long set product */}
+                          {selectedRequest.isLongSet && selectedRequest.details.longSetParts && (
+                            <div>
+                              <p className="text-xs text-gray-500 font-medium mt-3 mb-2">
+                                Long Set Parts:
+                              </p>
+                              <div className="bg-gray-100 p-3 rounded-md">
+                                <table className="w-full text-xs">
+                                  <thead>
+                                    <tr className="border-b border-gray-300">
+                                      <th className="text-left pb-2">Part Name</th>
+                                      <th className="text-left pb-2">Description</th>
+                                      <th className="text-right pb-2">Cost Price</th>
+                                      <th className="text-right pb-2">Karigar</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {JSON.parse(selectedRequest.details.longSetParts).map((part: any, index: number) => (
+                                      <tr key={index} className="border-b border-gray-200 last:border-0">
+                                        <td className="py-2">{part.partName}</td>
+                                        <td className="py-2">{part.partDescription || '-'}</td>
+                                        <td className="py-2 text-right">{part.costPrice ? `₹${part.costPrice}` : '-'}</td>
+                                        <td className="py-2 text-right">{part.karigarId || '-'}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
                             </div>
                           )}
                         </div>
@@ -1265,7 +1331,7 @@ export default function ProductRequestsPage() {
                           {selectedRequest.product.supplier && (
                             <div>
                               <p className="text-xs text-gray-500">
-                                Trader:
+                                Karigar:
                               </p>
                               <p className="text-xs">
                                 {selectedRequest.product.supplier}
@@ -1559,14 +1625,12 @@ export default function ProductRequestsPage() {
                                 </p>
                               </div>
                             </div>
-                          )}
-
-                          {/* Display supplier field in edit comparison */}
+                          )}                          {/* Display supplier field in edit comparison */}
                           {(selectedRequest.details.supplier !== undefined ||
                             selectedRequest.product.supplier) && (
                             <div>
                               <p className="text-xs text-gray-500">
-                                Trader:
+                                Karigar:
                               </p>
                               <div
                                 className={

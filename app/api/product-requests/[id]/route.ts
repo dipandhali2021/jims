@@ -184,57 +184,140 @@ export async function PUT(
           console.log('Rejecting edit without image change. No image deletion needed.');
         }
       }
-    }
-
-    // If request is approved, handle product operations based on request type
+    }    // If request is approved, handle product operations based on request type
     if (status === 'Approved') {
       switch (productRequest.requestType) {
         case 'add':
-          if (productRequest.details) {            // Create new product with details from the request
-            await prisma.product.create({
-              data: {
-                name: productRequest.details.name || '',
-                sku: productRequest.details.sku || '',
-                description: productRequest.details.description || '',
-                price: productRequest.details.price || 0,
-                costPrice: productRequest.details.costPrice || null,
-                stock: productRequest.details.stock || 0,
-                category: productRequest.details.category || '',
-                material: productRequest.details.material || '',
-                imageUrl: productRequest.details.imageUrl || '',
-                supplier: productRequest.details.supplier || null,
-                lowStockThreshold: 10,
-                userId: productRequest.userId // Associate with the requesting user
-              }
-            });
+          if (productRequest.details) {
+            // Handle long set product creation differently
+            if (productRequest.isLongSet && productRequest.details.longSetParts) {
+              // Parse the parts from the JSON string
+              const parts = JSON.parse(productRequest.details.longSetParts || '[]');
+              
+              // Create the main product first
+              const product = await prisma.product.create({
+                data: {
+                  name: productRequest.details.name || '',
+                  sku: productRequest.details.sku || '',
+                  description: productRequest.details.description || '',
+                  price: productRequest.details.price || 0,
+                  costPrice: productRequest.details.costPrice || null,
+                  stock: productRequest.details.stock || 0,
+                  category: productRequest.details.category || '',
+                  material: productRequest.details.material || '',
+                  imageUrl: productRequest.details.imageUrl || '',
+                  supplier: productRequest.details.supplier || null,
+                  lowStockThreshold: 10,
+                  userId: productRequest.userId // Associate with the requesting user
+                }
+              });
 
-            // If a supplier (karigar) is specified, add a transaction to their account
-            if (productRequest.details.supplier) {
-              const karigar = await findKarigarByName(productRequest.details.supplier);
-              if (karigar) {
-                const productCost = productRequest.details.costPrice || productRequest.details.price || 0;
-                const totalAmount = productCost * (productRequest.details.stock || 0);
-                  // Create automatically approved transaction - positive amount means we owe money to karigar
-                const transaction = await createKarigarTransaction(
-                  karigar.id,
-                  `New product added: ${productRequest.details.name}`,
-                  totalAmount,
-                  productRequest.requestId,
-                  productRequest.details.name || 'New product',
-                  userId
-                );
-                
-                // Auto-approve the transaction for add request
-                if (transaction) {
-                  console.log(`Auto-approving karigar transaction ${transaction.transactionId} for product add request ${productRequest.requestId}`);
-                  await prisma.karigarTransaction.update({
-                    where: { id: transaction.id },
-                    data: {
-                      isApproved: true,
-                      approvedById: userId
+              // Create the long set product with reference to the main product
+              const longSetProduct = await prisma.longSetProduct.create({
+                data: {
+                  name: productRequest.details.name || '',
+                  sku: productRequest.details.sku || '',
+                  description: productRequest.details.description || '',
+                  category: productRequest.details.category || '',
+                  material: productRequest.details.material || '',
+                  price: productRequest.details.price || 0,
+                  costPrice: productRequest.details.costPrice || null,
+                  stock: productRequest.details.stock || 0,
+                  imageUrl: productRequest.details.imageUrl || '',
+                  userId: productRequest.userId,
+                  productId: product.id,
+                  parts: {
+                    create: parts.map((part: any) => ({
+                      partName: part.partName,
+                      partDescription: part.partDescription || '',
+                      costPrice: part.costPrice || null,
+                      karigarId: part.karigarId || null
+                    }))
+                  }
+                }
+              });
+
+              // If parts have karigars specified, add transactions to their accounts
+              if (parts.length > 0) {
+                for (const part of parts) {
+                  if (part.karigarId) {
+                    const karigar = await prisma.karigar.findUnique({
+                      where: { id: part.karigarId }
+                    });
+                    
+                    if (karigar) {
+                      const partCost = part.costPrice || 0;
+                      // Create transaction for this part
+                      const transaction = await createKarigarTransaction(
+                        karigar.id,
+                        `Long set product part: ${part.partName} for ${productRequest.details.name}`,
+                        partCost,
+                        productRequest.requestId,
+                        productRequest.details.name || 'New long set product',
+                        userId
+                      );
+                      
+                      // Auto-approve the transaction
+                      if (transaction) {
+                        await prisma.karigarTransaction.update({
+                          where: { id: transaction.id },
+                          data: {
+                            isApproved: true,
+                            approvedById: userId
+                          }
+                        });
+                      }
                     }
-                  });
-                  console.log(`Add request transaction ${transaction.transactionId} auto-approved successfully`);
+                  }
+                }
+              }
+            } else {
+              // Regular product creation
+              await prisma.product.create({
+                data: {
+                  name: productRequest.details.name || '',
+                  sku: productRequest.details.sku || '',
+                  description: productRequest.details.description || '',
+                  price: productRequest.details.price || 0,
+                  costPrice: productRequest.details.costPrice || null,
+                  stock: productRequest.details.stock || 0,
+                  category: productRequest.details.category || '',
+                  material: productRequest.details.material || '',
+                  imageUrl: productRequest.details.imageUrl || '',
+                  supplier: productRequest.details.supplier || null,
+                  lowStockThreshold: 10,
+                  userId: productRequest.userId // Associate with the requesting user
+                }
+              });
+
+              // If a supplier (karigar) is specified, add a transaction to their account
+              if (productRequest.details.supplier) {
+                const karigar = await findKarigarByName(productRequest.details.supplier);
+                if (karigar) {
+                  const productCost = productRequest.details.costPrice || productRequest.details.price || 0;
+                  const totalAmount = productCost * (productRequest.details.stock || 0);
+                    // Create automatically approved transaction - positive amount means we owe money to karigar
+                  const transaction = await createKarigarTransaction(
+                    karigar.id,
+                    `New product added: ${productRequest.details.name}`,
+                    totalAmount,
+                    productRequest.requestId,
+                    productRequest.details.name || 'New product',
+                    userId
+                  );
+                  
+                  // Auto-approve the transaction for add request
+                  if (transaction) {
+                    console.log(`Auto-approving karigar transaction ${transaction.transactionId} for product add request ${productRequest.requestId}`);
+                    await prisma.karigarTransaction.update({
+                      where: { id: transaction.id },
+                      data: {
+                        isApproved: true,
+                        approvedById: userId
+                      }
+                    });
+                    console.log(`Add request transaction ${transaction.transactionId} auto-approved successfully`);
+                  }
                 }
               }
             }
@@ -347,11 +430,12 @@ export async function PUT(
     // Create notification for the user who made the request
     if (productRequest.userId) {
       let notificationMessage = '';
-      switch (productRequest.requestType) {
-        case 'add':          notificationMessage = `Your product add request (${productRequest.requestId}) has been ${status.toLowerCase()}.`;
+      switch (productRequest.requestType) {        case 'add':          notificationMessage = `Your product add request (${productRequest.requestId}) has been ${status.toLowerCase()}.`;
           if (status === 'Approved' && productRequest.details) {
             notificationMessage += ` Product "${productRequest.details.name}" has been added to inventory.`;
-            if (productRequest.details.supplier) {
+            if (productRequest.isLongSet) {
+              notificationMessage += ` This long set product and its parts have been created.`;
+            } else if (productRequest.details.supplier) {
               notificationMessage += ` Related transactions with supplier ${productRequest.details.supplier} have been automatically approved.`;
             }
           }

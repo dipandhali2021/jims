@@ -14,6 +14,7 @@ export type ProductRequestDetails = {
   lowStockThreshold?: number;
   supplier?: string;
   stockAdjustment?: number | null;
+  longSetParts?: string; // JSON string for long set product parts
 };
 
 export type ProductRequest = {
@@ -22,6 +23,7 @@ export type ProductRequest = {
   requestType: 'add' | 'edit' | 'delete';
   status: 'Pending' | 'Approved' | 'Rejected';
   adminAction: boolean;  // Flag to indicate if this was a direct admin action
+  isLongSet: boolean;    // Flag to indicate if this is a long set product request
   requestDate: Date | string;
   userId: string;
   productId?: string | null;

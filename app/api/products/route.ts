@@ -189,14 +189,33 @@ export async function GET(req: NextRequest) {
         break;
       default:
         orderBy = { updatedAt: 'desc' };
-    }
-
-    const products = await prisma.product.findMany({
+    }    const products = await prisma.product.findMany({
       where: whereClause,
       orderBy,
+      include: {
+        LongSetProduct: {
+          include: {
+            parts: {
+              include: {
+                karigar: true
+              }
+            }
+          }
+        }
+      }
     });
 
-    return NextResponse.json(products);
+    // Transform products to add isLongSet flag
+    const transformedProducts = products.map(product => ({
+      ...product,
+      isLongSet: !!product.LongSetProduct,
+      longSetProduct: product.LongSetProduct ? {
+        id: product.LongSetProduct.id,
+        parts: product.LongSetProduct.parts
+      } : undefined
+    }));
+
+    return NextResponse.json(transformedProducts);
   } catch (error) {
     console.error('Error fetching products:', error);
     return NextResponse.json(

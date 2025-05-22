@@ -1,5 +1,6 @@
 'use client';
 
+
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
@@ -13,6 +14,8 @@ import { DeleteProductDialog } from '@/components/products/DeleteProductDialog';
 import { Product, useProducts } from '@/hooks/use-products';
 import { useToast } from '@/hooks/use-toast';
 import { LowStockThresholdSetting } from '@/components/admin/LowStockThresholdSetting';
+import { AddLongSetProductDialog } from '@/components/products/AddLongSetProductDialog';
+import { EditLongSetProductDialog } from '@/components/products/EditLongSetProductDialog';
 
 import {
   LayoutGrid,
@@ -80,7 +83,6 @@ export default function InventoryPage() {
 
   // Calculate total pages
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-
   return (
     <div className="p-6">      {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-center md:items-center mb-6 gap-4">
@@ -120,10 +122,14 @@ export default function InventoryPage() {
                 currentThreshold={lowStockThreshold}
                 onThresholdUpdated={handleThresholdUpdated}
               />
+              <AddLongSetProductDialog onProductAdded={refreshProducts} />
               <AddProductDialog onProductAdded={refreshProducts} />
             </>
           ) : (
-            <AddProductRequestDialog onRequestCreated={refreshProducts} />
+            <>
+              <AddLongSetProductDialog onProductAdded={refreshProducts} />
+              <AddProductRequestDialog onRequestCreated={refreshProducts} />
+            </>
           )}
         </div>
       </div>
@@ -246,15 +252,18 @@ export default function InventoryPage() {
                       ) as HTMLButtonElement
                     )?.click()
                   }
-                >
-                  <img
+                >                  <img
                     src={product.imageUrl}
                     alt={product.name}
                     className="object-cover w-full h-full"
-                  />
-                  {product.stock < (product.lowStockThreshold || lowStockThreshold) && (
+                  />                  {product.stock < (product.lowStockThreshold || lowStockThreshold) && (
                     <span className="absolute top-2 right-2 bg-red-500 text-white text-xs px-2 py-1 rounded">
                       Low Stock
+                    </span>
+                  )}
+                  {(product.isLongSet || product.longSetProduct) && (
+                    <span className="absolute top-2 left-2 bg-purple-500 text-white text-xs px-2 py-1 rounded">
+                      Long Set
                     </span>
                   )}
                 </div>
@@ -275,19 +284,24 @@ export default function InventoryPage() {
                     >
                       Stock: {product.stock}
                     </span>
-                  </div>
-                  <div className="flex mt-4 justify-evenly flex-wrap md:flex-nowrap">
+                  </div>                  <div className="flex mt-4 justify-evenly flex-wrap md:flex-nowrap">
                     <CreateSalesRequestDialog
                       product={product}
                       onRequestCreated={refreshProducts}
-                    />
-                    <ProductPreviewDialog product={product} />
+                    />                    <ProductPreviewDialog product={product} />
                     {user?.publicMetadata?.role === 'admin' ? (
                       <>
-                        <EditProductDialog
-                          product={product}
-                          onProductUpdated={refreshProducts}
-                        />
+                        {(product.isLongSet || product.longSetProduct) ? (
+                          <EditLongSetProductDialog
+                            product={product}
+                            onProductUpdated={refreshProducts}
+                          />
+                        ) : (
+                          <EditProductDialog
+                            product={product}
+                            onProductUpdated={refreshProducts}
+                          />
+                        )}
                         <DeleteProductDialog
                           product={product}
                           onProductDeleted={refreshProducts}
@@ -329,13 +343,18 @@ export default function InventoryPage() {
                   {currentProducts.map((product) => (
                     <tr key={product.id} className="border-b">
                       <td className="p-4">
-                        <div className="flex items-center gap-3">
-                          <img
+                        <div className="flex items-center gap-3">                          <img
                             src={product.imageUrl}
                             alt={product.name}
                             className="w-12 h-12 object-cover rounded"
-                          />
-                          <span className="font-medium">{product.name}</span>
+                          />                          <div>
+                            <span className="font-medium">{product.name}</span>
+                            {(product.isLongSet || product.longSetProduct) && (
+                              <span className="ml-2 bg-purple-500 text-white text-xs px-2 py-1 rounded">
+                                Long Set
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </td>
                       <td className="p-4">{product.sku}</td>
@@ -361,13 +380,19 @@ export default function InventoryPage() {
                           <CreateSalesRequestDialog
                             product={product}
                             onRequestCreated={refreshProducts}
-                          />
-                          {user?.publicMetadata?.role === 'admin' ? (
+                          />                          {user?.publicMetadata?.role === 'admin' ? (
                             <>
-                              <EditProductDialog
-                                product={product}
-                                onProductUpdated={refreshProducts}
-                              />
+                              {(product.isLongSet || product.longSetProduct) ? (
+                                <EditLongSetProductDialog
+                                  product={product}
+                                  onProductUpdated={refreshProducts}
+                                />
+                              ) : (
+                                <EditProductDialog
+                                  product={product}
+                                  onProductUpdated={refreshProducts}
+                                />
+                              )}
                               <DeleteProductDialog
                                 product={product}
                                 onProductDeleted={refreshProducts}
