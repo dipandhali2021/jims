@@ -618,6 +618,18 @@ export default function ProductRequestsPage() {
                     )}
                   </div>
 
+                  {/* Long Set Parts with Karigars - after stock badges */}
+                  {request.isLongSet && request.details?.longSetParts && (
+                    <div className="flex flex-wrap gap-2">
+                      {JSON.parse(request.details.longSetParts).map((part: any, index: number) => (
+                        <div key={index} className="inline-flex items-center px-2.5 py-1.5 rounded-full text-xs font-medium bg-teal-50 text-teal-700 border border-teal-100">
+                          <span className="flex h-2 w-2 rounded-full bg-teal-500 mr-1.5"></span>
+                          {part.partName}: {part.karigarName || 'Not assigned'}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   {/* Supplier badges - always on their own line */}
                   <div className="flex flex-wrap gap-2">
                     {request.requestType === 'add' && request.details?.supplier && (
@@ -1242,7 +1254,7 @@ export default function ProductRequestsPage() {
                                         <td className="py-2">{part.partName}</td>
                                         <td className="py-2">{part.partDescription || '-'}</td>
                                         <td className="py-2 text-right">{part.costPrice ? `₹${part.costPrice}` : '-'}</td>
-                                        <td className="py-2 text-right">{part.karigarId || '-'}</td>
+                                        <td className="py-2 text-right">{part.karigarName || 'Not assigned'}</td>
                                       </tr>
                                     ))}
                                   </tbody>
@@ -1625,12 +1637,14 @@ export default function ProductRequestsPage() {
                                 </p>
                               </div>
                             </div>
-                          )}                          {/* Display supplier field in edit comparison */}
+                          )}
+
+                          {/* Display supplier field in edit comparison */}
                           {(selectedRequest.details.supplier !== undefined ||
                             selectedRequest.product.supplier) && (
                             <div>
                               <p className="text-xs text-gray-500">
-                                Karigar:
+                                Trader:
                               </p>
                               <div
                                 className={

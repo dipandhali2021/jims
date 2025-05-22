@@ -8,12 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, X, Plus, Trash2 } from 'lucide-react';
+import { PlusCircle, X, Plus, Trash2, Loader2 } from 'lucide-react';
 import { useKarigar } from '@/hooks/use-karigar';
 import { Card, CardContent } from '@/components/ui/card';
 import { useUser } from '@clerk/nextjs';
 
-// Reuse categories and materials from AddProductDialog
 const categories = [
   'Rings',
   'Necklaces',
@@ -36,6 +35,13 @@ const materials = [
   'Other',
 ];
 
+interface LongSetProductPart {
+  partName: string;
+  partDescription: string;
+  costPrice: string;
+  karigarId: string;
+}
+
 export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: () => Promise<void> }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -54,19 +60,20 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
     name: '',
     sku: '',
     description: '',
-    category: 'Necklaces', // Default to Necklaces
-    material: 'Copper', // Default to Gold
+    category: '',
+    material: '',
     customCategory: '',
     customMaterial: '',
     costPrice: '',
     sellingPrice: '',
-    stock: '',
+    stock: '1',
   });
+
   // Product parts data
-  const [parts, setParts] = useState([
-    { 
-      partName: 'Part 1', 
-      partDescription: '', 
+  const [parts, setParts] = useState<LongSetProductPart[]>([
+    {
+      partName: 'Part 1',
+      partDescription: '',
       costPrice: '',
       karigarId: 'none'
     }
@@ -79,7 +86,7 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
         try {
           setLoadingKarigars(true);
           const fetchedKarigars = await fetchKarigars();
-          setKarigars(fetchedKarigars.filter((k:any) => k.isApproved));
+          setKarigars(fetchedKarigars.filter((k: any) => k.isApproved));
         } catch (error) {
           console.error('Error fetching karigars:', error);
           toast({
@@ -95,31 +102,6 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
     
     loadKarigars();
   }, [isOpen, fetchKarigars, toast]);
-
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      sku: '',
-      description: '',
-      category: 'Necklaces',
-      material: 'Copper',
-      customCategory: '',
-      customMaterial: '',
-      costPrice: '',
-      sellingPrice: '',
-      stock: '',
-    });    setParts([
-      { 
-        partName: 'Part 1', 
-        partDescription: '', 
-        costPrice: '',
-        karigarId: 'none'
-      }
-    ]);
-    setImageFile(null);
-    setPreviewUrl('');
-    setError(null);
-  };
 
   const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -148,7 +130,8 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
   const addPart = () => {
     setParts([
       ...parts,
-      {        partName: `Part ${parts.length + 1}`,
+      {
+        partName: `Part ${parts.length + 1}`,
         partDescription: '',
         costPrice: '',
         karigarId: 'none'
@@ -158,162 +141,69 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
 
   const removePart = (index: number) => {
     if (parts.length > 1) {
-      const updatedParts = parts.filter((_, i) => i !== index);
-      setParts(updatedParts);
+      setParts(parts.filter((_, i) => i !== index));
     } else {
       toast({
-        title: 'Info',
-        description: 'A long set product must have at least one part',
+        title: 'Error',
+        description: 'Long set product must have at least one part',
+        variant: 'destructive',
       });
     }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      // Check file size (limit to 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast({
-          title: 'Error',
-          description: 'Image size should be less than 10MB',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
-      // Check file type
-      if (!file.type.startsWith('image/')) {
-        toast({
-          title: 'Error',
-          description: 'Please upload a valid image file',
-          variant: 'destructive',
-        });
-        return;
-      }
-      
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
       setImageFile(file);
       setPreviewUrl(URL.createObjectURL(file));
     }
   };
 
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      sku: '',
+      description: '',
+      category: '',
+      material: '',
+      customCategory: '',
+      customMaterial: '',
+      costPrice: '',
+      sellingPrice: '',
+      stock: '1',
+    });
+    setParts([
+      {
+        partName: 'Part 1',
+        partDescription: '',
+        costPrice: '',
+        karigarId: 'none'
+      }
+    ]);
+    setImageFile(null);
+    setPreviewUrl('');
+    setError(null);
+  };
+
   const validateForm = () => {
-    // Base product validation
-    if (!formData.name.trim()) {
-      setError("Product name is required");
+    if (!formData.name || !formData.sku || !formData.sellingPrice || !formData.stock) {
+      setError('Please fill in all required fields');
       toast({
         title: 'Error',
-        description: 'Product name is required',
-        variant: 'destructive',
-      });
-      return false;
-    }
-    
-    if (!formData.sku.trim()) {
-      setError("Product ID is required");
-      toast({
-        title: 'Error',
-        description: 'Product ID is required',
-        variant: 'destructive',
-      });
-      return false;
-    }
-    
-    if (!formData.category) {
-      setError("Category is required");
-      toast({
-        title: 'Error',
-        description: 'Please select a category',
+        description: 'Please fill in all required fields',
         variant: 'destructive',
       });
       return false;
     }
 
-    if (formData.category === 'Other' && !formData.customCategory.trim()) {
-      setError("Custom category is required when 'Other' is selected");
+    if (parts.some(part => !part.partName)) {
+      setError('Each part must have a name');
       toast({
         title: 'Error',
-        description: "Please enter a custom category name",
+        description: 'Each part must have a name',
         variant: 'destructive',
       });
       return false;
-    }
-    
-    if (!formData.material) {
-      setError("Material is required");
-      toast({
-        title: 'Error',
-        description: 'Please select a material',
-        variant: 'destructive',
-      });
-      return false;
-    }
-
-    if (formData.material === 'Other' && !formData.customMaterial.trim()) {
-      setError("Custom material is required when 'Other' is selected");
-      toast({
-        title: 'Error',
-        description: "Please enter a custom material name",
-        variant: 'destructive',
-      });
-      return false;
-    }
-    
-    if (!formData.sellingPrice || isNaN(parseFloat(formData.sellingPrice))) {
-      setError("Valid selling price is required");
-      toast({
-        title: 'Error',
-        description: 'Please enter a valid selling price',
-        variant: 'destructive',
-      });
-      return false;
-    }
-    
-    if (!formData.stock || isNaN(parseInt(formData.stock))) {
-      setError("Valid stock quantity is required");
-      toast({
-        title: 'Error',
-        description: 'Please enter a valid stock quantity',
-        variant: 'destructive',
-      });
-      return false;
-    }
-
-    // Validate parts
-    let totalCostPrice = 0;
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      if (!part.partName.trim()) {
-        setError(`Part ${i + 1} name is required`);
-        toast({
-          title: 'Error',
-          description: `Part ${i + 1} name is required`,
-          variant: 'destructive',
-        });
-        return false;
-      }
-
-      // Cost price is optional for parts, but must be valid if provided
-      if (part.costPrice && isNaN(parseFloat(part.costPrice))) {
-        setError(`Valid cost price is required for part ${i + 1}`);
-        toast({
-          title: 'Error',
-          description: `Please enter a valid cost price for part ${i + 1}`,
-          variant: 'destructive',
-        });
-        return false;
-      }
-
-      if (part.costPrice) {
-        totalCostPrice += parseFloat(part.costPrice);
-      }
-    }
-
-    // Set total cost price based on sum of parts
-    if (totalCostPrice > 0) {
-      setFormData(prev => ({
-        ...prev,
-        costPrice: totalCostPrice.toString()
-      }));
     }
 
     return true;
@@ -323,14 +213,13 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
     e.preventDefault();
     setError(null);
     
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       const DEFAULT_IMAGE_URL = "https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png";
       setIsLoading(true);
-        // Prepare data with custom category/material if "Other" is selected
+
+      // Prepare data with custom category/material if "Other" is selected
       const finalCategory = formData.category === 'Other' ? formData.customCategory : formData.category;
       const finalMaterial = formData.material === 'Other' ? formData.customMaterial : formData.material;
 
@@ -362,15 +251,14 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
             data.append(key, String(value));
           }
         });
-        // Add parts as JSON string
         data.append('parts', JSON.stringify(longSetProductData.parts));
         data.append('image', imageFile);
         
         requestOptions = {
           method: 'POST',
           body: data
-        };      } else {
-        // If no image, send as JSON with default imageUrl
+        };
+      } else {
         requestOptions = {
           method: 'POST',
           headers: {
@@ -382,41 +270,32 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
           })
         };
       }
-      
-      // Determine the endpoint based on user role
-      const endpoint = isAdmin 
-        ? '/api/products/long-set'  // Direct creation for admins
-        : '/api/product-requests/long-set';  // Request system for shopkeepers
-      
-      // Send the request to create a long set product or product request
-      const response = await fetch(endpoint, requestOptions);
+
+      // Send request to the appropriate endpoint
+      const response = await fetch('/api/products/long-set', requestOptions);
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create long set product');
+        throw new Error(errorData.error || 'Failed to create long set product request');
       }
 
       // Call the callback to refresh products
       await onProductAdded();
 
-      // Show success toast with appropriate message
+      // Show success message
       toast({
         title: 'Success',
         description: isAdmin 
-          ? 'Long set product created successfully' 
+          ? 'Long set product request created and waiting for approval' 
           : 'Long set product request submitted for approval',
       });
       
-      // Close the dialog and reset form
       setIsOpen(false);
       resetForm();
     } catch (error: any) {
-      console.error('Error creating long set product:', error);
-      
-      // Set error message and show toast
-      const errorMessage = error.message || 'Failed to create long set product';
+      console.error('Error creating long set product request:', error);
+      const errorMessage = error.message || 'Failed to create long set product request';
       setError(errorMessage);
-      
       toast({
         title: 'Error',
         description: errorMessage,
@@ -434,22 +313,30 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
         setIsOpen(open);
         if (!open) resetForm();
       }}
-    >      <DialogTrigger asChild>
+    >
+      <DialogTrigger asChild>
         <Button 
           variant="outline" 
           size="sm" 
           className="gap-1"
         >
           <PlusCircle className="h-4 w-4" />
-          {isAdmin ? "Add Long Set" : "Request Long Set"}
+          {isAdmin ? "Create Long Set Request" : "Request Long Set"}
         </Button>
       </DialogTrigger>
+
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] p-6 bg-white rounded-lg shadow-lg border-0 overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold">
-            {isAdmin ? "Add Long Set Product" : "Request Long Set Product"}
+            {isAdmin ? "Create Long Set Product Request" : "Request Long Set Product"}
           </DialogTitle>
         </DialogHeader>
+        
+        {error && (
+          <div className="bg-red-50 text-red-800 p-3 rounded-md mb-4 text-sm">
+            {error}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           {/* Base Product Section */}
@@ -459,7 +346,7 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
             {/* Product name and SKU */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="name">Product Name</Label>
+                <Label htmlFor="name">Product Name <span className="text-red-500">*</span></Label>
                 <Input
                   id="name"
                   name="name"
@@ -470,11 +357,11 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sku">Product ID (SKU)</Label>
+                <Label htmlFor="sku">SKU <span className="text-red-500">*</span></Label>
                 <Input
                   id="sku"
                   name="sku"
-                  placeholder="Enter product ID"
+                  placeholder="Enter SKU"
                   value={formData.sku}
                   onChange={handleFormChange}
                   required
@@ -482,23 +369,10 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
               </div>
             </div>
             
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                name="description"
-                placeholder="Enter product description"
-                value={formData.description}
-                onChange={handleFormChange}
-                rows={3}
-              />
-            </div>
-            
             {/* Category and Material */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="category">Category <span className="text-red-500">*</span></Label>
                 <Select
                   value={formData.category}
                   onValueChange={(value) => handleSelectChange('category', value)}
@@ -514,21 +388,18 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
                     ))}
                   </SelectContent>
                 </Select>
-                
                 {formData.category === 'Other' && (
-                  <div className="mt-2">
-                    <Input
-                      name="customCategory"
-                      placeholder="Enter custom category"
-                      value={formData.customCategory}
-                      onChange={handleFormChange}
-                    />
-                  </div>
+                  <Input
+                    className="mt-2"
+                    name="customCategory"
+                    placeholder="Enter custom category"
+                    value={formData.customCategory}
+                    onChange={handleFormChange}
+                  />
                 )}
               </div>
-              
               <div className="space-y-2">
-                <Label htmlFor="material">Material</Label>
+                <Label htmlFor="material">Material <span className="text-red-500">*</span></Label>
                 <Select
                   value={formData.material}
                   onValueChange={(value) => handleSelectChange('material', value)}
@@ -544,46 +415,54 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
                     ))}
                   </SelectContent>
                 </Select>
-                
                 {formData.material === 'Other' && (
-                  <div className="mt-2">
-                    <Input
-                      name="customMaterial"
-                      placeholder="Enter custom material"
-                      value={formData.customMaterial}
-                      onChange={handleFormChange}
-                    />
-                  </div>
+                  <Input
+                    className="mt-2"
+                    name="customMaterial"
+                    placeholder="Enter custom material"
+                    value={formData.customMaterial}
+                    onChange={handleFormChange}
+                  />
                 )}
               </div>
             </div>
             
             {/* Price and Stock */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="sellingPrice">Selling Price (₹)</Label>
+                <Label htmlFor="sellingPrice">Selling Price (₹) <span className="text-red-500">*</span></Label>
                 <Input
                   id="sellingPrice"
                   name="sellingPrice"
-                  placeholder="Enter selling price"
                   type="number"
                   min="0"
                   step="0.01"
+                  placeholder="0.00"
                   value={formData.sellingPrice}
                   onChange={handleFormChange}
                   required
                 />
               </div>
-              
               <div className="space-y-2">
-                <Label htmlFor="stock">Stock Quantity</Label>
+                <Label htmlFor="costPrice">Cost Price (₹)</Label>
+                <Input
+                  id="costPrice"
+                  name="costPrice"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={formData.costPrice}
+                  onChange={handleFormChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="stock">Initial Stock <span className="text-red-500">*</span></Label>
                 <Input
                   id="stock"
                   name="stock"
-                  placeholder="Enter stock quantity"
                   type="number"
                   min="0"
-                  step="1"
                   value={formData.stock}
                   onChange={handleFormChange}
                   required
@@ -591,71 +470,78 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
               </div>
             </div>
             
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                placeholder="Product description"
+                value={formData.description}
+                onChange={handleFormChange}
+                rows={3}
+              />
+            </div>
+            
             {/* Product Image */}
             <div className="space-y-2">
-              <Label htmlFor="image">Product Image</Label>
-              <div className="flex items-center gap-4">
-                <Input
-                  id="image"
-                  name="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                  className="flex-1"
-                />
-                
-                {previewUrl && (
-                  <div className="relative w-16 h-16">
-                    <img
-                      src={previewUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover rounded-md"
+              <Label>Product Image</Label>
+              <div className="mt-1 flex items-center space-x-4">
+                <div 
+                  className="w-24 h-24 border border-gray-300 rounded-md overflow-hidden flex items-center justify-center bg-gray-50"
+                >
+                  {previewUrl ? (
+                    <img 
+                      src={previewUrl} 
+                      alt="Product preview" 
+                      className="w-full h-full object-contain"
                     />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setImageFile(null);
-                        setPreviewUrl('');
-                      }}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                )}
+                  ) : (
+                    <span className="text-gray-400 text-xs text-center px-1">No image selected</span>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="max-w-xs"
+                  />
+                  <p className="text-xs text-gray-500">
+                    Recommended: 500x500px, PNG or JPG
+                  </p>
+                </div>
               </div>
             </div>
           </div>
           
           {/* Parts Section */}
-          <div className="mt-8 space-y-4">
-            <div className="flex justify-between items-center border-b pb-2">
-              <h3 className="text-lg font-semibold">Product Parts</h3>
-              <Button 
-                type="button" 
-                variant="outline" 
-                size="sm" 
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h3 className="text-lg font-semibold border-b pb-2">Parts Information</h3>
+              <Button
+                type="button"
                 onClick={addPart}
-                className="flex items-center gap-1"
+                variant="outline"
+                size="sm"
+                className="gap-1"
               >
                 <Plus className="h-4 w-4" />
                 Add Part
               </Button>
             </div>
             
-            <div className="space-y-6">
+            <div className="space-y-4">
               {parts.map((part, index) => (
-                <Card key={index} className="border border-gray-200">
+                <Card key={index}>
                   <CardContent className="p-4">
                     <div className="flex justify-between items-center mb-4">
-                      <h4 className="font-medium text-md">
-                        {part.partName}
-                      </h4>
+                      <h4 className="font-medium">Part {index + 1}</h4>
                       <Button
                         type="button"
-                        variant="destructive"
-                        size="sm"
                         onClick={() => removePart(index)}
+                        variant="ghost"
+                        size="sm"
                         disabled={parts.length === 1}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -664,43 +550,39 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor={`partName-${index}`}>Part Name</Label>
+                        <Label>Part Name <span className="text-red-500">*</span></Label>
                         <Input
-                          id={`partName-${index}`}
                           value={part.partName}
                           onChange={(e) => handlePartChange(index, 'partName', e.target.value)}
                           placeholder="Enter part name"
                           required
                         />
                       </div>
-                      
                       <div className="space-y-2">
-                        <Label htmlFor={`costPrice-${index}`}>Cost Price (₹)</Label>
+                        <Label>Cost Price (₹)</Label>
                         <Input
-                          id={`costPrice-${index}`}
-                          value={part.costPrice}
-                          onChange={(e) => handlePartChange(index, 'costPrice', e.target.value)}
-                          placeholder="Enter cost price"
                           type="number"
                           min="0"
                           step="0.01"
+                          value={part.costPrice}
+                          onChange={(e) => handlePartChange(index, 'costPrice', e.target.value)}
+                          placeholder="0.00"
                         />
                       </div>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                       <div className="space-y-2">
-                        <Label htmlFor={`partDescription-${index}`}>Part Description</Label>
+                        <Label>Description</Label>
                         <Textarea
-                          id={`partDescription-${index}`}
                           value={part.partDescription}
                           onChange={(e) => handlePartChange(index, 'partDescription', e.target.value)}
-                          placeholder="Enter part description"
+                          placeholder="Part description"
                           rows={2}
                         />
                       </div>
-                        <div className="space-y-2">
-                        <Label htmlFor={`karigar-${index}`}>Karigar (Artisan)</Label>
+                      <div className="space-y-2">
+                        <Label>Karigar (Artisan)</Label>
                         <Select
                           value={part.karigarId}
                           onValueChange={(value) => handlePartChange(index, 'karigarId', value)}
@@ -734,19 +616,21 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
               disabled={isLoading}
             >
               Cancel
-            </Button>            <Button
+            </Button>
+            <Button
               type="submit"
               disabled={isLoading}
             >
-              {isLoading ? 'Processing...' : isAdmin ? 'Create Long Set Product' : 'Submit Request'}
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                isAdmin ? "Create Request" : "Submit Request"
+              )}
             </Button>
           </div>
-          
-          {error && (
-            <div className="bg-red-50 p-3 rounded-md text-red-600 text-sm mt-4">
-              {error}
-            </div>
-          )}
         </form>
       </DialogContent>
     </Dialog>

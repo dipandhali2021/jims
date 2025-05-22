@@ -1,7 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clerkClient, currentUser } from '@clerk/nextjs/server';
-import  prisma  from '@/lib/prisma';
-import { uploadImageToStorage,getImageUrl } from '../../utils';
+import prisma from '@/lib/prisma';
+import { uploadImageToStorage, getImageUrl } from '../../utils';
+
+// Function to generate request ID
+async function generateRequestId(): Promise<string> {
+  const year = new Date().getFullYear();
+  
+  // Get the count of requests for this year to generate the sequence number
+  const requestCount = await prisma.productRequest.count({
+    where: {
+      requestId: {
+        startsWith: `PR-${year}`
+      }
+    }
+  });
+
+  // Format the sequence number with leading zeros (XXXX)
+  const sequence = (requestCount + 1).toString().padStart(4, '0');
+  
+  return `PR-${year}-${sequence}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
     // Get the current user
@@ -14,16 +34,16 @@ export async function POST(request: NextRequest) {
     const userInfo = await clerkClient.users.getUser(user.id);
     const userRole = userInfo.publicMetadata.role as string || 'user';
     
-    if (userRole !== 'admin') {
-      // If not admin, check if they're subscribed
-      const isSubscribed = userInfo.publicMetadata.isSubscribed as boolean || false;
-      if (!isSubscribed) {
-        return NextResponse.json(
-          { error: 'Subscription required to add products' },
-          { status: 403 }
-        );
-      }
-    }
+    // if (userRole !== 'admin') {
+    //   // If not admin, check if they're subscribed
+    //   const isSubscribed = userInfo.publicMetadata.isSubscribed as boolean || false;
+    //   if (!isSubscribed) {
+    //     return NextResponse.json(
+    //       { error: 'Subscription required to add products' },
+    //       { status: 403 }
+    //     );
+    //   }
+    // }
 
     // Check if request is multipart/form-data or application/json
     let longSetProductData;
@@ -93,51 +113,75 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create the product first
-    const product = await prisma.product.create({
-      data: {
-        name: longSetProductData.name,
-        sku: longSetProductData.sku,
-        description: longSetProductData.description || '',
-        category: longSetProductData.category,
-        material: longSetProductData.material,
-        price: longSetProductData.price,
-        costPrice: longSetProductData.costPrice,
-        stock: longSetProductData.stock,
-        imageUrl: imageUrl,
-        userId: user.id
-      }
-    });
+    // For admin actions, create a product request instead of direct creation
+    if (userRole === 'admin') {
+      // Generate a unique request ID
+      const requestId = await generateRequestId();
 
-    // Create the long set product with reference to the main product
-    const longSetProduct = await prisma.longSetProduct.create({
+      const productRequest = await prisma.productRequest.create({
+        data: {
+          requestId,
+          requestType: 'add',
+          status: 'Pending',
+          adminAction: true,
+          isLongSet: true,
+          userId: user.id,
+          details: {
+            create: {
+              name: longSetProductData.name,
+              sku: longSetProductData.sku,
+              description: longSetProductData.description || '',
+              category: longSetProductData.category,
+              material: longSetProductData.material,
+              price: longSetProductData.price,
+              costPrice: longSetProductData.costPrice,
+              stock: longSetProductData.stock,
+              imageUrl: imageUrl,
+              longSetParts: JSON.stringify(longSetProductData.parts)
+            }
+          }
+        },
+        include: {
+          details: true
+        }
+      });
+
+      return NextResponse.json(productRequest, { status: 201 });
+    }
+
+    // For non-admin users, create a product request that needs approval
+    // Generate a unique request ID
+    const requestId = await generateRequestId();
+
+    const productRequest = await prisma.productRequest.create({
       data: {
-        name: longSetProductData.name,
-        sku: longSetProductData.sku,
-        description: longSetProductData.description || '',
-        category: longSetProductData.category,
-        material: longSetProductData.material,
-        price: longSetProductData.price,
-        costPrice: longSetProductData.costPrice,
-        stock: longSetProductData.stock,
-        imageUrl: imageUrl,
+        requestId,
+        requestType: 'add',
+        status: 'Pending',
+        adminAction: false,
+        isLongSet: true,
         userId: user.id,
-        productId: product.id,
-        parts: {
-          create: longSetProductData.parts.map((part: any) => ({
-            partName: part.partName,
-            partDescription: part.partDescription || '',
-            costPrice: part.costPrice || null,
-            karigarId: part.karigarId || null
-          }))
+        details: {
+          create: {
+            name: longSetProductData.name,
+            sku: longSetProductData.sku,
+            description: longSetProductData.description || '',
+            category: longSetProductData.category,
+            material: longSetProductData.material,
+            price: longSetProductData.price,
+            costPrice: longSetProductData.costPrice,
+            stock: longSetProductData.stock,
+            imageUrl: imageUrl,
+            longSetParts: JSON.stringify(longSetProductData.parts)
+          }
         }
       },
       include: {
-        parts: true
+        details: true
       }
     });
 
-    return NextResponse.json(longSetProduct, { status: 201 });
+    return NextResponse.json(productRequest, { status: 201 });
   } catch (error: any) {
     console.error('Error creating long set product:', error);
     return NextResponse.json(

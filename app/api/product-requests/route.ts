@@ -378,7 +378,14 @@ export async function GET(req: NextRequest) {
     const isAdmin = clerkUser.publicMetadata?.role === 'admin';
 
     // For admin users, return all product requests
-    // For regular users, only return their own requests
+    // For regular users, only return their own requests    // Fetch all karigars first for better performance
+    const karigars = await prisma.karigar.findMany({
+      where: { isApproved: true },
+      select: { id: true, name: true }
+    });
+    
+    const karigarMap = new Map(karigars.map(k => [k.id, k]));
+
     const productRequests = await prisma.productRequest.findMany({
       where: isAdmin ? {} : { userId },
       include: {
@@ -396,9 +403,30 @@ export async function GET(req: NextRequest) {
       orderBy: {
         requestDate: 'desc'
       }
+    });    // Process the long set parts to include karigar names
+    const processedRequests = productRequests.map(request => {
+      if (request.isLongSet && request.details?.longSetParts) {
+        const parts = JSON.parse(request.details.longSetParts) as Array<{
+          karigarId: string | null;
+          [key: string]: any;
+        }>;
+        const processedParts = parts.map(part => ({
+          ...part,
+          karigarId: part.karigarId,
+          karigarName: part.karigarId ? karigarMap.get(part.karigarId)?.name || null : null
+        }));
+        return {
+          ...request,
+          details: {
+            ...request.details,
+            longSetParts: JSON.stringify(processedParts)
+          }
+        };
+      }
+      return request;
     });
 
-    return NextResponse.json(productRequests);
+    return NextResponse.json(processedRequests);
   } catch (error) {
     console.error('Error fetching product requests:', error);
     return NextResponse.json(
