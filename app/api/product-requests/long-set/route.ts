@@ -131,7 +131,7 @@ export async function POST(req: NextRequest) {
 
     if (existingProduct) {
       return NextResponse.json(
-        { error: 'A product with this SKU already exists' },
+        { error: 'A product with this Product ID already exists' },
         { status: 400 }
       );
     }

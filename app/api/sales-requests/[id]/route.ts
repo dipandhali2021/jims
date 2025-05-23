@@ -34,6 +34,8 @@ export async function PUT(
     const { status, billType, billDetails } = await req.json();
     const id = params.id;
 
+    console.log('Received billDetails:', JSON.stringify(billDetails));
+
     if (!['Approved', 'Rejected'].includes(status)) {
       return NextResponse.json(
         { error: 'Invalid status' },
@@ -78,7 +80,9 @@ export async function PUT(
           });
         }
       }
-    }        // Create transaction record if request is approved and there's no existing transaction
+    }
+    
+    // Create transaction record if request is approved and there's no existing transaction
     if (status === 'Approved') {
       // Ensure user exists in database
       await ensureUserExists(salesRequest.userId);
@@ -86,8 +90,9 @@ export async function PUT(
       // Check if a transaction already exists for this sales request
       const existingTransaction = await prisma.transaction.findUnique({
         where: { orderId: salesRequest.requestId }
-      });      
-        // Only create a transaction if one doesn't exist
+      });
+      
+      // Only create a transaction if one doesn't exist
       if (!existingTransaction) {
         // Format items for transaction record with full product details
         const transactionItems = salesRequest.items.map(item => ({
@@ -140,7 +145,8 @@ export async function PUT(
             billType: billType || null, // Set billType from request (GST or Non-GST)
           }
         });
-          // Create a transaction in the khatabook for the vyapari if associated
+        
+        // Create a transaction in the khatabook for the vyapari if associated
         if (salesRequest.vyapariId) {
           try {
             // First check if the vyapari exists and is approved
@@ -165,7 +171,9 @@ export async function PUT(
               });
               
               const sequentialNumber = (transactionCountForYear + 1).toString().padStart(4, '0');
-              const transactionId = `VT-${currentYear}-${sequentialNumber}`;              // Create vyapari transaction - negative amount means the trader owes us money
+              const transactionId = `VT-${currentYear}-${sequentialNumber}`;
+              
+              // Create vyapari transaction - negative amount means the trader owes us money
               // We can reuse the GST values and taxable status already calculated above
               const vyapariTransactionAmount = billType === 'GST' && isTaxable
                 ? salesRequest.totalValue + (sgst || 0) + (cgst || 0) + (igst || 0) 
@@ -174,7 +182,8 @@ export async function PUT(
               await prisma.vyapariTransaction.create({
                 data: {
                   transactionId,
-                  description: `Sales Request ${salesRequest.requestId} approved`,                  amount: -vyapariTransactionAmount, // Negative amount - trader owes us money
+                  description: `Sales Request ${salesRequest.requestId} approved`,
+                  amount: -vyapariTransactionAmount, // Negative amount - trader owes us money
                   items: {
                     salesRequestId: salesRequest.requestId,
                     items: transactionItems,
@@ -202,12 +211,20 @@ export async function PUT(
             console.error(`Error creating khatabook transaction for vyapari ${salesRequest.vyapariId}:`, error);
           }
         }
-      }      // Generate bill if billType is provided
+      }
+      
+      // Generate bill if billType is provided
       if (billType && ['GST', 'Non-GST'].includes(billType)) {
         // Generate bill number
         const billNumber = `BILL-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-        // Get the HSN code from billDetails or use default
-        const hsnCode = billDetails?.hsnCode || '7113';
+        
+        // Get the default HSN code from billDetails or use default
+        const defaultHsnCode = billDetails?.hsnCode || '7113';
+        
+        // Extract item-specific HSN codes from the request
+        const itemHsnCodes = billDetails?.itemHsnCodes || {};
+        
+        console.log('Received item-specific HSN codes:', JSON.stringify(itemHsnCodes));
         
         // If we haven't yet set these variables in the transaction code above, define them now
         // This is to avoid duplicate variable declarations
@@ -227,14 +244,24 @@ export async function PUT(
         const sgstRate = sgstPercentage / 100;
         const igstRate = igstPercentage / 100;
         
-        // Format bill items
-        const billItems = salesRequest.items.map(item => ({
-          name: item?.product?.name || item.productName,
-          quantity: item.quantity,
-          rate: item.price,
-          amount: item.price * item.quantity,
-          hsn: billType === 'GST' ? hsnCode : undefined,
-        }));
+        // Format bill items with their specific HSN codes
+        const billItems = salesRequest.items.map(item => {
+          // Get item-specific HSN code from itemHsnCodes if available
+          const itemId = item.id || item.productId || '';
+          
+          // Use the item-specific HSN code if available, otherwise use the default
+          const itemHsnCode = itemHsnCodes[itemId] || defaultHsnCode;
+          
+          console.log(`Item ${itemId} using HSN code: ${itemHsnCode}`);
+            
+          return {
+            name: item?.product?.name || item.productName,
+            quantity: item.quantity,
+            rate: item.price,
+            amount: item.price * item.quantity,
+            hsn: billType === 'GST' ? itemHsnCode : undefined,
+          };
+        });
         
         const totalAmount = salesRequest.totalValue;
         
@@ -249,7 +276,8 @@ export async function PUT(
           sgst = totalAmount * sgstRate;
           igst = totalAmount * igstRate;
         }
-          // Process date and time of supply
+        
+        // Process date and time of supply
         let date = new Date();
         let timeOfSupply = null;
         if (billDetails?.supplyDateTime) {
@@ -262,7 +290,15 @@ export async function PUT(
         }
         
         // Store HSN codes as JSON if available
-        const hsnCodes = billType === 'GST' ? { default: hsnCode } : undefined;        
+        // Include both the default and the item-specific HSN codes
+        const hsnCodes = billType === 'GST' 
+          ? { 
+              default: defaultHsnCode,
+              ...itemHsnCodes 
+            } 
+          : undefined;
+          
+        console.log('Final HSN codes for bill:', JSON.stringify(hsnCodes));
         
         // Store custom fields in _meta to preserve GST percentage information (for backward compatibility)
         const enhancedItems = {
@@ -273,7 +309,9 @@ export async function PUT(
             cgstPercentage: cgstPercentage || 9,
             sgstPercentage: sgstPercentage || 9,
             igstPercentage: igstPercentage || 0,
-            hsnCode: hsnCode || '7113'
+            hsnCode: defaultHsnCode || '7113',
+            // Add the item-specific HSN codes to meta data
+            itemHsnCodes: itemHsnCodes || {}
           }
         };
         
@@ -292,7 +330,8 @@ export async function PUT(
             transportMode: billDetails?.transportMode,
             vehicleNo: billDetails?.vehicleNo,
             placeOfSupply: billDetails?.placeOfSupply || (billType === 'GST' ? 'Maharashtra' : undefined),
-            items: enhancedItems,            totalAmount: billType === 'GST' && isTaxable ? totalAmount + (sgst || 0) + (cgst || 0) + (igst || 0) : totalAmount,
+            items: enhancedItems,
+            totalAmount: billType === 'GST' && isTaxable ? totalAmount + (sgst || 0) + (cgst || 0) + (igst || 0) : totalAmount,
             sgst,
             cgst,
             igst,

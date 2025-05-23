@@ -368,7 +368,7 @@ export function CreateManualBillDialog({
                       onCheckedChange={setIsTaxable}
                     />
                     <Label htmlFor="isTaxable">
-                      Bill is Taxable (Include GST)
+                      Tax is payable on Reverse Charge
                     </Label>
                   </div>
 
@@ -681,7 +681,7 @@ export function CreateManualBillDialog({
                             <div>
                               <div className="font-medium">{product.name}</div>
                               <div className="text-sm text-muted-foreground">
-                                SKU: {product.sku}
+                                Product ID: {product.sku}
                               </div>
                               <div className="text-sm">
                                 ₹{product.price.toLocaleString()} | Stock:{' '}

@@ -1,0 +1,399 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from '@/hooks/use-toast';
+import { PenSquare, X, Plus, Trash2, Loader2 } from 'lucide-react';
+import { useKarigar } from '@/hooks/use-karigar';
+import { Card, CardContent } from '@/components/ui/card';
+import { Product } from '@/hooks/use-products';
+
+// Reuse categories and materials from AddProductDialog
+const categories = [
+  'Rings',
+  'Necklaces',
+  'Earrings',
+  'Bracelets',
+  'Watches',
+  'Pendants',
+  'Other',
+];
+
+const materials = [
+  'Copper',
+  'Gold',
+  'Silver',
+  'Platinum',
+  'Diamond',
+  'Pearl',
+  'White Gold',
+  'Stainless Steel',
+  'Other',
+];
+
+interface EditLongSetProductDialogProps {
+  product: Product;
+  onProductUpdated: () => Promise<void>;
+}
+
+interface LongSetProductPart {
+  id?: string;
+  partName: string;
+  partDescription: string;
+  costPrice: string;
+  karigarId: string;
+}
+
+export function EditLongSetProductDialog({ product, onProductUpdated }: EditLongSetProductDialogProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string>(product.imageUrl);
+  const [error, setError] = useState<string | null>(null);
+  const [karigars, setKarigars] = useState<any[]>([]);
+  const [loadingKarigars, setLoadingKarigars] = useState(false);
+  const { toast } = useToast();
+  const { fetchKarigars } = useKarigar();
+
+  // Base product form data
+  const [formData, setFormData] = useState({
+    name: product.name,
+    sku: product.sku,
+    description: product.description || '',
+    category: product.category,
+    material: product.material,
+    customCategory: '',
+    customMaterial: '',
+    costPrice: product.costPrice?.toString() || '',
+    sellingPrice: product.price.toString(),
+    stock: product.stock.toString(),
+  });
+
+  // Product parts data
+  const [parts, setParts] = useState<LongSetProductPart[]>([]);
+  const [removedPartIds, setRemovedPartIds] = useState<string[]>([]);
+
+  // Fetch Karigars when dialog opens
+  useEffect(() => {
+    const loadKarigars = async () => {
+      if (isOpen) {
+        try {
+          setLoadingKarigars(true);
+          const fetchedKarigars = await fetchKarigars();
+          setKarigars(fetchedKarigars.filter((k:any) => k.isApproved));
+        } catch (error) {
+          console.error('Error fetching karigars:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load artisans',
+            variant: 'destructive',
+          });
+        } finally {
+          setLoadingKarigars(false);
+        }
+      }
+    };
+    
+    loadKarigars();
+  }, [isOpen, fetchKarigars, toast]);  // Load product parts when dialog opens
+  useEffect(() => {
+    const loadProductParts = async () => {
+      if (isOpen) {
+        try {
+          // First check if we have parts data already
+          if (product.longSetProduct?.parts && product.longSetProduct.parts.length > 0) {
+            setParts(product.longSetProduct.parts.map((part: { id?: string; partName: string; partDescription?: string; costPrice?: number; karigar?: { id: string; name: string } | null }) => ({
+              id: part.id,
+              partName: part.partName,
+              partDescription: part.partDescription || '',
+              costPrice: part.costPrice?.toString() || '',
+              karigarId: part.karigar?.id || 'none'
+            })));
+            return;
+          }
+          
+          // Otherwise fetch parts from API
+          console.log('Fetching long set product data for:', product.id);
+          const response = await fetch(`/api/products/long-set/${product.id}`);
+          if (!response.ok) {
+            throw new Error('Failed to load product parts');
+          }
+          const data = await response.json();
+          if (data.LongSetProduct && data.LongSetProduct.parts) {
+            setParts(data.LongSetProduct.parts.map((part: any) => ({
+              id: part.id,
+              partName: part.partName,
+              partDescription: part.partDescription || '',
+              costPrice: part.costPrice?.toString() || '',
+              karigarId: part.karigar?.id || 'none'
+            })));
+          }
+        } catch (error) {
+          console.error('Error loading product parts:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load product parts',
+            variant: 'destructive',
+          });
+        }
+      }
+    };
+    
+    loadProductParts();
+  }, [isOpen, product, toast]);
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handlePartChange = (index: number, field: string, value: string) => {
+    const updatedParts = [...parts];
+    updatedParts[index] = {
+      ...updatedParts[index],
+      [field]: value
+    };
+    setParts(updatedParts);
+  };
+
+  const addPart = () => {
+    setParts([
+      ...parts,
+      {
+        partName: `Part ${parts.length + 1}`,
+        partDescription: '',
+        costPrice: '',
+        karigarId: 'none'
+      }
+    ]);
+  };
+
+  const removePart = (index: number) => {
+    const part = parts[index];
+    
+    // If part has an ID, add it to removedPartIds
+    if (part.id) {
+      setRemovedPartIds([...removedPartIds, part.id]);
+    }
+    
+    if (parts.length > 1) {
+      const updatedParts = parts.filter((_, i) => i !== index);
+      setParts(updatedParts);
+    } else {
+      toast({
+        title: 'Info',
+        description: 'A long set product must have at least one part',
+      });
+    }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Check file size (limit to 10MB)
+      if (file.size > 10 * 1024 * 1024) {
+        toast({
+          title: 'Error',
+          description: 'Image size should be less than 10MB',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      // Check file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Error',
+          description: 'Please upload a valid image file',
+          variant: 'destructive',
+        });
+        return;
+      }
+      
+      setImageFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const validateForm = () => {
+    // Base product validation
+    if (!formData.name.trim()) {
+      setError("Product name is required");
+      toast({
+        title: 'Error',
+        description: 'Product name is required',
+        variant: 'destructive',
+      });
+      return false;
+    }
+    
+    if (!formData.sku.trim()) {
+      setError("Product ID is required");
+      toast({
+        title: 'Error',
+        description: 'Product ID is required',
+        variant: 'destructive',
+      });
+      return false;
+    }
+    
+    if (!formData.category) {
+      setError("Category is required");
+      toast({
+        title: 'Error',
+        description: 'Please select a category',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    if (formData.category === 'Other' && !formData.customCategory.trim()) {
+      setError("Custom category is required when 'Other' is selected");
+      toast({
+        title: 'Error',
+        description: "Please enter a custom category name",
+        variant: 'destructive',
+      });
+      return false;
+    }
+    
+    if (!formData.material) {
+      setError("Material is required");
+      toast({
+        title: 'Error',
+        description: 'Please select a material',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    if (formData.material === 'Other' && !formData.customMaterial.trim()) {
+      setError("Custom material is required when 'Other' is selected");
+      toast({
+        title: 'Error',
+        description: "Please enter a custom material name",
+        variant: 'destructive',
+      });
+      return false;
+    }
+    
+    if (!formData.sellingPrice || isNaN(parseFloat(formData.sellingPrice))) {
+      setError("Valid selling price is required");
+      toast({
+        title: 'Error',
+        description: 'Please enter a valid selling price',
+        variant: 'destructive',
+      });
+      return false;
+    }
+    
+    if (!formData.stock || isNaN(parseInt(formData.stock))) {
+      setError("Valid stock quantity is required");
+      toast({
+        title: 'Error',
+        description: 'Please enter a valid stock quantity',
+        variant: 'destructive',
+      });
+      return false;
+    }
+
+    // Validate parts
+    let totalCostPrice = 0;
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (!part.partName.trim()) {
+        setError(`Part ${i + 1} name is required`);
+        toast({
+          title: 'Error',
+          description: `Part ${i + 1} name is required`,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      // Cost price is optional for parts, but must be valid if provided
+      if (part.costPrice && isNaN(parseFloat(part.costPrice))) {
+        setError(`Valid cost price is required for part ${i + 1}`);
+        toast({
+          title: 'Error',
+          description: `Please enter a valid cost price for part ${i + 1}`,
+          variant: 'destructive',
+        });
+        return false;
+      }
+
+      if (part.costPrice) {
+        totalCostPrice += parseFloat(part.costPrice);
+      }
+    }
+
+    // Set total cost price based on sum of parts
+    if (totalCostPrice > 0) {
+      setFormData(prev => ({
+        ...prev,
+        costPrice: totalCostPrice.toString()
+      }));
+    }
+
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Prepare data with custom category/material if "Other" is selected
+      const finalCategory = formData.category === 'Other' ? formData.customCategory : formData.category;
+      const finalMaterial = formData.material === 'Other' ? formData.customMaterial : formData.material;
+
+      // Build data for submit
+      const longSetProductData = {
+        id: product.id,
+        name: formData.name,
+        sku: formData.sku,
+        description: formData.description || '',
+        category: finalCategory,
+        material: finalMaterial,
+        price: parseFloat(formData.sellingPrice),
+        costPrice: formData.costPrice ? parseFloat(formData.costPrice) : null,
+        stock: parseInt(formData.stock),
+        supplier: product.supplier || '',
+        parts: parts.map(part => ({
+          id: part.id,
+          partName: part.partName,
+          partDescription: part.partDescription || '',
+          costPrice: part.costPrice ? parseFloat(part.costPrice) : null,
+          karigarId: part.karigarId && part.karigarId !== 'none' ? part.karigarId : null
+        })),
+        removedPartIds: removedPartIds
+      };
+
+      let requestOptions: RequestInit;
+      
+      // If there's an image file, use FormData
+      if (imageFile) {
+        const data = new FormData();
+        Object.entries(longSetProductData).forEach(([key, value]) => {
+          if

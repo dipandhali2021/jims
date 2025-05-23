@@ -133,7 +133,26 @@ export async function PUT(
       );
     }
 
-    // Get the product request with its details and user
+// Custom type for product request details
+interface ProductRequestDetails {
+  id: string;
+  requestId: string;
+  name: string | null;
+  sku: string | null;
+  description: string | null;
+  category: string | null;
+  material: string | null;
+  price: number | null;
+  costPrice: number | null;
+  stock: number | null;
+  imageUrl: string | null;
+  supplier: string | null;
+  stockAdjustment?: number;
+  longSetParts: string | null;
+  removedPartIds?: string | null;
+}
+
+// Get the product request with its details and user
     const productRequest = await prisma.productRequest.findUnique({
       where: { id },
       include: {
@@ -141,7 +160,20 @@ export async function PUT(
         user: true,
         details: true
       }
-    });
+    }) as {
+      id: string;
+      requestId: string;
+      requestType: string;
+      status: string;
+      adminAction: boolean;
+      isLongSet: boolean;
+      userId: string;
+      productId: string | null;
+      requestDate: Date;
+      product: any;
+      user: any;
+      details: ProductRequestDetails | null;
+    } | null;
 
     if (!productRequest) {
       return NextResponse.json(
@@ -335,23 +367,102 @@ export async function PUT(
             ) {
               await deleteImageFromCloudinary(productRequest.product.imageUrl);
             }
-              // Update existing product
-            await prisma.product.update({
-              where: { id: productRequest.productId },
-              data: {
-                ...(productRequest.details.name && { name: productRequest.details.name }),
-                ...(productRequest.details.sku && { sku: productRequest.details.sku }),
-                ...(productRequest.details.description !== null && { description: productRequest.details.description }),
-                ...(productRequest.details.price && { price: productRequest.details.price }),
-                ...(productRequest.details.costPrice !== undefined && { costPrice: productRequest.details.costPrice }),
-                ...(productRequest.details.stock !== null && { stock: productRequest.details.stock }),
-                ...(productRequest.details.category && { category: productRequest.details.category }),
-                ...(productRequest.details.material && { material: productRequest.details.material }),
-                ...(productRequest.details.imageUrl !== null && { imageUrl: productRequest.details.imageUrl }),
-                // Add supplier field to the update
-                ...(productRequest.details.supplier !== undefined && { supplier: productRequest.details.supplier })
+
+            if (productRequest.isLongSet) {
+              // First update the base product
+              await prisma.product.update({
+                where: { id: productRequest.productId },
+                data: {
+                  ...(productRequest.details.name && { name: productRequest.details.name }),
+                  ...(productRequest.details.sku && { sku: productRequest.details.sku }),
+                  ...(productRequest.details.description !== null && { description: productRequest.details.description }),
+                  ...(productRequest.details.price && { price: productRequest.details.price }),
+                  ...(productRequest.details.costPrice !== undefined && { costPrice: productRequest.details.costPrice }),
+                  ...(productRequest.details.stock !== null && { stock: productRequest.details.stock }),
+                  ...(productRequest.details.category && { category: productRequest.details.category }),
+                  ...(productRequest.details.material && { material: productRequest.details.material }),
+                  ...(productRequest.details.imageUrl !== null && { imageUrl: productRequest.details.imageUrl }),
+                }
+              });
+
+              // Then update the long set product and its parts
+              if (productRequest.details.longSetParts) {
+                const parts = JSON.parse(productRequest.details.longSetParts);
+                const removedPartIds = productRequest.details.removedPartIds ? 
+                  JSON.parse(productRequest.details.removedPartIds) : [];
+
+                // Update long set product
+                const longSetProduct = await prisma.longSetProduct.update({
+                  where: { productId: productRequest.productId },
+                  data: {
+                    name: productRequest.details.name || '',
+                    sku: productRequest.details.sku || '',
+                    description: productRequest.details.description || '',
+                    category: productRequest.details.category || '',
+                    material: productRequest.details.material || '',
+                    price: productRequest.details.price || 0,
+                    costPrice: productRequest.details.costPrice || null,
+                    stock: productRequest.details.stock || 0,
+                    imageUrl: productRequest.details.imageUrl || '',
+                  }
+                });
+
+                // Delete removed parts
+                if (removedPartIds.length > 0) {
+                  await prisma.longSetProductPart.deleteMany({
+                    where: {
+                      id: {
+                        in: removedPartIds
+                      }
+                    }
+                  });
+                }
+
+                // Update or create parts
+                for (const part of parts) {
+                  if (part.id) {
+                    // Update existing part
+                    await prisma.longSetProductPart.update({
+                      where: { id: part.id },
+                      data: {
+                        partName: part.partName,
+                        partDescription: part.partDescription || '',
+                        costPrice: part.costPrice || null,
+                        karigarId: part.karigarId && part.karigarId !== 'none' ? part.karigarId : null
+                      }
+                    });
+                  } else {
+                    // Create new part
+                    await prisma.longSetProductPart.create({
+                      data: {
+                        partName: part.partName,
+                        partDescription: part.partDescription || '',
+                        costPrice: part.costPrice || null,
+                        karigarId: part.karigarId && part.karigarId !== 'none' ? part.karigarId : null,
+                        longSetProductId: longSetProduct.id
+                      }
+                    });
+                  }
+                }
               }
-            });
+            } else {
+              // Update regular product
+              await prisma.product.update({
+                where: { id: productRequest.productId },
+                data: {
+                  ...(productRequest.details.name && { name: productRequest.details.name }),
+                  ...(productRequest.details.sku && { sku: productRequest.details.sku }),
+                  ...(productRequest.details.description !== null && { description: productRequest.details.description }),
+                  ...(productRequest.details.price && { price: productRequest.details.price }),
+                  ...(productRequest.details.costPrice !== undefined && { costPrice: productRequest.details.costPrice }),
+                  ...(productRequest.details.stock !== null && { stock: productRequest.details.stock }),
+                  ...(productRequest.details.category && { category: productRequest.details.category }),
+                  ...(productRequest.details.material && { material: productRequest.details.material }),
+                  ...(productRequest.details.imageUrl !== null && { imageUrl: productRequest.details.imageUrl }),
+                  ...(productRequest.details.supplier !== undefined && { supplier: productRequest.details.supplier })
+                }
+              });
+            }
 
             // If a supplier (karigar) is specified and it's different or stock is added, add a transaction to their account
             if (

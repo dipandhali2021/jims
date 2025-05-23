@@ -39,9 +39,10 @@ export function AddKarigarPaymentDialog({
   onClose,
   onPaymentAdded,
   karigar,
-}: AddKarigarPaymentDialogProps) {
-  const [amount, setAmount] = useState('');
-  const [paymentMode, setPaymentMode] = useState('Cash');  const [referenceNumber, setReferenceNumber] = useState('');
+}: AddKarigarPaymentDialogProps) {  const [amount, setAmount] = useState('');
+  const [paymentMode, setPaymentMode] = useState('Cash');
+  const [paymentDirection, setPaymentDirection] = useState<'to_karigar' | 'from_karigar'>('to_karigar');
+  const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -99,20 +100,21 @@ export function AddKarigarPaymentDialog({
 
     try {
       setIsSubmitting(true);
-      
-      const paymentData: CreatePaymentDto = {
+        const paymentData: CreatePaymentDto = {
         amount: Number(amount),
         paymentMode: paymentMode,
+        paymentDirection: paymentDirection,
         referenceNumber: referenceNumber.trim() || undefined,
         notes: notes.trim() || undefined
       };
       
       await createKarigarPayment(karigar.id, paymentData);
-      
-      // Reset form
+        // Reset form
       setAmount('');
       setPaymentMode('Cash');
-      setReferenceNumber('');      setNotes('');
+      setPaymentDirection('to_karigar');
+      setReferenceNumber('');
+      setNotes('');
       
       onPaymentAdded();
       onClose();

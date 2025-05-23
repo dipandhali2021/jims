@@ -38,13 +38,13 @@ export function AddVyapariPaymentDialog({
   onClose,
   onPaymentAdded,
   vyapari,
-}: AddVyapariPaymentDialogProps) {
-  const [amount, setAmount] = useState('');
-  const [paymentMode, setPaymentMode] = useState('Cash');  const [referenceNumber, setReferenceNumber] = useState('');
+}: AddVyapariPaymentDialogProps) {  const [amount, setAmount] = useState('');
+  const [paymentMode, setPaymentMode] = useState('Cash');  
+  const [paymentDirection, setPaymentDirection] = useState<'to_vyapari' | 'from_vyapari'>('to_vyapari');
+  const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  
   const { toast } = useToast();
   const { createVyapariPayment } = useVyapari();
   
@@ -98,20 +98,21 @@ export function AddVyapariPaymentDialog({
 
     try {
       setIsSubmitting(true);
-      
-      const paymentData: CreatePaymentDto = {
+        const paymentData: CreatePaymentDto = {
         amount: Number(amount),
         paymentMode: paymentMode,
+        paymentDirection: paymentDirection,
         referenceNumber: referenceNumber.trim() || undefined,
         notes: notes.trim() || undefined
       };
       
       await createVyapariPayment(vyapari.id, paymentData);
-      
-      // Reset form
+        // Reset form
       setAmount('');
       setPaymentMode('Cash');
-      setReferenceNumber('');      setNotes('');
+      setPaymentDirection('to_vyapari');
+      setReferenceNumber('');
+      setNotes('');
       
       onPaymentAdded();
       onClose();
@@ -191,6 +192,23 @@ export function AddVyapariPaymentDialog({
                       {mode}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+            </div>
+              <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="paymentDirection" className="text-right">
+                Direction *
+              </Label>
+              <Select
+                value={paymentDirection}
+                onValueChange={setPaymentDirection}
+              >
+                <SelectTrigger id="paymentDirection" className="col-span-3">
+                  <SelectValue placeholder="Select payment direction" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="to_vyapari">Paid to Trader</SelectItem>
+                  <SelectItem value="from_vyapari">Received from Trader</SelectItem>
                 </SelectContent>
               </Select>
             </div>

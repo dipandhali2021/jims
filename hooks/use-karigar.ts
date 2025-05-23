@@ -36,6 +36,7 @@ export interface KarigarPayment {
   paymentId: string;
   amount: number;
   paymentMode: string;
+  paymentDirection: 'to_karigar' | 'from_karigar'; // Payment to karigar (we paid) or from karigar (they paid)
   referenceNumber?: string;
   notes?: string;
   isApproved: boolean;
@@ -68,6 +69,7 @@ export interface CreateTransactionDto {
 export interface CreatePaymentDto {
   amount: number;
   paymentMode: string;
+  paymentDirection: 'to_karigar' | 'from_karigar'; // Payment to karigar (we paid) or from karigar (they paid)
   referenceNumber?: string;
   notes?: string;
 }

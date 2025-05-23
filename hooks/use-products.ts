@@ -20,6 +20,7 @@ export interface Product {
   isLongSet?: boolean;
   longSetProduct?: {
     id: string;
+    productId: string;
     parts: {
       partName: string;
       partDescription?: string;

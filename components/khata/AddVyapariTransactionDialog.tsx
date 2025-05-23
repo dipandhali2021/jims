@@ -134,7 +134,7 @@ export function AddVyapariTransactionDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Add Transaction for {vyapari?.name || 'Trader'}</DialogTitle>
           <DialogDescription>
@@ -153,23 +153,22 @@ export function AddVyapariTransactionDialog({
         )}
         
         <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="description" className="text-right">
+          <div className="grid gap-6 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="description" className="text-sm font-medium">
                 Description *
               </Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="col-span-3"
                 placeholder="Enter transaction description"
                 required
               />
             </div>
             
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="amount" className="text-right">
+            <div className="grid gap-2">
+              <Label htmlFor="amount" className="text-sm font-medium">
                 Amount *
               </Label>
               <Input
@@ -179,55 +178,53 @@ export function AddVyapariTransactionDialog({
                 min="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                className="col-span-3"
                 placeholder="Enter amount"
                 required
               />
             </div>
             
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right">
+            <div className="grid gap-2">
+              <Label className="text-sm font-medium">
                 Type *
               </Label>
-              <div className="col-span-3 flex gap-4">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <Button
                   type="button"
                   variant={isCredit ? "default" : "outline"}
                   onClick={() => setIsCredit(true)}
-                  className="flex-1"
+                  className="flex-1 sm:flex-[1_0_auto]"
                 >
-                  We Owe Trader
+                  Vyapari Sold Us
                 </Button>
                 <Button
                   type="button"
                   variant={!isCredit ? "default" : "outline"}
                   onClick={() => setIsCredit(false)}
-                  className="flex-1"
+                  className="flex-1 sm:flex-[1_0_auto]"
                 >
-                  Trader Owes Us
+                  We Sold Vyapari
                 </Button>
               </div>
             </div>
             
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="items" className="text-right">
+            <div className="grid gap-2">
+              <Label htmlFor="items" className="text-sm font-medium">
                 Items
               </Label>
               <Textarea
                 id="items"
                 value={items}
                 onChange={(e) => setItems(e.target.value)}
-                className="col-span-3"
                 placeholder="Enter items data (optional)"
               />
             </div>
           </div>
           
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter className="flex-col sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
               {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Add Transaction
             </Button>

@@ -147,12 +147,24 @@ export function VyapariDetailsDialog({
                   <span className="font-medium">{vyapari.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <Badge variant={vyapari.isApproved ? "default" : "outline"}>
-                    {vyapari.isApproved ? "Approved" : "Pending Approval"}
-                  </Badge>
-                  <Badge variant={vyapari.status === 'Active' ? "default" : "secondary"}>
-                    {vyapari.status}
-                  </Badge>
+                  {vyapari.isApproved ? (
+                    <Badge className="bg-green-100 text-green-800 hover:bg-green-200 border border-green-200">
+                      Approved
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border border-yellow-200">
+                      Pending Approval
+                    </Badge>
+                  )}
+                  {vyapari.status === 'Active' ? (
+                    <Badge className="bg-blue-100 text-blue-800 hover:bg-blue-200 border border-blue-200">
+                      Active
+                    </Badge>
+                  ) : (
+                    <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-200 border border-gray-200">
+                      {vyapari.status}
+                    </Badge>
+                  )}
                 </div>
                 {vyapari.phone && (
                   <div className="flex items-center gap-2">
@@ -207,8 +219,8 @@ export function VyapariDetailsDialog({
                 </TabsTrigger>
               </TabsList>
               
-              <ScrollArea className="flex-1">
-                <TabsContent value="transactions" className="m-0">
+              <TabsContent value="transactions" className="m-0 h-[400px]">
+                <ScrollArea className="h-full">
                   {transactions.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <FileText className="mx-auto h-8 w-8 mb-2" />
@@ -253,21 +265,23 @@ export function VyapariDetailsDialog({
                       </TableBody>
                     </Table>
                   )}
-                </TabsContent>
+                </ScrollArea>
+              </TabsContent>
                 
-                <TabsContent value="payments" className="m-0">
+              <TabsContent value="payments" className="m-0 h-[400px]">
+                <ScrollArea className="h-full">
                   {payments.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <CreditCard className="mx-auto h-8 w-8 mb-2" />
                       <p>No payments found</p>
                     </div>
                   ) : (
-                    <Table>
-                      <TableHeader>
+                    <Table>                      <TableHeader>
                         <TableRow>
                           <TableHead>Payment ID</TableHead>
                           <TableHead>Date</TableHead>
                           <TableHead>Payment Mode</TableHead>
+                          <TableHead>Direction</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Reference</TableHead>
                           <TableHead className="text-right">Amount</TableHead>
@@ -275,10 +289,16 @@ export function VyapariDetailsDialog({
                       </TableHeader>
                       <TableBody>
                         {payments.map((payment) => (
-                          <TableRow key={payment.id}>
-                            <TableCell className="font-medium">{payment.paymentId}</TableCell>
+                          <TableRow key={payment.id}>                            <TableCell className="font-medium">{payment.paymentId}</TableCell>
                             <TableCell>{formatDate(payment.createdAt)}</TableCell>
                             <TableCell>{payment.paymentMode}</TableCell>
+                            <TableCell>
+                              {payment.paymentDirection === 'to_vyapari' ? (
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100">Paid to Trader</Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Received from Trader</Badge>
+                              )}
+                            </TableCell>
                             <TableCell>
                               {payment.isApproved ? (
                                 <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Approved</Badge>
@@ -291,15 +311,18 @@ export function VyapariDetailsDialog({
                             </TableCell>
                             <TableCell>{payment.referenceNumber || '-'}</TableCell>
                             <TableCell className="text-right">
-                              {formatCurrency(payment.amount)}
+                              <span className={payment.paymentDirection === 'to_vyapari' ? "text-red-500" : "text-green-500"}>
+                                {payment.paymentDirection === 'to_vyapari' ? "- " : "+ "}
+                                {formatCurrency(payment.amount)}
+                              </span>
                             </TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
                   )}
-                </TabsContent>
-              </ScrollArea>
+                </ScrollArea>
+              </TabsContent>
             </Tabs>
             
             <div className="flex justify-end mt-4">

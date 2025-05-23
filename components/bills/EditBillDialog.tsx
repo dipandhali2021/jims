@@ -209,7 +209,7 @@ export function EditBillDialog({
                     checked={isTaxable}
                     onCheckedChange={setIsTaxable}
                   />
-                  <Label htmlFor="isTaxable">Bill is Taxable (Include GST)</Label>
+                  <Label htmlFor="isTaxable">Tax is payable on Reverse Charge</Label>
                 </div>
                 
                 <div className="grid grid-cols-3 gap-3">

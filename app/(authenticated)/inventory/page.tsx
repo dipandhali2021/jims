@@ -309,10 +309,17 @@ export default function InventoryPage() {
                       </>
                     ) : (
                       <>
-                        <EditProductRequestDialog
-                          product={product}
-                          onRequestCreated={refreshProducts}
-                        />
+                        {(product.isLongSet || product.longSetProduct) ? (
+                          <EditLongSetProductDialog
+                            product={product}
+                            onProductUpdated={refreshProducts}
+                          />
+                        ) : (
+                          <EditProductRequestDialog
+                            product={product}
+                            onRequestCreated={refreshProducts}
+                          />
+                        )}
                         <DeleteProductRequestDialog
                           product={product}
                           onRequestCreated={refreshProducts}
@@ -400,10 +407,17 @@ export default function InventoryPage() {
                             </>
                           ) : (
                             <>
-                              <EditProductRequestDialog
-                                product={product}
-                                onRequestCreated={refreshProducts}
-                              />
+                              {(product.isLongSet || product.longSetProduct) ? (
+                                <EditLongSetProductDialog
+                                  product={product}
+                                  onProductUpdated={refreshProducts}
+                                />
+                              ) : (
+                                <EditProductRequestDialog
+                                  product={product}
+                                  onRequestCreated={refreshProducts}
+                                />
+                              )}
                               <DeleteProductRequestDialog
                                 product={product}
                                 onRequestCreated={refreshProducts}

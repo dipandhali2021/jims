@@ -87,7 +87,7 @@ export function LongSetProductRequestCard({
           <div>
             <h4 className="font-medium mb-2">Product Details</h4>
             <div className="space-y-1 text-sm">
-              <p><span className="font-medium">SKU:</span> {request.details?.sku}</p>
+              <p><span className="font-medium">Product ID:</span> {request.details?.sku}</p>
               <p><span className="font-medium">Category:</span> {request.details?.category}</p>
               <p><span className="font-medium">Material:</span> {request.details?.material}</p>
               <p><span className="font-medium">Price:</span> ₹{request.details?.price}</p>

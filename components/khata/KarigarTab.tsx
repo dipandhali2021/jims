@@ -293,7 +293,7 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
               </div>
               <Button onClick={() => setShowCreateDialog(true)}>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Add Artisan
+                Add Karigar
               </Button>
             </div>
           </CardHeader>

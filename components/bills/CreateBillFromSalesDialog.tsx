@@ -23,7 +23,8 @@ export function CreateBillFromSalesDialog({
   onClose,
   salesRequest,
   onSuccess
-}: CreateBillFromSalesDialogProps) {  const [billType, setBillType] = useState<"gst" | "non-gst">("gst");
+}: CreateBillFromSalesDialogProps) {  
+  const [billType, setBillType] = useState<"gst" | "non-gst">("gst");
   const [customerGSTIN, setCustomerGSTIN] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
   const [customerState, setCustomerState] = useState("");
@@ -35,12 +36,29 @@ export function CreateBillFromSalesDialog({
   const [cgstPercentage, setCgstPercentage] = useState("9"); // Default 9%
   const [sgstPercentage, setSgstPercentage] = useState("9"); // Default 9%
   const [igstPercentage, setIgstPercentage] = useState("0"); // Default 0% for intra-state
-  const [hsnCode, setHsnCode] = useState("7113"); // Default HSN code for jewelry
+  const [defaultHsnCode, setDefaultHsnCode] = useState("7113"); // Default HSN code for jewelry
   const [dateOfSupply, setDateOfSupply] = useState(format(new Date(), "yyyy-MM-dd"));
   const [timeOfSupply, setTimeOfSupply] = useState(format(new Date(), "HH:mm"));
-
-  const { createBill, isLoading } = useBills();
-  const { toast } = useToast();  const handleCreateBill = async () => {
+  
+  // Store HSN codes for each product item
+  const [productHsnCodes, setProductHsnCodes] = useState<{[productId: string]: string}>(
+    salesRequest?.items?.reduce((acc: {[key: string]: string}, item: any) => {
+      const itemId = item.id || item.productId || String(Math.random());
+      acc[itemId] = item.product?.hsnCode || defaultHsnCode;
+      return acc;
+    }, {}) || {}
+  );
+  const { createBill } = useBills();
+  const { toast } = useToast();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const handleHsnCodeChange = (itemId: string, value: string) => {
+    setProductHsnCodes(prev => ({
+      ...prev,
+      [itemId]: value
+    }));
+  };
+    const handleCreateBill = async () => {
     if (!salesRequest) return;
     
     // Parse GST percentages
@@ -48,14 +66,17 @@ export function CreateBillFromSalesDialog({
     const sgstRate = parseFloat(sgstPercentage) / 100;
     const igstRate = parseFloat(igstPercentage) / 100;
     
-    // Convert sales items to bill items
-    const billItems: BillItem[] = salesRequest.items.map((item: any) => ({
-      name: item.product?.name || item.productName || "Unknown Product",
-      quantity: item.quantity,
-      rate: item.price,
-      amount: item.price * item.quantity,
-      hsn: billType === "gst" ? hsnCode : undefined,
-    }));
+    // Convert sales items to bill items with their specific HSN codes
+    const billItems: BillItem[] = salesRequest.items.map((item: any) => {
+      const itemId = item.id || item.productId || String(Math.random());
+      return {
+        name: item.product?.name || item.productName || "Unknown Product",
+        quantity: item.quantity,
+        rate: item.price,
+        amount: item.price * item.quantity,
+        hsn: billType === "gst" ? (productHsnCodes[itemId] || defaultHsnCode) : undefined,
+      };
+    });
     
     const totalAmount = salesRequest.totalValue;
     let sgst, cgst, igst;
@@ -76,7 +97,22 @@ export function CreateBillFromSalesDialog({
       ? `${dateOfSupply}T${timeOfSupply}:00` 
       : new Date().toISOString();
     
-    try {
+  try {
+      setIsSubmitting(true);
+      toast({
+        title: "Processing",
+        description: "Creating bill and approving request...",
+      });
+      
+      // Prepare a mapping of HSN codes as expected by the backend
+      const itemHsnMapping = salesRequest.items.reduce((acc: { [key: string]: string }, item: any) => {
+        const itemId = item.id || item.productId || String(Math.random());
+        if (billType === "gst" && productHsnCodes[itemId]) {
+          acc[itemId] = productHsnCodes[itemId];
+        }
+        return acc;
+      }, {});
+      
       // For GST bill, we need to include all the GST-related fields
       // This will be combined with the sales request approval
       const response = await fetch(`/api/sales-requests/${salesRequest.id}`, {
@@ -94,7 +130,8 @@ export function CreateBillFromSalesDialog({
             transportMode: billType === "gst" ? transportMode : undefined,
             vehicleNo: billType === "gst" ? vehicleNo : undefined,
             placeOfSupply: billType === "gst" ? placeOfSupply : undefined,
-            hsnCode: billType === "gst" ? hsnCode : undefined,
+            hsnCode: billType === "gst" ? defaultHsnCode : undefined, // Use defaultHsnCode for the backend's default
+            itemHsnCodes: billType === "gst" ? itemHsnMapping : undefined, // Send the per-item HSN mapping
             isTaxable: billType === "gst" ? isTaxable : false,
             cgstPercentage: billType === "gst" && isTaxable ? parseFloat(cgstPercentage) : 0,
             sgstPercentage: billType === "gst" && isTaxable ? parseFloat(sgstPercentage) : 0,
@@ -107,6 +144,13 @@ export function CreateBillFromSalesDialog({
         throw new Error("Failed to approve request and create bill");
       }
       
+      // Success notification
+      toast({
+        title: "Success",
+        description: `${billType === "gst" ? "GST" : "Non-GST"} bill created successfully`,
+        variant: "default",
+      });
+      
       // First call onSuccess to signal successful completion to the parent component
       onSuccess();
       
@@ -116,14 +160,15 @@ export function CreateBillFromSalesDialog({
       setTimeout(() => {
         onClose();
       }, 0);
-      
-    } catch (error) {
+        } catch (error) {
       console.error("Error creating bill:", error);
       toast({
         title: "Error",
         description: "Failed to create bill",
         variant: "destructive",
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
   return (
@@ -133,152 +178,200 @@ export function CreateBillFromSalesDialog({
         if (!isOpen) onClose();
       }}
     >
-      <DialogContent className="max-w-md md:max-w-lg">
+      <DialogContent className="max-w-md md:max-w-3xl max-h-[90vh]">
         <DialogHeader>
           <DialogTitle>Create Bill for Sales Request #{salesRequest?.requestId}</DialogTitle>
         </DialogHeader>
         
-        <BillTabs onValueChange={(v) => setBillType(v as "gst" | "non-gst")}>          <TabsContent value="gst" className="space-y-4 pt-4">
-            <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="customerGSTIN">Customer GSTIN</Label>
+        <BillTabs onValueChange={(v) => setBillType(v as "gst" | "non-gst")}>
+          <TabsContent value="gst" className="space-y-4 pt-4">
+            <div className="max-h-[60vh] overflow-y-auto pr-2 scrollbar-thin">
+              {/* Customer Details Section */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium mb-2 border-b pb-1">Customer Details</h3>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="customerGSTIN">Customer GSTIN</Label>
+                    <Input
+                      id="customerGSTIN"
+                      placeholder="Enter customer GSTIN"
+                      value={customerGSTIN}
+                      onChange={(e) => setCustomerGSTIN(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="placeOfSupply">Place of Supply</Label>
+                    <Input
+                      id="placeOfSupply"
+                      placeholder="State"
+                      value={placeOfSupply}
+                      onChange={(e) => setPlaceOfSupply(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 mt-3">
+                  <Label htmlFor="customerAddress">Customer Address</Label>
                   <Input
-                    id="customerGSTIN"
-                    placeholder="Enter customer GSTIN"
-                    value={customerGSTIN}
-                    onChange={(e) => setCustomerGSTIN(e.target.value)}
+                    id="customerAddress"
+                    placeholder="Enter customer address"
+                    value={customerAddress}
+                    onChange={(e) => setCustomerAddress(e.target.value)}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="placeOfSupply">Place of Supply</Label>
-                  <Input
-                    id="placeOfSupply"
-                    placeholder="State"
-                    value={placeOfSupply}
-                    onChange={(e) => setPlaceOfSupply(e.target.value)}
-                  />
+
+                <div className="grid md:grid-cols-2 gap-3 mt-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="customerState">Customer State</Label>
+                    <Input
+                      id="customerState"
+                      placeholder="Enter customer state"
+                      value={customerState}
+                      onChange={(e) => setCustomerState(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="transportMode">Transport Mode</Label>
+                    <Input
+                      id="transportMode"
+                      placeholder="By Road, etc."
+                      value={transportMode}
+                      onChange={(e) => setTransportMode(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-3 mt-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="vehicleNo">Vehicle Number</Label>
+                    <Input
+                      id="vehicleNo"
+                      placeholder="Enter vehicle number"
+                      value={vehicleNo}
+                      onChange={(e) => setVehicleNo(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="defaultHsnCode">Default HSN Code</Label>
+                    <Input
+                      id="defaultHsnCode"
+                      placeholder="Default HSN code for jewelry"
+                      value={defaultHsnCode}
+                      onChange={(e) => setDefaultHsnCode(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">Used for products without specific HSN code</p>
+                  </div>
                 </div>
               </div>
+              
+              {/* Products Section with HSN codes */}
+              {salesRequest?.items && salesRequest.items.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium mb-2 border-b pb-1">Products</h3>
+                  <div className="space-y-3">
+                    {salesRequest.items.map((item: any, index: number) => {
+                      const itemId = item.id || item.productId || String(index);
+                      return (
+                        <div key={itemId} className="grid md:grid-cols-2 gap-3 p-2 rounded-md bg-muted/30">
+                          <div className="text-sm">
+                            <p className="font-medium">{item.product?.name || item.productName || "Product " + (index + 1)}</p>
+                            <p className="text-muted-foreground">
+                              {item.quantity} × ₹{item.price.toFixed(2)} = ₹{(item.quantity * item.price).toFixed(2)}
+                            </p>
+                          </div>
+                          <div className="space-y-1">
+                            <Label htmlFor={`hsn-${itemId}`} className="text-xs">HSN Code</Label>
+                            <Input
+                              id={`hsn-${itemId}`}
+                              placeholder="HSN code"
+                              value={productHsnCodes[itemId] || defaultHsnCode}
+                              onChange={(e) => handleHsnCodeChange(itemId, e.target.value)}
+                              className="h-8"
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
-              <div className="space-y-2">
-                <Label htmlFor="customerAddress">Customer Address</Label>
-                <Input
-                  id="customerAddress"
-                  placeholder="Enter customer address"
-                  value={customerAddress}
-                  onChange={(e) => setCustomerAddress(e.target.value)}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="customerState">Customer State</Label>
-                  <Input
-                    id="customerState"
-                    placeholder="Enter customer state"
-                    value={customerState}
-                    onChange={(e) => setCustomerState(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="transportMode">Transport Mode</Label>
-                  <Input
-                    id="transportMode"
-                    placeholder="By Road, etc."
-                    value={transportMode}
-                    onChange={(e) => setTransportMode(e.target.value)}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="vehicleNo">Vehicle Number</Label>
-                  <Input
-                    id="vehicleNo"
-                    placeholder="Enter vehicle number"
-                    value={vehicleNo}
-                    onChange={(e) => setVehicleNo(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="hsnCode">HSN Code</Label>
-                  <Input
-                    id="hsnCode"
-                    placeholder="HSN code for jewelry"
-                    value={hsnCode}
-                    onChange={(e) => setHsnCode(e.target.value)}
-                  />
-                </div>
-              </div>                <div className="flex items-center space-x-2 mb-3">
+              {/* Tax Section */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium mb-2 border-b pb-1">Tax Details</h3>
+                <div className="flex items-center space-x-2 mb-3">
                   <Switch
                     id="isTaxable"
                     checked={isTaxable}
                     onCheckedChange={setIsTaxable}
                   />
-                  <Label htmlFor="isTaxable">Bill is Taxable (Include GST)</Label>
+                  <Label htmlFor="isTaxable">Tax is payable on Reverse Charge</Label>
                 </div>
-                
-                <div className="grid grid-cols-3 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="cgstPercentage">CGST (%)</Label>
-                  <Input
-                    id="cgstPercentage"
-                    disabled={!isTaxable}
-                    type="number"
-                    placeholder="CGST percentage"
-                    value={cgstPercentage}
-                    onChange={(e) => setCgstPercentage(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="sgstPercentage">SGST (%)</Label>
-                  <Input
-                    id="sgstPercentage"
-                    type="number"
-                    placeholder="SGST percentage"
-                    value={sgstPercentage}
-                    onChange={(e) => setSgstPercentage(e.target.value)}
-                    disabled={!isTaxable}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="igstPercentage">IGST (%)</Label>
-                  <Input
-                    id="igstPercentage"
-                    type="number"
-                    placeholder="IGST percentage"
-                    value={igstPercentage}
-                    onChange={(e) => setIgstPercentage(e.target.value)}
-                    disabled={!isTaxable}
-                  />
-                  <p className="text-xs text-muted-foreground">For inter-state transactions</p>
+                  
+                <div className="grid md:grid-cols-3 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="cgstPercentage">CGST (%)</Label>
+                    <Input
+                      id="cgstPercentage"
+                      disabled={!isTaxable}
+                      type="number"
+                      placeholder="CGST percentage"
+                      value={cgstPercentage}
+                      onChange={(e) => setCgstPercentage(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="sgstPercentage">SGST (%)</Label>
+                    <Input
+                      id="sgstPercentage"
+                      type="number"
+                      placeholder="SGST percentage"
+                      value={sgstPercentage}
+                      onChange={(e) => setSgstPercentage(e.target.value)}
+                      disabled={!isTaxable}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="igstPercentage">IGST (%)</Label>
+                    <Input
+                      id="igstPercentage"
+                      type="number"
+                      placeholder="IGST percentage"
+                      value={igstPercentage}
+                      onChange={(e) => setIgstPercentage(e.target.value)}
+                      disabled={!isTaxable}
+                    />
+                    <p className="text-xs text-muted-foreground">For inter-state transactions</p>
+                  </div>
                 </div>
               </div>
               
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="dateOfSupply">Date of Supply</Label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              {/* Supply Info Section */}
+              <div>
+                <h3 className="text-sm font-medium mb-2 border-b pb-1">Supply Information</h3>
+                <div className="grid md:grid-cols-2 gap-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="dateOfSupply">Date of Supply</Label>
+                    <div className="relative">
+                      <Calendar className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="dateOfSupply"
+                        type="date"
+                        className="pl-10"
+                        value={dateOfSupply}
+                        onChange={(e) => setDateOfSupply(e.target.value)}
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="timeOfSupply">Time of Supply</Label>
                     <Input
-                      id="dateOfSupply"
-                      type="date"
-                      className="pl-10"
-                      value={dateOfSupply}
-                      onChange={(e) => setDateOfSupply(e.target.value)}
+                      id="timeOfSupply"
+                      type="time"
+                      value={timeOfSupply}
+                      onChange={(e) => setTimeOfSupply(e.target.value)}
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="timeOfSupply">Time of Supply</Label>
-                  <Input
-                    id="timeOfSupply"
-                    type="time"
-                    value={timeOfSupply}
-                    onChange={(e) => setTimeOfSupply(e.target.value)}
-                  />
                 </div>
               </div>
             </div>
@@ -289,13 +382,12 @@ export function CreateBillFromSalesDialog({
               Non-GST bill will be created with basic customer information only.
             </p>
           </TabsContent>
-          
-          <div className="flex justify-end space-x-2 mt-6">
-            <Button variant="outline" onClick={onClose} disabled={isLoading}>
+            <div className="flex justify-end space-x-2 mt-6">
+            <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button onClick={handleCreateBill} disabled={isLoading}>
-              {isLoading ? (
+            <Button onClick={handleCreateBill} disabled={isSubmitting}>
+              {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating...
                 </>

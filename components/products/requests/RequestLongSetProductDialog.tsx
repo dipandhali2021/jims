@@ -333,7 +333,7 @@ export function RequestLongSetProductDialog({ onRequestCreated }: { onRequestCre
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sku">Product ID/SKU <span className="text-red-500">*</span></Label>
+                <Label htmlFor="sku">Product ID <span className="text-red-500">*</span></Label>
                 <Input
                   id="sku"
                   name="sku"

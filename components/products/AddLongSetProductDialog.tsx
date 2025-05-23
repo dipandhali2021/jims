@@ -357,11 +357,11 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sku">SKU <span className="text-red-500">*</span></Label>
+                <Label htmlFor="sku">Product ID <span className="text-red-500">*</span></Label>
                 <Input
                   id="sku"
                   name="sku"
-                  placeholder="Enter SKU"
+                  placeholder="Enter Product ID"
                   value={formData.sku}
                   onChange={handleFormChange}
                   required

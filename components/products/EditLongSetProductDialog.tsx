@@ -420,21 +420,23 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
       }
       
       // Send the request to update a long set product
-      const response = await fetch(`/api/products/long-set/${product.id}`, requestOptions);
+      // Use base product ID for the request
+      const productId = product.longSetProduct?.productId || product.id;
+      const response = await fetch(`/api/products/long-set/${productId}`, requestOptions);
       
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Failed to update long set product');
       }
 
+      // Show success toast for request submission
+      toast({
+        title: 'Request Submitted',
+        description: 'Your request to update the long set product has been submitted for approval',
+      });
+
       // Call the callback to refresh products
       await onProductUpdated();
-
-      // Show success toast
-      toast({
-        title: 'Success',
-        description: 'Long set product updated successfully',
-      });
       
       // Close the dialog
       setIsOpen(false);
@@ -454,17 +456,23 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
       setIsLoading(false);
     }
   };
-
   return (
     <Dialog 
       open={isOpen} 
-      onOpenChange={setIsOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        // Reset form state when dialog is closed
+        if (!open) {
+          setError(null);
+        }
+      }}
     >
       <Button 
         onClick={() => setIsOpen(true)}
         variant="ghost" 
         size="icon"
         className="h-8 w-8"
+        title="Edit Long Set Product"
       >
         <PenSquare className="h-4 w-4" />
       </Button>
@@ -492,7 +500,7 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="sku">Product ID (SKU)</Label>
+                <Label htmlFor="sku">Product ID</Label>
                 <Input
                   id="sku"
                   name="sku"

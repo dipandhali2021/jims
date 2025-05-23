@@ -35,6 +35,7 @@ export interface VyapariPayment {
   paymentId: string;
   amount: number;
   paymentMode: string;
+  paymentDirection: 'to_vyapari' | 'from_vyapari'; // Payment to vyapari (we paid) or from vyapari (they paid)
   referenceNumber?: string;
   notes?: string;
   isApproved: boolean;
@@ -65,6 +66,7 @@ export interface CreateTransactionDto {
 export interface CreatePaymentDto {
   amount: number;
   paymentMode: string;
+  paymentDirection: 'to_vyapari' | 'from_vyapari'; // Payment to vyapari (we paid) or from vyapari (they paid)
   referenceNumber?: string;
   notes?: string;
 }
