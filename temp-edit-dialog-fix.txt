@@ -1,0 +1,53 @@
+      setIsLoading(true);
+      
+      // Prepare data with custom category/material if "Other" is selected
+      const finalCategory = formData.category === 'Other' ? formData.customCategory : formData.category;
+      const finalMaterial = formData.material === 'Other' ? formData.customMaterial : formData.material;
+      
+      // Build data for submit
+      const longSetProductData = {
+        id: product.id,
+        name: formData.name,
+        sku: formData.sku,
+        description: formData.description || '',
+        category: finalCategory,
+        material: finalMaterial,
+        price: parseFloat(formData.sellingPrice),
+        costPrice: formData.costPrice ? parseFloat(formData.costPrice) : null,
+        stock: parseInt(formData.stock),
+        supplier: product.supplier || '',
+        parts: parts.map(part => ({
+          id: part.id,
+          partName: part.partName,
+          partDescription: part.partDescription || '',
+          costPrice: part.costPrice ? parseFloat(part.costPrice) : null,
+          karigarId: part.karigarId && part.karigarId !== 'none' ? part.karigarId : null
+        })),
+        removedPartIds: removedPartIds
+      };
+
+      let requestOptions: RequestInit;
+      
+      // If there's an image file, use FormData
+      if (imageFile) {
+        const data = new FormData();
+        Object.entries(longSetProductData).forEach(([key, value]) => {
+          if (key !== 'parts' && key !== 'removedPartIds') {
+            // Ensure null values are handled correctly
+            if (value !== null && value !== undefined) {
+              data.append(key, String(value));
+            } else {
+              // If null, set as empty string
+              data.append(key, "");
+            }
+          }
+        });
+        // Add parts as JSON string
+        data.append('parts', JSON.stringify(longSetProductData.parts));
+        data.append('removedPartIds', JSON.stringify(longSetProductData.removedPartIds));
+        data.append('image', imageFile);
+        
+        requestOptions = {
+          method: 'PUT',
+          body: data
+        };
