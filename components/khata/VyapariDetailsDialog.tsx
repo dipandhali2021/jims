@@ -281,7 +281,6 @@ export function VyapariDetailsDialog({
                           <TableHead>Payment ID</TableHead>
                           <TableHead>Date</TableHead>
                           <TableHead>Payment Mode</TableHead>
-                          <TableHead>Direction</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Reference</TableHead>
                           <TableHead className="text-right">Amount</TableHead>
@@ -292,13 +291,7 @@ export function VyapariDetailsDialog({
                           <TableRow key={payment.id}>                            <TableCell className="font-medium">{payment.paymentId}</TableCell>
                             <TableCell>{formatDate(payment.createdAt)}</TableCell>
                             <TableCell>{payment.paymentMode}</TableCell>
-                            <TableCell>
-                              {payment.paymentDirection === 'to_vyapari' ? (
-                                <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100">Paid to Trader</Badge>
-                              ) : (
-                                <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Received from Trader</Badge>
-                              )}
-                            </TableCell>
+                            
                             <TableCell>
                               {payment.isApproved ? (
                                 <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Approved</Badge>

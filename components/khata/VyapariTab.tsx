@@ -403,19 +403,6 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                               variant="outline"
                               size="icon"
                               className="h-8 w-8"
-                              title="Add Transaction"
-                              onClick={() => {
-                                setSelectedVyapari(vyapari);
-                                setShowTransactionDialog(true);
-                              }}
-                            >
-                              <FileText className="h-4 w-4" />
-                              <span className="sr-only">Add Transaction</span>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
                               title="Add Payment"
                               onClick={() => {
                                 setSelectedVyapari(vyapari);

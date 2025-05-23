@@ -40,7 +40,7 @@ export function AddVyapariPaymentDialog({
   vyapari,
 }: AddVyapariPaymentDialogProps) {  const [amount, setAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('Cash');  
-  const [paymentDirection, setPaymentDirection] = useState<'to_vyapari' | 'from_vyapari'>('to_vyapari');
+  const [paymentDirection, setPaymentDirection] = useState<'to_vyapari' | 'from_vyapari'>('from_vyapari');
   const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -201,13 +201,13 @@ export function AddVyapariPaymentDialog({
               </Label>
               <Select
                 value={paymentDirection}
-                onValueChange={setPaymentDirection}
+                onValueChange={(value) => setPaymentDirection(value as 'to_vyapari' | 'from_vyapari')}
               >
                 <SelectTrigger id="paymentDirection" className="col-span-3">
                   <SelectValue placeholder="Select payment direction" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="to_vyapari">Paid to Trader</SelectItem>
+                  {/* <SelectItem value="to_vyapari">Paid to Trader</SelectItem> */}
                   <SelectItem value="from_vyapari">Received from Trader</SelectItem>
                 </SelectContent>
               </Select>

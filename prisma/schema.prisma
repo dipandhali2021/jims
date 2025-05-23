@@ -370,7 +370,7 @@ model KarigarPayment {
 model LongSetProduct {
   id                String               @id @default(cuid())
   name              String
-  sku               String // Main product SKU
+  sku               String // Main product 
   description       String?
   category          String
   material          String

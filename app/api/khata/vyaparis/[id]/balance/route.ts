@@ -35,9 +35,7 @@ export async function GET(req: Request, { params }: RouteParams) {
       );
     }    // Get user role from metadata
     const userRole = auth().sessionClaims?.metadata?.role as string || 'user';
-    const isAdmin = userRole === 'admin';
-    
-    // Calculate balance from approved transactions
+    const isAdmin = userRole === 'admin';    // Calculate balance from approved transactions
     // Positive transactions represent money we owe to vyapari
     // Negative transactions represent money vyapari owes us
     const transactionsSum = await prisma.vyapariTransaction.aggregate({
@@ -49,23 +47,34 @@ export async function GET(req: Request, { params }: RouteParams) {
         amount: true
       }
     });
-
-    // Get sum of all approved payments
-    const paymentsSum = await prisma.vyapariPayment.aggregate({
+    
+    // Get all approved payments with all fields
+    const payments = await prisma.vyapariPayment.findMany({
       where: {
         vyapariId: id,
         isApproved: true // Only include approved payments
-      },
-      _sum: {
-        amount: true
       }
     });
 
     const transactionTotal = transactionsSum._sum.amount || 0;
-    const paymentTotal = paymentsSum._sum.amount || 0;
-
-    // Final balance: positive means we owe them, negative means they owe us
-    const balance = transactionTotal - paymentTotal;
+    
+    // Calculate payment totals based on direction
+    let paidToVyapariTotal = 0;
+    let paidByVyapariTotal = 0;
+    
+    for (const payment of payments) {
+      // Use type assertion since TypeScript doesn't have paymentDirection in its type definition
+      const direction = (payment as any).paymentDirection;
+      if (direction === 'to_vyapari') {
+        paidToVyapariTotal += payment.amount;
+      } else if (direction === 'from_vyapari') {
+        paidByVyapariTotal += payment.amount;
+      }
+    }    // Final balance: positive means we owe them, negative means they owe us
+    // Transactions affect the balance (positive amounts are what we owe)
+    // Payments to vyapari reduce what we owe
+    // Payments from vyapari reduce what they owe us
+    const balance = transactionTotal - paidToVyapariTotal - paidByVyapariTotal;
 
     return NextResponse.json({ balance });
   } catch (error) {
