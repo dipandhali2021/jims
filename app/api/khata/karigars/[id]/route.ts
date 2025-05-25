@@ -52,7 +52,7 @@ export async function GET(req: Request, { params }: RouteParams) {
 
     if (!karigar) {
       return NextResponse.json(
-        { error: 'Artisan not found' },
+        { error: 'Karigar not found' },
         { status: 404 }
       );
     }
@@ -61,7 +61,7 @@ export async function GET(req: Request, { params }: RouteParams) {
   } catch (error) {
     console.error(`Error fetching karigar ${params.id}:`, error);
     return NextResponse.json(
-      { error: 'Failed to fetch artisan details' },
+      { error: 'Failed to fetch karigar details' },
       { status: 500 }
     );
   }
@@ -92,7 +92,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
     if (!existingKarigar) {
       return NextResponse.json(
-        { error: 'Artisan not found' },
+        { error: 'Karigar not found' },
         { status: 404 }
       );
     }
@@ -130,7 +130,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
   } catch (error) {
     console.error(`Error updating karigar ${params.id}:`, error);
     return NextResponse.json(
-      { error: 'Failed to update artisan' },
+      { error: 'Failed to update karigar' },
       { status: 500 }
     );
   }

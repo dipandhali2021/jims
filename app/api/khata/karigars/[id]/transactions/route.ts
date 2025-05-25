@@ -30,7 +30,7 @@ export async function GET(req: Request, { params }: RouteParams) {
 
     if (!karigar) {
       return NextResponse.json(
-        { error: 'Artisan not found' },
+        { error: 'Karigar not found' },
         { status: 404 }
       );
     }
@@ -49,7 +49,7 @@ export async function GET(req: Request, { params }: RouteParams) {
   } catch (error) {
     console.error(`Error fetching karigar transactions ${params.id}:`, error);
     return NextResponse.json(
-      { error: 'Failed to fetch artisan transactions' },
+      { error: 'Failed to fetch karigar transactions' },
       { status: 500 }
     );
   }
@@ -75,7 +75,7 @@ export async function POST(req: Request, { params }: RouteParams) {
 
     if (!karigar) {
       return NextResponse.json(
-        { error: 'Artisan not found or not approved' },
+        { error: 'Karigar not found or not approved' },
         { status: 404 }
       );
     }
@@ -134,7 +134,7 @@ export async function POST(req: Request, { params }: RouteParams) {
   } catch (error) {
     console.error(`Error creating karigar transaction ${params.id}:`, error);
     return NextResponse.json(
-      { error: 'Failed to create artisan transaction' },
+      { error: 'Failed to create karigar transaction' },
       { status: 500 }
     );
   }

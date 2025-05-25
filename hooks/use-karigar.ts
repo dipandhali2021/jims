@@ -91,7 +91,7 @@ export function useKarigar() {
       console.error('Error fetching karigars:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch artisans',
+        description: error.message || 'Failed to fetch karigar',
         variant: 'destructive',
       });
       return [];
@@ -112,7 +112,7 @@ export function useKarigar() {
       console.error('Error fetching pending karigars:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch pending artisans',
+        description: error.message || 'Failed to fetch pending karigars',
         variant: 'destructive',
       });
       return [];
@@ -133,7 +133,7 @@ export function useKarigar() {
       console.error(`Error fetching karigar ${id}:`, error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch artisan details',
+        description: error.message || 'Failed to fetch karigar details',
         variant: 'destructive',
       });
       return null;
@@ -153,14 +153,14 @@ export function useKarigar() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create artisan');
+        throw new Error(errorData.error || 'Failed to create karigar');
       }
       
       const result = await response.json();
       
       toast({
         title: 'Success',
-        description: 'Artisan created successfully',
+        description: 'Karigar created successfully',
       });
       
       return result;
@@ -168,7 +168,7 @@ export function useKarigar() {
       console.error('Error creating karigar:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create artisan',
+        description: error.message || 'Failed to create karigar',
         variant: 'destructive',
       });
       throw error;
@@ -188,14 +188,14 @@ export function useKarigar() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update artisan');
+        throw new Error(errorData.error || 'Failed to update karigar');
       }
       
       const result = await response.json();
       
       toast({
         title: 'Success',
-        description: 'Artisan updated successfully',
+        description: 'Karigar updated successfully',
       });
       
       return result;
@@ -203,7 +203,7 @@ export function useKarigar() {
       console.error(`Error updating karigar ${id}:`, error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update artisan',
+        description: error.message || 'Failed to update karigar',
         variant: 'destructive',
       });
       throw error;
@@ -226,9 +226,9 @@ export function useKarigar() {
         try {
           errorData = await response.json();
         } catch (e) {
-          throw new Error(`Failed to ${approve ? 'approve' : 'reject'} artisan. Status: ${response.status}`);
+          throw new Error(`Failed to ${approve ? 'approve' : 'reject'} karigar. Status: ${response.status}`);
         }
-        throw new Error(errorData.error || `Failed to ${approve ? 'approve' : 'reject'} artisan`);
+        throw new Error(errorData.error || `Failed to ${approve ? 'approve' : 'reject'} karigar`);
       }
       
       const result = await response.json();
@@ -250,7 +250,7 @@ export function useKarigar() {
       const response = await fetch(`/api/khata/karigars/${id}/transactions`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch artisan transactions');
+        throw new Error('Failed to fetch karigar transactions');
       }
       
       return await response.json();
@@ -258,7 +258,7 @@ export function useKarigar() {
       console.error(`Error fetching transactions for karigar ${id}:`, error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch artisan transactions',
+        description: error.message || 'Failed to fetch karigar transactions',
         variant: 'destructive',
       });
       return [];
@@ -306,7 +306,7 @@ export function useKarigar() {
       const response = await fetch(`/api/khata/karigars/${id}/payments`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch artisan payments');
+        throw new Error('Failed to fetch karigar payments');
       }
       
       return await response.json();
@@ -314,7 +314,7 @@ export function useKarigar() {
       console.error(`Error fetching payments for karigar ${id}:`, error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch artisan payments',
+        description: error.message || 'Failed to fetch karigar payments',
         variant: 'destructive',
       });
       return [];
@@ -361,16 +361,14 @@ export function useKarigar() {
     try {
       const response = await fetch(`/api/khata/karigars/${id}/balance`);
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch artisan balance');
-      }
+      
       
       return await response.json();
     } catch (error: any) {
       console.error(`Error calculating balance for karigar ${id}:`, error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to calculate artisan balance',
+        description: error.message || 'Failed to calculate karigar balance',
         variant: 'destructive',
       });
       return { balance: 0 };
@@ -496,12 +494,12 @@ export function useKarigar() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete artisan');
+        throw new Error(errorData.error || 'Failed to delete karigar');
       }
       
       toast({
         title: 'Success',
-        description: 'Artisan deleted successfully',
+        description: 'Karigar deleted successfully',
       });
       
       return true;
@@ -509,7 +507,7 @@ export function useKarigar() {
       console.error(`Error deleting karigar ${id}:`, error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete artisan',
+        description: error.message || 'Failed to delete karigar',
         variant: 'destructive',
       });
       throw error;

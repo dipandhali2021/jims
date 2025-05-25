@@ -87,7 +87,7 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
           console.log('Fetched karigars:', data);
           setKarigars(data);
         } catch (error) {
-          console.error('Failed to load artisans:', error);
+          console.error('Failed to load karigars:', error);
         } finally {
           setLoadingKarigars(false);
         }
@@ -552,7 +552,7 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
               />
             </div>
           </div>          <div className="space-y-2">
-            <Label htmlFor="supplier" className="font-medium">Karigar/Artisan</Label>
+            <Label htmlFor="supplier" className="font-medium">Karigar</Label>
             <Select
               value={formData.supplier}
               onValueChange={(value) =>
@@ -560,7 +560,7 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
               }
             >
               <SelectTrigger className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50">
-                <SelectValue placeholder="Select karigar/artisan" />
+                <SelectValue placeholder="Select karigar" />
               </SelectTrigger>
               <SelectContent>                
                 {loadingKarigars ? (

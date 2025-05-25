@@ -76,7 +76,7 @@ export function CreateKarigarDialog({
       if (!isAdmin) {
         toast({
           title: 'Pending Approval',
-          description: 'The artisan has been created and is awaiting approval from admin',
+          description: 'The karigar has been created and is awaiting approval from admin',
         });
       }
       
@@ -86,7 +86,7 @@ export function CreateKarigarDialog({
       console.error('Failed to create karigar:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create artisan',
+        description: error.message || 'Failed to create karigar',
         variant: 'destructive',
       });
     } finally {
@@ -98,10 +98,10 @@ export function CreateKarigarDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Add New Artisan</DialogTitle>
+          <DialogTitle>Add New Karigar</DialogTitle>
           <DialogDescription>
-            Add a new artisan (KARIGAR) to your records.
-            {!isAdmin && " Admin approval will be required before the artisan appears in your list."}
+            Add a new karigar to your records.
+            {!isAdmin && " Admin approval will be required before the karigar appears in your list."}
           </DialogDescription>
         </DialogHeader>
         
@@ -116,7 +116,7 @@ export function CreateKarigarDialog({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="col-span-3"
-                placeholder="Enter artisan name"
+                placeholder="Enter karigar name"
                 required
               />
             </div>
@@ -157,7 +157,7 @@ export function CreateKarigarDialog({
                 value={specialization}
                 onChange={(e) => setSpecialization(e.target.value)}
                 className="col-span-3"
-                placeholder="Enter artisan specialization"
+                placeholder="Enter karigar specialization"
               />
             </div>
             

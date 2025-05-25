@@ -56,7 +56,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
           // No need to filter for approval - API already does this for non-admin users
           setKarigars(data);
         } catch (error) {
-          console.error('Failed to load artisans:', error);
+          console.error('Failed to load karigars:', error);
         } finally {
           setLoadingKarigars(false);
         }
@@ -511,7 +511,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
               />
             </div>
           </div>          <div className="space-y-2">
-            <Label htmlFor="supplier" className="font-medium">Karigar/Artisan</Label>
+            <Label htmlFor="supplier" className="font-medium">Karigar</Label>
             <Select
               value={formData.supplier}
               onValueChange={(value) =>
@@ -519,7 +519,7 @@ export function AddProductDialog({onProductAdded}: {onProductAdded: () => Promis
               }
             >
               <SelectTrigger className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50">
-                <SelectValue placeholder="Select karigar/artisan" />
+                <SelectValue placeholder="Select karigar" />
               </SelectTrigger>
               <SelectContent>                {loadingKarigars ? (
                   <div className="flex items-center justify-center p-2">

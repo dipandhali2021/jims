@@ -30,7 +30,7 @@ export async function GET(req: Request, { params }: RouteParams) {
 
     if (!karigar) {
       return NextResponse.json(
-        { error: 'Artisan not found' },
+        { error: 'Karigar not found' },
         { status: 404 }
       );
     }    // Get user role from metadata
@@ -71,7 +71,7 @@ export async function GET(req: Request, { params }: RouteParams) {
   } catch (error) {
     console.error(`Error calculating karigar balance ${params.id}:`, error);
     return NextResponse.json(
-      { error: 'Failed to calculate artisan balance' },
+      { error: 'Failed to calculate karigar balance' },
       { status: 500 }
     );
   }

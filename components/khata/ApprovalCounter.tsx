@@ -135,12 +135,12 @@ export function ApprovalCounter({ className }: ApprovalCounterProps) {
               )}
               {pendingCount.karigarTransactions > 0 && (
                 <span className="inline-flex items-center bg-slate-100 px-2 py-0.5 rounded-full text-xs">
-                  Artisan Trans: {pendingCount.karigarTransactions}
+                  Karigar Trans: {pendingCount.karigarTransactions}
                 </span>
               )}
               {pendingCount.karigarPayments > 0 && (
                 <span className="inline-flex items-center bg-slate-100 px-2 py-0.5 rounded-full text-xs">
-                  Artisan Payments: {pendingCount.karigarPayments}
+                  Karigar Payments: {pendingCount.karigarPayments}
                 </span>
               )}
             </div>

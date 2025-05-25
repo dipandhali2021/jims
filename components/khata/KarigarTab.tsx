@@ -49,6 +49,7 @@ import { KarigarDetailsDialog } from './KarigarDetailsDialog';
 import { AddKarigarTransactionDialog } from './AddKarigarTransactionDialog';
 import { AddKarigarPaymentDialog } from './AddKarigarPaymentDialog';
 import { DeleteKarigarDialog } from './DeleteKarigarDialog';
+import { KarigarTabSkeleton } from './KarigarTabSkeleton';
 import { useKarigar } from '@/hooks/use-karigar';
 
 interface KarigarTabProps {
@@ -95,7 +96,7 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
         console.error('Failed to load karigar data:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load artisan data',
+          description: 'Failed to load karigar data',
           variant: 'destructive',
         });
       } finally {
@@ -149,13 +150,13 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
       
       toast({
         title: 'Success',
-        description: `Artisan ${approve ? 'approved' : 'rejected'} successfully`,
+        description: `Karigar ${approve ? 'approved' : 'rejected'} successfully`,
       });
     } catch (error) {
       console.error('Failed to update status:', error);
       toast({
         title: 'Error',
-        description: `Failed to ${approve ? 'approve' : 'reject'} artisan. Please try again.`,
+        description: `Failed to ${approve ? 'approve' : 'reject'} karigar. Please try again.`,
         variant: 'destructive',
       });
     } finally {
@@ -179,6 +180,9 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
 
     return matchesSearch && matchesStatus;
   });
+  if (isLoading) {
+    return <KarigarTabSkeleton />;
+  }
 
   return (
     <>
@@ -190,7 +194,7 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                 <div>
                   <CardTitle>Pending Approvals</CardTitle>
                   <CardDescription>
-                    {pendingApprovals.length} artisan {pendingApprovals.length === 1 ? 'record' : 'records'} pending approval
+                    {pendingApprovals.length} karigar {pendingApprovals.length === 1 ? 'record' : 'records'} pending approval
                   </CardDescription>
                 </div>
               </div>
@@ -207,7 +211,7 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                       <TableHead>Date</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
-                  </TableHeader>                  <TableBody>
+                  </TableHeader><TableBody>
                     {pendingApprovals.map((karigar) => (
                       <TableRow 
                         key={karigar.id}
@@ -259,18 +263,7 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                               )}
                               <span className="sr-only">Reject</span>
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => {
-                                setSelectedKarigar(karigar);
-                                setShowDetailsDialog(true);
-                              }}
-                            >
-                              <Eye className="h-4 w-4" />
-                              <span className="sr-only">View</span>
-                            </Button>
+                            
                           </div>
                         </TableCell>
                       </TableRow>
@@ -286,9 +279,9 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Artisans (KARIGAR)</CardTitle>
+                <CardTitle>Karigars</CardTitle>
                 <CardDescription>
-                  Manage your artisans, their transactions, and payment records
+                  Manage your karigars, their transactions, and payment records
                 </CardDescription>
               </div>
               <Button onClick={() => setShowCreateDialog(true)}>
@@ -303,7 +296,7 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                 <div className="relative">
                   <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                   <Input
-                    placeholder="Search artisans..."
+                    placeholder="Search karigars..."
                     className="pl-9 w-[250px]"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -327,7 +320,7 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
               </div>
             ) : filteredKarigars.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                No artisans found. Try different search criteria or add a new artisan.
+                No karigars found. Try different search criteria or add a new karigar.
               </div>
             ) : (
               <div className="rounded-md border">
@@ -378,9 +371,9 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                           {balances[karigar.id] !== undefined && (
                             <div className="text-xs text-muted-foreground">
                               {balances[karigar.id] < 0
-                                ? 'They owe you'
+                                ? 'You have to pay them'
                                 : balances[karigar.id] > 0
-                                  ? 'You owe them'
+                                  ? 'They have to pay you'
                                   : 'No balance'}
                             </div>
                           )}
@@ -425,19 +418,21 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                               <CreditCard className="h-4 w-4" />
                               <span className="sr-only">Add Payment</span>
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8 text-red-600"
-                              title="Delete Artisan"
-                              onClick={() => {
-                                setSelectedKarigar(karigar);
-                                setShowDeleteDialog(true);
-                              }}
-                            >
-                              <Trash className="h-4 w-4" />
-                              <span className="sr-only">Delete Artisan</span>
-                            </Button>
+                            {isAdmin && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 text-red-600"
+                                title="Delete Karigar"
+                                onClick={() => {
+                                  setSelectedKarigar(karigar);
+                                  setShowDeleteDialog(true);
+                                }}
+                              >
+                                <Trash className="h-4 w-4" />
+                                <span className="sr-only">Delete Karigar</span>
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

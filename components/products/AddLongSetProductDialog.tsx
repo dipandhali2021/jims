@@ -91,7 +91,7 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
           console.error('Error fetching karigars:', error);
           toast({
             title: 'Error',
-            description: 'Failed to load artisans',
+            description: 'Failed to load karigars',
             variant: 'destructive',
           });
         } finally {
@@ -582,7 +582,7 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Karigar (Artisan)</Label>
+                        <Label>Karigar</Label>
                         <Select
                           value={part.karigarId}
                           onValueChange={(value) => handlePartChange(index, 'karigarId', value)}

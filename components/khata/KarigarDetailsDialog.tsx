@@ -92,7 +92,7 @@ export function KarigarDetailsDialog({
       console.error('Error loading karigar details:', error);
       toast({
         title: 'Error',
-        description: 'Failed to load artisan details',
+        description: 'Failed to load karigar details',
         variant: 'destructive',
       });
     } finally {
@@ -121,9 +121,9 @@ export function KarigarDetailsDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Artisan Details</DialogTitle>
+          <DialogTitle>Karigar Details</DialogTitle>
           <DialogDescription>
-            View artisan information, transaction history, and payment records.
+            View karigar information, transaction history, and payment records.
           </DialogDescription>
         </DialogHeader>
 
@@ -134,9 +134,9 @@ export function KarigarDetailsDialog({
         ) : !karigar ? (
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <AlertCircle className="h-12 w-12 text-muted-foreground mb-2" />
-            <h3 className="text-lg font-medium">Artisan Not Found</h3>
+            <h3 className="text-lg font-medium">Karigar Not Found</h3>
             <p className="text-sm text-muted-foreground">
-              The requested artisan information could not be loaded.
+              The requested karigar information could not be loaded.
             </p>
           </div>
         ) : (
@@ -302,9 +302,9 @@ export function KarigarDetailsDialog({
                             <TableCell>{payment.paymentMode}</TableCell>
                             <TableCell>
                               {payment.paymentDirection === 'to_karigar' ? (
-                                <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100">Paid to Artisan</Badge>
+                                <Badge variant="outline" className="bg-blue-50 text-blue-700 hover:bg-blue-100">Paid to Karigar</Badge>
                               ) : (
-                                <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Received from Artisan</Badge>
+                                <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-100">Received from Karigar</Badge>
                               )}
                             </TableCell>
                             <TableCell>

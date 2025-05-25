@@ -33,7 +33,7 @@ export function AddKarigarTransactionDialog({
   karigar,
 }: AddKarigarTransactionDialogProps) {
   const [description, setDescription] = useState('');
-  const [amount, setAmount] = useState('');  const [isCredit, setIsCredit] = useState(true); // true = we owe artisan, false = artisan owes us
+  const [amount, setAmount] = useState('');  const [isCredit, setIsCredit] = useState(true); // true = we owe Karigar, false = Karigar owes us
   const [items, setItems] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -72,7 +72,7 @@ export function AddKarigarTransactionDialog({
     if (!karigar?.id) {
       toast({
         title: 'Error',
-        description: 'Invalid artisan data',
+        description: 'Invalid karigar data',
         variant: 'destructive',
       });
       return;
@@ -136,9 +136,9 @@ export function AddKarigarTransactionDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Transaction for {karigar?.name || 'Artisan'}</DialogTitle>
+          <DialogTitle>Add Transaction for {karigar?.name || 'Karigar'}</DialogTitle>
           <DialogDescription>
-            Add a new transaction to the artisan's account.
+            Add a new transaction to the karigar's account.
           </DialogDescription>
         </DialogHeader>
         

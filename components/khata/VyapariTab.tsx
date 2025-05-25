@@ -50,6 +50,7 @@ import { VyapariDetailsDialog } from './VyapariDetailsDialog';
 import { AddVyapariTransactionDialog } from './AddVyapariTransactionDialog';
 import { AddVyapariPaymentDialog } from './AddVyapariPaymentDialog';
 import { DeleteVyapariDialog } from './DeleteVyapariDialog';
+import { VyapariTabSkeleton } from './VyapariTabSkeleton';
 import { useVyapari } from '@/hooks/use-vyapari';
 
 interface VyapariTabProps {
@@ -183,6 +184,9 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
 
     return matchesSearch && matchesStatus;
   });
+  if (isLoading) {
+    return <VyapariTabSkeleton />;
+  }
 
   return (
     <>
@@ -210,7 +214,7 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                       <TableHead>Date</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
-                  </TableHeader>                  <TableBody>
+                  </TableHeader><TableBody>
                     {pendingApprovals.map((vyapari) => (
                       <TableRow 
                         key={vyapari.id} 
@@ -261,18 +265,7 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                               )}
                               <span className="sr-only">Reject</span>
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => {
-                                setSelectedVyapari(vyapari);
-                                setShowDetailsDialog(true);
-                              }}
-                            >
-                              <Eye className="h-4 w-4" />
-                              <span className="sr-only">View</span>
-                            </Button>
+                            
                           </div>
                         </TableCell>
                       </TableRow>
@@ -321,13 +314,7 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                   <option value="pending">Pending Approval</option>
                 </select>
               </div>
-            </div>
-
-            {isLoading ? (
-              <div className="flex justify-center items-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : filteredVyaparis.length === 0 ? (
+            </div>            {filteredVyaparis.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 No traders found. Try different search criteria or add a new trader.
               </div>
@@ -378,9 +365,9 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                           {balances[vyapari.id] !== undefined && (
                             <div className="text-xs text-muted-foreground">
                               {balances[vyapari.id] < 0
-                                ? 'They owe you'
+                                ? 'You have to pay them'
                                 : balances[vyapari.id] > 0
-                                  ? 'You owe them'
+                                  ? 'They have to pay you'
                                   : 'No balance'}
                             </div>
                           )}
@@ -412,19 +399,21 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                               <CreditCard className="h-4 w-4" />
                               <span className="sr-only">Add Payment</span>
                             </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-8 w-8 text-red-600"
-                              title="Delete Trader"
-                              onClick={() => {
-                                setSelectedVyapari(vyapari);
-                                setShowDeleteDialog(true);
-                              }}
-                            >
-                              <Trash className="h-4 w-4" />
-                              <span className="sr-only">Delete Trader</span>
-                            </Button>
+                            {isAdmin && (
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8 text-red-600"
+                                title="Delete Trader"
+                                onClick={() => {
+                                  setSelectedVyapari(vyapari);
+                                  setShowDeleteDialog(true);
+                                }}
+                              >
+                                <Trash className="h-4 w-4" />
+                                <span className="sr-only">Delete Trader</span>
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>

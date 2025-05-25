@@ -90,7 +90,7 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
           console.error('Error fetching karigars:', error);
           toast({
             title: 'Error',
-            description: 'Failed to load artisans',
+            description: 'Failed to load karigars',
             variant: 'destructive',
           });
         } finally {
@@ -733,7 +733,7 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
                         </div>
                         
                         <div className="space-y-2">
-                          <Label htmlFor={`karigar-${index}`}>Karigar (Artisan)</Label>
+                          <Label htmlFor={`karigar-${index}`}>Karigar</Label>
                           <Select
                             value={part.karigarId}
                             onValueChange={(value) => handlePartChange(index, 'karigarId', value)}

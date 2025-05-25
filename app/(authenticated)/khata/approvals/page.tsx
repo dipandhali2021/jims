@@ -132,7 +132,7 @@ export default function KhataApprovals() {
         console.error('Failed to load pending karigar transactions:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load pending artisan transactions',
+          description: 'Failed to load pending karigar transactions',
           variant: 'destructive',
         });
       } finally {
@@ -156,7 +156,7 @@ export default function KhataApprovals() {
         console.error('Failed to load pending karigar payments:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load pending artisan payments',
+          description: 'Failed to load pending karigar payments',
           variant: 'destructive',
         });
       } finally {
@@ -279,7 +279,7 @@ export default function KhataApprovals() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Khata Book Approvals</h1>
             <p className="text-muted-foreground">
-              Approve or reject pending transactions and payments for traders and artisans.
+              Approve or reject pending transactions and payments for vyaparis and karigars.
             </p>
           </div>
           <Button 
@@ -309,14 +309,14 @@ export default function KhataApprovals() {
             </TabsTrigger>
             <TabsTrigger value="karigar-transactions" className="flex items-center gap-1">
               <FileText className="h-4 w-4" />
-              <span>Artisan Transactions</span>
+              <span>Karigar Transactions</span>
               {pendingKarigarTransactions.length > 0 && (
                 <Badge variant="secondary">{pendingKarigarTransactions.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="karigar-payments" className="flex items-center gap-1">
               <CreditCard className="h-4 w-4" />
-              <span>Artisan Payments</span>
+              <span>Karigar Payments</span>
               {pendingKarigarPayments.length > 0 && (
                 <Badge variant="secondary">{pendingKarigarPayments.length}</Badge>
               )}
@@ -495,7 +495,7 @@ export default function KhataApprovals() {
           <TabsContent value="karigar-transactions">
             <Card>
               <CardHeader>
-                <CardTitle>Pending Artisan Transactions</CardTitle>
+                <CardTitle>Pending Karigar Transactions</CardTitle>
                 <CardDescription>Review and approve transactions created by shopkeepers</CardDescription>
               </CardHeader>
               <CardContent>
@@ -505,7 +505,7 @@ export default function KhataApprovals() {
                   </div>
                 ) : pendingKarigarTransactions.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    No pending artisan transactions to approve
+                    No pending karigar transactions to approve
                   </div>
                 ) : (
                   <div className="rounded-md border">
@@ -513,7 +513,7 @@ export default function KhataApprovals() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Transaction ID</TableHead>
-                          <TableHead>Artisan</TableHead>
+                          <TableHead>Karigar</TableHead>
                           <TableHead>Description</TableHead>
                           <TableHead>Amount</TableHead>
                           <TableHead>Created By</TableHead>
@@ -580,7 +580,7 @@ export default function KhataApprovals() {
           <TabsContent value="karigar-payments">
             <Card>
               <CardHeader>
-                <CardTitle>Pending Artisan Payments</CardTitle>
+                <CardTitle>Pending Karigar Payments</CardTitle>
                 <CardDescription>Review and approve payments created by shopkeepers</CardDescription>
               </CardHeader>
               <CardContent>
@@ -590,7 +590,7 @@ export default function KhataApprovals() {
                   </div>
                 ) : pendingKarigarPayments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    No pending artisan payments to approve
+                    No pending karigar payments to approve
                   </div>
                 ) : (
                   <div className="rounded-md border">
@@ -598,7 +598,7 @@ export default function KhataApprovals() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Payment ID</TableHead>
-                          <TableHead>Artisan</TableHead>
+                          <TableHead>Karigar</TableHead>
                           <TableHead>Amount</TableHead>
                           <TableHead>Payment Mode</TableHead>
                           <TableHead>Created By</TableHead>

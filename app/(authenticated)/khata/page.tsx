@@ -33,7 +33,7 @@ export default function KhataPage() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Khata Book</h1>
             <p className="text-muted-foreground">
-              Manage your traders (VYAPARI) and artisans (KARIGAR) records, transactions, and payments.
+              Manage your Vyapari and Karigar records, transactions, and payments.
             </p>
           </div>          <div className="flex flex-col sm:flex-row gap-2">
             {isAdmin && (
@@ -66,7 +66,7 @@ export default function KhataPage() {
               </TabsTrigger>
               <TabsTrigger value="karigar">
                 <UserCircle className="h-4 w-4 mr-2" />
-                <span>KARIGAR (Artisans)</span>
+                <span>Karigar</span>
               </TabsTrigger>
               {/* Will add Analytics tab in future */}
             </TabsList>

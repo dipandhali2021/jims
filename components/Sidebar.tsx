@@ -111,14 +111,19 @@ export function DashboardSidebar({
   const [searchQuery, setSearchQuery] = useState('');
     // Initialize openMenus state based on the current path
   const [openMenus, setOpenMenus] = useState<Record<string, boolean>>(() => {
-    const initialState: Record<string, boolean> = {};
+    const initialState: Record<string, boolean> = {
+      'Inventory': true, // Keep Inventory dropdown open by default
+      'Khata Book': true, // Keep Khata Book dropdown open by default
+    };
     
-    // Auto-expand any menu that contains the current path
+    // Auto-expand any other menu that contains the current path
     sidebarLinks.forEach(link => {
-      if (link.subItems && (
-        pathname === link.href || 
-        link.subItems.some(subItem => pathname.startsWith(subItem.href))
-      )) {
+      if (link.subItems &&
+          link.label !== 'Inventory' &&
+          link.label !== 'Khata Book' &&
+          (pathname === link.href ||
+           link.subItems.some(subItem => pathname.startsWith(subItem.href)))
+      ) {
         initialState[link.label] = true;
       }
     });

@@ -906,7 +906,7 @@ export default function RequestsPage() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs sm:text-sm text-gray-500">Customer</p>
+                  <p className="text-xs sm:text-sm text-gray-500">Trader</p>
                   <p className="font-medium text-sm sm:text-base text-gray-800">
                     {selectedRequest.customer}
                   </p>

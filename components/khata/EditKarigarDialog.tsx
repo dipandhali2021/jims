@@ -78,7 +78,7 @@ export function EditKarigarDialog({
     if (!karigar?.id) {
       toast({
         title: 'Error',
-        description: 'Invalid artisan data',
+        description: 'Invalid karigar data',
         variant: 'destructive',
       });
       return;
@@ -105,7 +105,7 @@ export function EditKarigarDialog({
       console.error('Failed to update karigar:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update artisan',
+        description: error.message || 'Failed to update karigar',
         variant: 'destructive',
       });
     } finally {
@@ -117,9 +117,9 @@ export function EditKarigarDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Artisan</DialogTitle>
+          <DialogTitle>Edit Karigar</DialogTitle>
           <DialogDescription>
-            Update artisan information. Click save when you're done.
+            Update karigar information. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
         
@@ -134,7 +134,7 @@ export function EditKarigarDialog({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="col-span-3"
-                placeholder="Enter artisan name"
+                placeholder="Enter karigar name"
                 required
               />
             </div>
@@ -175,7 +175,7 @@ export function EditKarigarDialog({
                 value={specialization}
                 onChange={(e) => setSpecialization(e.target.value)}
                 className="col-span-3"
-                placeholder="Enter artisan specialization"
+                placeholder="Enter karigar specialization"
               />
             </div>
             

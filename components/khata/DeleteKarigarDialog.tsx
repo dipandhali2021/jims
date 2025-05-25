@@ -43,7 +43,7 @@ export function DeleteKarigarDialog({
         onClose();
       }
     } catch (error) {
-      console.error('Error deleting artisan:', error);
+      console.error('Error deleting karigar:', error);
       // Keep the dialog open if there was an error
     } finally {
       setIsDeleting(false);
@@ -54,10 +54,10 @@ export function DeleteKarigarDialog({
     <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Force Delete Artisan</AlertDialogTitle>
+          <AlertDialogTitle>Force Delete Karigar</AlertDialogTitle>
           <AlertDialogDescription>
             <p className="mb-2">
-              You are about to forcefully delete the artisan <strong>{karigarName}</strong>.
+              You are about to forcefully delete the karigar <strong>{karigarName}</strong>.
             </p>
             <p className="mb-2 text-red-600 font-semibold">
               This action is irreversible and will delete all associated transactions, 

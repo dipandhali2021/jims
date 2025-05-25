@@ -89,7 +89,7 @@ export function RequestLongSetProductDialog({ onRequestCreated }: { onRequestCre
           console.error('Error fetching karigars:', error);
           toast({
             title: 'Error',
-            description: 'Failed to load artisans',
+            description: 'Failed to load Karigars',
             variant: 'destructive',
           });
         } finally {
@@ -562,13 +562,13 @@ export function RequestLongSetProductDialog({ onRequestCreated }: { onRequestCre
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor={`partArtisan-${index}`}>Artisan (Karigar)</Label>
+                        <Label htmlFor={`partArtisan-${index}`}>Karigar</Label>
                         <Select
                           value={part.karigarId}
                           onValueChange={(value) => handlePartChange(index, 'karigarId', value)}
                         >
                           <SelectTrigger>
-                            <SelectValue placeholder="Select artisan" />
+                            <SelectValue placeholder="Select karigar" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="none">None</SelectItem>

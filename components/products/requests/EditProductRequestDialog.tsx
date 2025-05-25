@@ -100,7 +100,7 @@ export function EditProductRequestDialog({
           console.log('Fetched karigars:', data);
           setKarigars(data);
         } catch (error) {
-          console.error('Failed to load artisans:', error);
+          console.error('Failed to load karigars:', error);
         } finally {
           setLoadingKarigars(false);
         }
@@ -501,7 +501,7 @@ export function EditProductRequestDialog({
                 </div>
               </div>              <div className="space-y-2">
                 <Label htmlFor="supplier" className="text-sm font-medium">
-                  Karigar/Artisan
+                  Karigar
                 </Label>
                 <Select
                   value={formData.supplier}
@@ -510,7 +510,7 @@ export function EditProductRequestDialog({
                   }
                 >
                   <SelectTrigger className="border border-gray-300 rounded-md focus:ring-2 focus:ring-primary/50">
-                    <SelectValue placeholder="Select karigar/artisan" />
+                    <SelectValue placeholder="Select karigar" />
                   </SelectTrigger>
                   <SelectContent>
                     {loadingKarigars ? (

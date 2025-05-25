@@ -311,7 +311,7 @@ export default function KhataDashboard() {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Khata Dashboard</h1>
             <p className="text-muted-foreground">
-              Overview of your Karigar (artisan) and Vyapari (trader) transactions and balances.
+              Overview of your Karigar and Vyapari transactions and balances.
             </p>
           </div>
           
@@ -333,7 +333,7 @@ export default function KhataDashboard() {
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {/* Summary Cards */}
                 <StatCard 
-                  title="Total Artisans"
+                  title="Total Karigars"
                   value={analytics?.karigar?.totalKarigars || 0}
                   description="Active Karigars"
                   icon={<UserCircle className="h-5 w-5" />}
@@ -415,7 +415,7 @@ export default function KhataDashboard() {
                   <CardHeader>
                     <CardTitle>Top 5 Karigars</CardTitle>
                     <CardDescription>
-                      Artisans with highest transaction volumes
+                      Karigars with highest transaction volumes
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-1">
@@ -461,7 +461,7 @@ export default function KhataDashboard() {
                   transactions={analytics?.karigar?.transactionChart || []}
                   payments={analytics?.karigar?.paymentChart || []}
                   title="Karigar Activity Calendar"
-                  description="Daily transactions and payments for artisans"
+                  description="Daily transactions and payments for karigars"
                   colorClass="bg-purple-50 text-purple-900"
                 />
                 
@@ -469,7 +469,7 @@ export default function KhataDashboard() {
                   transactions={analytics?.vyapari?.transactionChart || []}
                   payments={analytics?.vyapari?.paymentChart || []}
                   title="Vyapari Activity Calendar"
-                  description="Daily transactions and payments for traders"
+                  description="Daily transactions and payments for vyaparis"
                   colorClass="bg-blue-50 text-blue-900"
                 />
               </div>
@@ -549,7 +549,7 @@ export default function KhataDashboard() {
             {/* Karigar Tab */}
             <TabsContent value="karigar" className="space-y-6">              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard 
-                  title="Total Artisans"
+                  title="Total Karigars"
                   value={analytics?.karigar?.totalKarigars || 0}
                   description="Active Karigars"
                   icon={<UserCircle className="h-5 w-5" />}
@@ -614,7 +614,7 @@ export default function KhataDashboard() {
               </Card>              <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Top Artisans</CardTitle>
+                    <CardTitle>Top Karigars</CardTitle>
                     <CardDescription>By transaction volume</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -628,7 +628,7 @@ export default function KhataDashboard() {
                               </div>
                               <div>
                                 <p className="font-medium">{karigar.name}</p>
-                                <p className="text-xs text-muted-foreground">Artisan</p>
+                                <p className="text-xs text-muted-foreground">Karigar</p>
                               </div>
                             </div>
                             
@@ -646,7 +646,7 @@ export default function KhataDashboard() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Recent Karigar Transactions</CardTitle>
-                    <CardDescription>Latest artisan transactions</CardDescription>
+                    <CardDescription>Latest karigar transactions</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {analytics?.karigar?.recentTransactions?.length ? (
@@ -682,7 +682,7 @@ export default function KhataDashboard() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Recent Karigar Payments</CardTitle>
-                    <CardDescription>Latest payments to/from artisans</CardDescription>
+                    <CardDescription>Latest payments to/from karigars</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {analytics?.karigar?.recentPayments?.length ? (

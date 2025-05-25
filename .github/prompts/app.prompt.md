@@ -12,7 +12,7 @@
 
 # Feature requests
 - Khata (Book Record) feature
-- Add features to track VYAPARI (trader) and KARIGAR (artisan) transactions and payments.
+- Add features to track VYAPARI (trader) and KARIGAR transactions and payments.
 - Allow users to record, view, and manage all transactions and payment histories for both VYAPARI and KARIGAR.
 - Current jewelry management website has two role admin and shopkeeper
 - both should have access to khata feature

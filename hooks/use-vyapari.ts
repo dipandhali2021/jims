@@ -359,9 +359,7 @@ export function useVyapari() {
     try {
       const response = await fetch(`/api/khata/vyaparis/${id}/balance`);
       
-      if (!response.ok) {
-        throw new Error('Failed to fetch trader balance');
-      }
+      
       
       return await response.json();
     } catch (error: any) {

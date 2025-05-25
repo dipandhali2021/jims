@@ -92,7 +92,7 @@ export function AddKarigarPaymentDialog({
     if (!karigar?.id) {
       toast({
         title: 'Error',
-        description: 'Invalid artisan data',
+        description: 'Invalid karigar data',
         variant: 'destructive',
       });
       return;
@@ -142,9 +142,9 @@ export function AddKarigarPaymentDialog({
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">        <DialogHeader>
-          <DialogTitle>Add Payment for {karigar?.name || 'Artisan'}</DialogTitle>
+          <DialogTitle>Add Payment for {karigar?.name || 'Karigar'}</DialogTitle>
           <DialogDescription>
-            Record a payment made to or received from this artisan.
+            Record a payment made to or received from this karigar.
           </DialogDescription>
         </DialogHeader>
         

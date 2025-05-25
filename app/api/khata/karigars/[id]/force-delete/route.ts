@@ -21,7 +21,7 @@ export async function DELETE(
 
   // Only admin can force delete
   if (user?.role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden. Only admin can force delete artisans.' }, { status: 403 });
+    return NextResponse.json({ error: 'Forbidden. Only admin can force delete karigars.' }, { status: 403 });
   }
 
   const { id } = params;
@@ -34,7 +34,7 @@ export async function DELETE(
 
     if (!karigar) {
       return NextResponse.json(
-        { error: 'Artisan not found' },
+        { error: 'Karigar not found' },
         { status: 404 }
       );
     }
@@ -58,14 +58,14 @@ export async function DELETE(
     });
 
     return NextResponse.json({ 
-      message: 'Artisan and all related records deleted successfully',
+      message: 'Karigar and all related records deleted successfully',
       deletedId: id 
     });
   } catch (error) {
     console.error('Error force deleting karigar:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to delete artisan';
+    const errorMessage = error instanceof Error ? error.message : 'Failed to delete karigar';
     return NextResponse.json(
-      { error: `Failed to delete artisan: ${errorMessage}` },
+      { error: `Failed to delete karigar: ${errorMessage}` },
       { status: 500 }
     );
   }

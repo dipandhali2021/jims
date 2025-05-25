@@ -42,7 +42,7 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error('Error fetching karigars:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch artisans' },
+      { error: 'Failed to fetch karigars' },
       { status: 500 }
     );
   }
@@ -104,14 +104,14 @@ export async function POST(req: Request) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         return NextResponse.json(
-          { error: 'An artisan with this information already exists' },
+          { error: 'A karigar with this information already exists' },
           { status: 400 }
         );
       }
     }
     
     return NextResponse.json(
-      { error: 'Failed to create artisan' },
+      { error: 'Failed to create karigar' },
       { status: 500 }
     );
   }

@@ -42,7 +42,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
     if (!existingKarigar) {
       return NextResponse.json(
-        { error: 'Artisan not found' },
+        { error: 'Karigar not found' },
         { status: 404 }
       );
     }
@@ -84,12 +84,12 @@ export async function PUT(req: Request, { params }: RouteParams) {
         where: { id }
       });
       
-      return NextResponse.json({ message: 'Artisan rejected and removed successfully' });
+      return NextResponse.json({ message: 'Karigar rejected and removed successfully' });
     }
   } catch (error) {
     console.error(`Error updating karigar approval status ${params.id}:`, error);
     return NextResponse.json(
-      { error: 'Failed to update artisan approval status' },
+      { error: 'Failed to update karigar approval status' },
       { status: 500 }
     );
   }
