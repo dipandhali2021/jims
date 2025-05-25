@@ -328,25 +328,28 @@ export async function GET(req: NextRequest) {
       name: point.name,
       value: point.value || 0,
       timestamp: point.istDisplayTime, // Use the pre-formatted IST display time
-    }));
-
-    // Calculate top selling products by aggregating sales data
+    }));    // Calculate top selling products by aggregating sales data
     // This helps identify best performing products
     const productSales = new Map();
     transactions.forEach(transaction => {
-      const items = transaction.items as any[];
-      items.forEach(item => {
-        const currentSales = productSales.get(item.productId) || {
-          name: item.productName,
-          quantity: 0,
-          revenue: 0,
-        };
-        productSales.set(item.productId, {
-          name: item.productName,
-          quantity: currentSales.quantity + item.quantity,
-          revenue: currentSales.revenue + item.total,
+      // Ensure items is properly parsed as an array
+      const items = Array.isArray(transaction.items) ? transaction.items : 
+                   (typeof transaction.items === 'string' ? JSON.parse(transaction.items) : []);
+      
+      if (items && Array.isArray(items)) {
+        items.forEach(item => {
+          const currentSales = productSales.get(item.productId) || {
+            name: item.productName,
+            quantity: 0,
+            revenue: 0,
+          };
+          productSales.set(item.productId, {
+            name: item.productName,
+            quantity: currentSales.quantity + item.quantity,
+            revenue: currentSales.revenue + item.total,
+          });
         });
-      });
+      }
     });
 
     const topProducts = Array.from(productSales.entries())
@@ -357,22 +360,25 @@ export async function GET(req: NextRequest) {
         quantity: data.quantity,
       }))
       .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5);
-
-    // Calculate revenue distribution across product categories
+      .slice(0, 5);    // Calculate revenue distribution across product categories
     // This provides insights into which categories drive the most revenue
     const categoryRevenue = new Map();
     transactions.forEach(transaction => {
-      const items = transaction.items as any[];
-      items.forEach(item => {
-        // Note: Category info needs to be included in transaction items during creation
-        const category = item.category || 'Uncategorized';
-        const currentRevenue = categoryRevenue.get(category) || 0;
-        categoryRevenue.set(
-          category,
-          currentRevenue + item.total
-        );
-      });
+      // Ensure items is properly parsed as an array
+      const items = Array.isArray(transaction.items) ? transaction.items : 
+                   (typeof transaction.items === 'string' ? JSON.parse(transaction.items) : []);
+      
+      if (items && Array.isArray(items)) {
+        items.forEach(item => {
+          // Note: Category info needs to be included in transaction items during creation
+          const category = item.category || 'Uncategorized';
+          const currentRevenue = categoryRevenue.get(category) || 0;
+          categoryRevenue.set(
+            category,
+            currentRevenue + item.total
+          );
+        });
+      }
     });
 
     const revenueByCategory = Array.from(categoryRevenue.entries())
