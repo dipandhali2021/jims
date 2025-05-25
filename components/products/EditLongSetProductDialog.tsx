@@ -366,11 +366,9 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
       
       // Prepare data with custom category/material if "Other" is selected
       const finalCategory = formData.category === 'Other' ? formData.customCategory : formData.category;
-      const finalMaterial = formData.material === 'Other' ? formData.customMaterial : formData.material;
-
-      // Build data for submit
+      const finalMaterial = formData.material === 'Other' ? formData.customMaterial : formData.material;      // Build data for submit
       const longSetProductData = {
-        id: product.id,
+        id: product.longSetProduct?.id || product.id, // Use longSetProduct.id if available
         name: formData.name,
         sku: formData.sku,
         description: formData.description || '',
@@ -418,11 +416,10 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
           body: JSON.stringify(longSetProductData)
         };
       }
-      
-      // Send the request to update a long set product
-      // Use base product ID for the request
-      const productId = product.longSetProduct?.productId || product.id;
-      const response = await fetch(`/api/products/long-set/${productId}`, requestOptions);
+        // Send the request to update a long set product
+      // Use longSetProduct.id for the request as the API expects this ID
+      const longSetProductId = product.longSetProduct?.id || product.id;
+      const response = await fetch(`/api/products/long-set/${longSetProductId}`, requestOptions);
       
       if (!response.ok) {
         const errorData = await response.json();

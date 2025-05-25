@@ -46,6 +46,14 @@ export async function PUT(
       );
     }
 
+    // Check if product relationship exists
+    if (!existingProduct.product) {
+      return NextResponse.json(
+        { error: "Base product reference not found" },
+        { status: 400 }
+      );
+    }
+
     // Parse the request data
     let updateData;
     let imageUrl = existingProduct.imageUrl;
@@ -81,9 +89,7 @@ export async function PUT(
 
     // For admin actions, create a product request instead of direct update
     if (userRole === "admin") {
-      const requestId = await generateRequestId();
-
-      const productRequest = await prisma.productRequest.create({
+      const requestId = await generateRequestId();      const productRequest = await prisma.productRequest.create({
         data: {
           requestId,
           requestType: "edit",
@@ -91,7 +97,7 @@ export async function PUT(
           adminAction: true,
           isLongSet: true,
           userId: user.id,
-          productId: existingProduct.id,
+          productId: existingProduct.product.id, // Use the base product ID instead of longSetProduct ID
           details: {
             create: {
               name: updateData.name,
@@ -120,13 +126,12 @@ export async function PUT(
 
     const productRequest = await prisma.productRequest.create({
       data: {
-        requestId,
-        requestType: "edit",
+        requestId,        requestType: "edit",
         status: "Pending",
         adminAction: false,
         isLongSet: true,
         userId: user.id,
-        productId: existingProduct.id,
+        productId: existingProduct.product.id, // Use base product ID
         details: {
           create: {
             name: updateData.name,
@@ -183,6 +188,12 @@ export async function DELETE(
         { error: "Long set product not found" },
         { status: 404 }
       );
+    }    // Check if product relationship exists
+    if (!existingProduct.product) {
+      return NextResponse.json(
+        { error: "Base product reference not found" },
+        { status: 400 }
+      );
     }
 
     // For admin actions, create a product request instead of direct deletion
@@ -197,7 +208,7 @@ export async function DELETE(
           adminAction: true,
           isLongSet: true,
           userId: user.id,
-          productId: existingProduct.id,
+          productId: existingProduct.product.id, // Use base product ID
           details: {
             create: {
               name: existingProduct.name,
@@ -225,13 +236,12 @@ export async function DELETE(
 
     const productRequest = await prisma.productRequest.create({
       data: {
-        requestId,
-        requestType: "delete",
+        requestId,        requestType: "delete",
         status: "Pending",
         adminAction: false,
         isLongSet: true,
         userId: user.id,
-        productId: existingProduct.id,
+        productId: existingProduct.product.id, // Use base product ID
         details: {
           create: {
             name: existingProduct.name,
