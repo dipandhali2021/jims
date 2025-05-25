@@ -214,14 +214,16 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                       <TableHead>Date</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
-                  </TableHeader><TableBody>
-                    {pendingApprovals.map((vyapari) => (
+                  </TableHeader><TableBody>                    {pendingApprovals.map((vyapari) => (
                       <TableRow 
                         key={vyapari.id} 
-                        className="cursor-pointer hover:bg-muted/50"
+                        className="hover:bg-muted/50"
                         onClick={() => {
-                          setSelectedVyapari(vyapari);
-                          setShowDetailsDialog(true);
+                          toast({
+                            title: 'Access Restricted',
+                            description: 'Cannot view details of pending vyaparis until they are approved',
+                            variant: 'default',
+                          });
                         }}
                       >
                         <TableCell>{vyapari.name}</TableCell>
@@ -333,10 +335,18 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                     {filteredVyaparis.map((vyapari) => (
                       <TableRow 
                         key={vyapari.id} 
-                        className="cursor-pointer hover:bg-muted/50"
+                        className={`hover:bg-muted/50 ${vyapari.isApproved ? 'cursor-pointer' : ''}`}
                         onClick={() => {
-                          setSelectedVyapari(vyapari);
-                          setShowDetailsDialog(true);
+                          if (vyapari.isApproved) {
+                            setSelectedVyapari(vyapari);
+                            setShowDetailsDialog(true);
+                          } else {
+                            toast({
+                              title: 'Access Restricted',
+                              description: 'Cannot view details of pending vyaparis until they are approved',
+                              variant: 'default',
+                            });
+                          }
                         }}
                       >
                         <TableCell className="font-medium">{vyapari.name}</TableCell>

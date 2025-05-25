@@ -211,14 +211,16 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                       <TableHead>Date</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
-                  </TableHeader><TableBody>
-                    {pendingApprovals.map((karigar) => (
+                  </TableHeader><TableBody>                    {pendingApprovals.map((karigar) => (
                       <TableRow 
                         key={karigar.id}
-                        className="cursor-pointer hover:bg-muted/50"
+                        className="hover:bg-muted/50"
                         onClick={() => {
-                          setSelectedKarigar(karigar);
-                          setShowDetailsDialog(true);
+                          toast({
+                            title: 'Access Restricted',
+                            description: 'Cannot view details of pending karigars until they are approved',
+                            variant: 'default',
+                          });
                         }}
                       >
                         <TableCell>{karigar.name}</TableCell>
@@ -328,14 +330,21 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                       <TableHead>Balance</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
-                  </TableHeader>                  <TableBody>
-                    {filteredKarigars.map((karigar) => (
+                  </TableHeader>                  <TableBody>                    {filteredKarigars.map((karigar) => (
                       <TableRow 
                         key={karigar.id} 
-                        className="cursor-pointer hover:bg-muted/50"
+                        className={`hover:bg-muted/50 ${karigar.isApproved ? 'cursor-pointer' : ''}`}
                         onClick={() => {
-                          setSelectedKarigar(karigar);
-                          setShowDetailsDialog(true);
+                          if (karigar.isApproved) {
+                            setSelectedKarigar(karigar);
+                            setShowDetailsDialog(true);
+                          } else {
+                            toast({
+                              title: 'Access Restricted',
+                              description: 'Cannot view details of pending karigars until they are approved',
+                              variant: 'default',
+                            });
+                          }
                         }}
                       >
                         <TableCell className="font-medium">{karigar.name}</TableCell>
