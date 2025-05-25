@@ -146,12 +146,12 @@ export function DashboardSidebar({
             <SidebarMenuItem>
               <SidebarMenuButton className="h-full" asChild>
                 <Link href="/dashboard">
-                  <div className="flex aspect-square size-11 items-center justify-center rounded-full bg-yellow-100 border border-yellow-200 shadow-sm">
-                    <Gem className="size-6 text-yellow-600" />
+                  <div className="flex aspect-square size-16 items-center justify-center rounded-full">
+                    <img src="/assets/logo.png" width="70" height="70" alt="Omkar Gold Covering Logo" />
                   </div>
                   <div className="flex flex-col gap-0.5 leading-none">
                     <span className="font-bold text-lg tracking-tight">
-                      JEWELRY INVENTORY
+                      OMKAR GOLD COVERING
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {isAdmin ? 'Admin' : 'Shopkeeper'}
@@ -286,7 +286,7 @@ export function DashboardSidebar({
             <span>Log out</span>
           </Button>
           <div className="mt-4 text-xs text-center text-muted-foreground">
-            <p>© 2025 Jewelry Inventory</p>
+            <p>© 2025 Omkar Gold Covering</p>
             <p className="mt-1 text-xs text-muted-foreground/70">
               All rights reserved
             </p>
@@ -310,12 +310,12 @@ export function DashboardSidebar({
         {/* Mobile header with close button */}
         <div className="flex items-center justify-between p-4 ">
           <div className="flex items-center space-x-3">
-            <div className="flex aspect-square size-11 items-center justify-center rounded-full bg-yellow-100 border border-yellow-200 shadow-sm">
-              <Gem className="size-6 text-yellow-600" />
-            </div>
+            <div className="flex aspect-square size-11 items-center justify-center rounded-full">
+                    <img src="/assets/logo.png" width="70" height="70" alt="Omkar Gold Covering Logo" />
+                  </div>
             <div className="flex flex-col">
               <span className="font-semibold text-lg tracking-tight">
-                JEWELRY INVENTORY
+                OMKAR GOLD COVERING
               </span>
               <span className="text-xs text-muted-foreground">
                 {isAdmin
@@ -470,7 +470,7 @@ export function DashboardSidebar({
             <span>Log out</span>
           </Button>
           <div className="mt-4 text-xs text-center text-muted-foreground">
-            <p>© 2025 Jewelry Inventory</p>
+            <p>© 2025 Omkar Gold Covering</p>
             <p className="mt-1 text-xs text-muted-foreground/70">
               All rights reserved
             </p>

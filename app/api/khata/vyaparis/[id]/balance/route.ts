@@ -30,7 +30,7 @@ export async function GET(req: Request, { params }: RouteParams) {
 
     if (!vyapari) {
       return NextResponse.json(
-        { error: 'Trader not found' },
+        { error: 'Vyapari not found' },
         { status: 404 }
       );
     }    // Get user role from metadata
@@ -73,7 +73,7 @@ export async function GET(req: Request, { params }: RouteParams) {
   } catch (error) {
     console.error(`Error calculating vyapari balance ${params.id}:`, error);
     return NextResponse.json(
-      { error: 'Failed to calculate trader balance' },
+      { error: 'Failed to calculate vyapari balance' },
       { status: 500 }
     );
   }

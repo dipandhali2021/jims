@@ -125,12 +125,12 @@ export function ApprovalCounter({ className }: ApprovalCounterProps) {
             <div className="text-sm text-muted-foreground mt-1 flex flex-wrap gap-2">
               {pendingCount.vyapariTransactions > 0 && (
                 <span className="inline-flex items-center bg-slate-100 px-2 py-0.5 rounded-full text-xs">
-                  Trader Trans: {pendingCount.vyapariTransactions}
+                  Vyapari Trans: {pendingCount.vyapariTransactions}
                 </span>
               )}
               {pendingCount.vyapariPayments > 0 && (
                 <span className="inline-flex items-center bg-slate-100 px-2 py-0.5 rounded-full text-xs">
-                  Trader Payments: {pendingCount.vyapariPayments}
+                  Vyapari Payments: {pendingCount.vyapariPayments}
                 </span>
               )}
               {pendingCount.karigarTransactions > 0 && (

@@ -88,7 +88,7 @@ export function useVyapari() {
       console.error('Error fetching vyaparis:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch traders',
+        description: error.message || 'Failed to fetch vyaparis',
         variant: 'destructive',
       });
       return [];
@@ -109,7 +109,7 @@ export function useVyapari() {
       console.error('Error fetching pending vyaparis:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch pending traders',
+        description: error.message || 'Failed to fetch pending vyaparis',
         variant: 'destructive',
       });
       return [];
@@ -130,7 +130,7 @@ export function useVyapari() {
       console.error(`Error fetching vyapari ${id}:`, error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch trader details',
+        description: error.message || 'Failed to fetch vyapari details',
         variant: 'destructive',
       });
       return null;
@@ -150,14 +150,14 @@ export function useVyapari() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create trader');
+        throw new Error(errorData.error || 'Failed to create vyapari');
       }
       
       const result = await response.json();
       
       toast({
         title: 'Success',
-        description: 'Trader created successfully',
+        description: 'Vyapari created successfully',
       });
       
       return result;
@@ -165,7 +165,7 @@ export function useVyapari() {
       console.error('Error creating vyapari:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to create trader',
+        description: error.message || 'Failed to create vyapari',
         variant: 'destructive',
       });
       throw error;
@@ -185,14 +185,14 @@ export function useVyapari() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to update trader');
+        throw new Error(errorData.error || 'Failed to update vyapari');
       }
       
       const result = await response.json();
       
       toast({
         title: 'Success',
-        description: 'Trader updated successfully',
+        description: 'Vyapari updated successfully',
       });
       
       return result;
@@ -200,7 +200,7 @@ export function useVyapari() {
       console.error(`Error updating vyapari ${id}:`, error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update trader',
+        description: error.message || 'Failed to update vyapari',
         variant: 'destructive',
       });
       throw error;
@@ -224,9 +224,9 @@ export function useVyapari() {
         try {
           errorData = await response.json();
         } catch (e) {
-          throw new Error(`Failed to ${approve ? 'approve' : 'reject'} trader. Status: ${response.status}`);
+          throw new Error(`Failed to ${approve ? 'approve' : 'reject'} vyapari. Status: ${response.status}`);
         }
-        throw new Error(errorData.error || `Failed to ${approve ? 'approve' : 'reject'} trader`);
+        throw new Error(errorData.error || `Failed to ${approve ? 'approve' : 'reject'} vyapari`);
       }
       
       const result = await response.json();
@@ -248,7 +248,7 @@ export function useVyapari() {
       const response = await fetch(`/api/khata/vyaparis/${id}/transactions`);
       
       if (!response.ok) {
-        throw new Error('Failed to fetch trader transactions');
+        throw new Error('Failed to fetch vyapari transactions');
       }
       
       return await response.json();
@@ -256,7 +256,7 @@ export function useVyapari() {
       console.error(`Error fetching transactions for vyapari ${id}:`, error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch trader transactions',
+        description: error.message || 'Failed to fetch vyapari transactions',
         variant: 'destructive',
       });
       return [];
@@ -302,17 +302,16 @@ export function useVyapari() {
   const fetchVyapariPayments = useCallback(async (id: string) => {
     try {
       const response = await fetch(`/api/khata/vyaparis/${id}/payments`);
-      
       if (!response.ok) {
-        throw new Error('Failed to fetch trader payments');
+        throw new Error('Failed to fetch vyapari payments');
       }
-      
+
       return await response.json();
     } catch (error: any) {
       console.error(`Error fetching payments for vyapari ${id}:`, error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to fetch trader payments',
+        description: error.message || 'Failed to fetch vyapari payments',
         variant: 'destructive',
       });
       return [];
@@ -366,7 +365,7 @@ export function useVyapari() {
       console.error(`Error calculating balance for vyapari ${id}:`, error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to calculate trader balance',
+        description: error.message || 'Failed to calculate vyapari balance',
         variant: 'destructive',
       });
       return { balance: 0 };
@@ -385,12 +384,12 @@ export function useVyapari() {
       
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to delete trader');
+        throw new Error(errorData.error || 'Failed to delete vyapari');
       }
       
       toast({
         title: 'Success',
-        description: 'Trader deleted successfully',
+        description: 'Vyapari deleted successfully',
       });
       
       return true;
@@ -398,7 +397,7 @@ export function useVyapari() {
       console.error(`Error deleting vyapari ${id}:`, error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to delete trader',
+        description: error.message || 'Failed to delete vyapari',
         variant: 'destructive',
       });
       throw error;

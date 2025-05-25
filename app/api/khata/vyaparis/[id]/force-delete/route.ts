@@ -21,7 +21,7 @@ export async function DELETE(
 
   // Only admin can force delete
   if (user?.role !== 'admin') {
-    return NextResponse.json({ error: 'Forbidden. Only admin can force delete traders.' }, { status: 403 });
+    return NextResponse.json({ error: 'Forbidden. Only admin can force delete vyaparis.' }, { status: 403 });
   }
 
   const { id } = params;
@@ -33,7 +33,7 @@ export async function DELETE(
 
     if (!vyapari) {
       return NextResponse.json(
-        { error: 'Trader not found' },
+        { error: 'Vyapari not found' },
         { status: 404 }
       );
     }
@@ -57,14 +57,14 @@ export async function DELETE(
     });
 
     return NextResponse.json({ 
-      message: 'Trader and all related records deleted successfully',
+      message: 'Vyapari and all related records deleted successfully',
       deletedId: id 
     });
   } catch (error) {
     console.error('Error force deleting vyapari:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to delete trader';
+    const errorMessage = error instanceof Error ? error.message : 'Failed to delete vyapari';
     return NextResponse.json(
-      { error: `Failed to delete trader: ${errorMessage}` },
+      { error: `Failed to delete vyapari: ${errorMessage}` },
       { status: 500 }
     );
   }

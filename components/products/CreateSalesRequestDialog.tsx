@@ -53,10 +53,10 @@ export function CreateSalesRequestDialog({
           const approvedVyaparis = data.filter((v: Vyapari) => v.isApproved);
           setVyaparis(approvedVyaparis);
         } catch (error) {
-          console.error('Error loading traders:', error);
+          console.error('Error loading vyaparis:', error);
           toast({
             title: 'Error',
-            description: 'Failed to load traders',
+            description: 'Failed to load vyaparis',
             variant: 'destructive',
           });
         } finally {
@@ -72,7 +72,7 @@ export function CreateSalesRequestDialog({
       if (!selectedVyapariId || selectedVyapariId === 'none') {
       toast({
         title: 'Error',
-        description: 'Please select a trader',
+        description: 'Please select a vyaparis',
         variant: 'destructive',
       });
       return;
@@ -172,7 +172,7 @@ export function CreateSalesRequestDialog({
               onValueChange={(value) => setSelectedVyapariId(value)}
             >
               <SelectTrigger id="vyapari" className="w-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                <SelectValue placeholder="Select a trader" />
+                <SelectValue placeholder="Select a vyapari" />
               </SelectTrigger>
               <SelectContent>
                 {vyaparis.map((vyapari) => (
@@ -181,20 +181,20 @@ export function CreateSalesRequestDialog({
                   </SelectItem>
                 ))}
                 <SelectItem key="custom" value="custom">
-                  + Add Custom Trader
+                  + Add Custom Vyapari
                 </SelectItem>
               </SelectContent>
             </Select>
-            {isVyaparisLoading && <p className="text-sm text-gray-500">Loading traders...</p>}
+            {isVyaparisLoading && <p className="text-sm text-gray-500">Loading vyaparis...</p>}
             
             {selectedVyapariId === 'custom' && (
               <div className="mt-2">
                 <Label htmlFor="customTraderName" className="text-sm font-medium text-gray-700">
-                  Custom Trader Name
+                  Custom Vyapari Name
                 </Label>
                 <Input
                   id="customTraderName"
-                  placeholder="Enter trader name"
+                  placeholder="Enter vyapari name"
                   value={customTraderName}
                   onChange={(e) => setCustomTraderName(e.target.value)}
                   className="w-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"

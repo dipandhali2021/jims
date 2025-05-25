@@ -312,13 +312,7 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                   <option value="pending">Pending Approval</option>
                 </select>
               </div>
-            </div>
-
-            {isLoading ? (
-              <div className="flex justify-center items-center py-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : filteredKarigars.length === 0 ? (
+            </div>            {filteredKarigars.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 No karigars found. Try different search criteria or add a new karigar.
               </div>

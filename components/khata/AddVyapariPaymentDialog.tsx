@@ -91,7 +91,7 @@ export function AddVyapariPaymentDialog({
     if (!vyapari?.id) {
       toast({
         title: 'Error',
-        description: 'Invalid trader data',
+        description: 'Invalid vyapari data',
         variant: 'destructive',
       });
       return;
@@ -138,10 +138,11 @@ export function AddVyapariPaymentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[425px]">        <DialogHeader>
-          <DialogTitle>Add Payment for {vyapari?.name || 'Trader'}</DialogTitle>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Add Payment for {vyapari?.name || 'Vyapari'}</DialogTitle>
           <DialogDescription>
-            Record a payment made to or received from this trader.
+            Record a payment made to or received from this vyapari.
           </DialogDescription>
         </DialogHeader>
         

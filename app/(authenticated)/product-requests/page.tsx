@@ -1644,7 +1644,7 @@ export default function ProductRequestsPage() {
                             selectedRequest.product.supplier) && (
                             <div>
                               <p className="text-xs text-gray-500">
-                                Trader:
+                                Vyapari:
                               </p>
                               <div
                                 className={

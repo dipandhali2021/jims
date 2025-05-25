@@ -42,7 +42,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
     if (!existingVyapari) {
       return NextResponse.json(
-        { error: 'Trader not found' },
+        { error: 'Vyapari not found' },
         { status: 404 }
       );
     }
@@ -84,12 +84,12 @@ export async function PUT(req: Request, { params }: RouteParams) {
         where: { id }
       });
       
-      return NextResponse.json({ message: 'Trader rejected and removed successfully' });
+      return NextResponse.json({ message: 'Vyapari rejected and removed successfully' });
     }
   } catch (error) {
     console.error(`Error updating vyapari approval status ${params.id}:`, error);
     return NextResponse.json(
-      { error: 'Failed to update trader approval status' },
+      { error: 'Failed to update vyapari approval status' },
       { status: 500 }
     );
   }

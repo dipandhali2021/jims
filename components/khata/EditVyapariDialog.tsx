@@ -102,7 +102,7 @@ export function EditVyapariDialog({
       console.error('Failed to update vyapari:', error);
       toast({
         title: 'Error',
-        description: error.message || 'Failed to update trader',
+        description: error.message || 'Failed to update vyapari',
         variant: 'destructive',
       });
     } finally {
@@ -114,9 +114,9 @@ export function EditVyapariDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Edit Trader</DialogTitle>
+          <DialogTitle>Edit Vyapari</DialogTitle>
           <DialogDescription>
-            Update trader information. Click save when you're done.
+            Update vyapari information. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
         
@@ -131,7 +131,7 @@ export function EditVyapariDialog({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 className="col-span-3"
-                placeholder="Enter trader name"
+                placeholder="Enter vyapari name"
                 required
               />
             </div>

@@ -339,9 +339,8 @@ export default function KhataDashboard() {
                   icon={<UserCircle className="h-5 w-5" />}
                   iconColor="bg-purple-100 text-purple-700"
                 />
-                
                 <StatCard 
-                  title="Total Traders"
+                  title="Total Vyaparis"
                   value={analytics?.vyapari?.totalVyaparis || 0}
                   description="Active Vyaparis"
                   icon={<Users className="h-5 w-5" />}
@@ -437,7 +436,7 @@ export default function KhataDashboard() {
                   <CardHeader>
                     <CardTitle>Top 5 Vyaparis</CardTitle>
                     <CardDescription>
-                      Traders with highest transaction volumes
+                      Vyaparis with highest transaction volumes
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-1">
@@ -722,7 +721,7 @@ export default function KhataDashboard() {
             {/* Vyapari Tab */}
             <TabsContent value="vyapari" className="space-y-6">              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <StatCard 
-                  title="Total Traders"
+                  title="Total Vyaparis"
                   value={analytics?.vyapari?.totalVyaparis || 0}
                   description="Active Vyaparis"
                   icon={<Users className="h-5 w-5" />}
@@ -789,7 +788,7 @@ export default function KhataDashboard() {
               <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Top Traders</CardTitle>
+                    <CardTitle>Top Vyaparis</CardTitle>
                     <CardDescription>By transaction volume</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -803,7 +802,7 @@ export default function KhataDashboard() {
                               </div>
                               <div>
                                 <p className="font-medium">{vyapari.name}</p>
-                                <p className="text-xs text-muted-foreground">Trader</p>
+                                <p className="text-xs text-muted-foreground">Vyapari</p>
                               </div>
                             </div>
                             
@@ -820,7 +819,7 @@ export default function KhataDashboard() {
                 <Card>
                    <CardHeader>
                      <CardTitle>Recent Vyapari Payments</CardTitle>
-                     <CardDescription>Latest payments to/from traders</CardDescription>
+                     <CardDescription>Latest payments to/from vyaparis</CardDescription>
                    </CardHeader>
                    <CardContent>
                      {analytics?.vyapari?.recentPayments?.length ? (
@@ -855,7 +854,7 @@ export default function KhataDashboard() {
                 <Card>
                    <CardHeader>
                      <CardTitle>Recent Vyapari Transactions</CardTitle>
-                    <CardDescription>Latest trader transactions</CardDescription>
+                    <CardDescription>Latest vyapari transactions</CardDescription>
                   </CardHeader>
                   <CardContent>
                     {analytics?.vyapari?.recentTransactions?.length ? (

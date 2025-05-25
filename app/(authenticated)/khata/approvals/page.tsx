@@ -84,7 +84,7 @@ export default function KhataApprovals() {
         console.error('Failed to load pending vyapari transactions:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load pending trader transactions',
+          description: 'Failed to load pending vyapari transactions',
           variant: 'destructive',
         });
       } finally {
@@ -108,7 +108,7 @@ export default function KhataApprovals() {
         console.error('Failed to load pending vyapari payments:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load pending trader payments',
+          description: 'Failed to load pending vyapari payments',
           variant: 'destructive',
         });
       } finally {
@@ -295,14 +295,14 @@ export default function KhataApprovals() {
           <TabsList className="mb-4">
             <TabsTrigger value="vyapari-transactions" className="flex items-center gap-1">
               <FileText className="h-4 w-4" />
-              <span>Trader Transactions</span>
+              <span>Vyapari Transactions</span>
               {pendingVyapariTransactions.length > 0 && (
                 <Badge variant="secondary">{pendingVyapariTransactions.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="vyapari-payments" className="flex items-center gap-1">
               <CreditCard className="h-4 w-4" />
-              <span>Trader Payments</span>
+              <span>Vyapari Payments</span>
               {pendingVyapariPayments.length > 0 && (
                 <Badge variant="secondary">{pendingVyapariPayments.length}</Badge>
               )}
@@ -327,7 +327,7 @@ export default function KhataApprovals() {
           <TabsContent value="vyapari-transactions">
             <Card>
               <CardHeader>
-                <CardTitle>Pending Trader Transactions</CardTitle>
+                <CardTitle>Pending Vyapari Transactions</CardTitle>
                 <CardDescription>Review and approve transactions created by shopkeepers</CardDescription>
               </CardHeader>
               <CardContent>
@@ -337,7 +337,7 @@ export default function KhataApprovals() {
                   </div>
                 ) : pendingVyapariTransactions.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    No pending trader transactions to approve
+                    No pending vyapari transactions to approve
                   </div>
                 ) : (
                   <div className="rounded-md border">
@@ -345,7 +345,7 @@ export default function KhataApprovals() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Transaction ID</TableHead>
-                          <TableHead>Trader</TableHead>
+                          <TableHead>Vyapari</TableHead>
                           <TableHead>Description</TableHead>
                           <TableHead>Amount</TableHead>
                           <TableHead>Created By</TableHead>
@@ -412,7 +412,7 @@ export default function KhataApprovals() {
           <TabsContent value="vyapari-payments">
             <Card>
               <CardHeader>
-                <CardTitle>Pending Trader Payments</CardTitle>
+                <CardTitle>Pending Vyapari Payments</CardTitle>
                 <CardDescription>Review and approve payments created by shopkeepers</CardDescription>
               </CardHeader>
               <CardContent>
@@ -422,7 +422,7 @@ export default function KhataApprovals() {
                   </div>
                 ) : pendingVyapariPayments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
-                    No pending trader payments to approve
+                    No pending vyapari payments to approve
                   </div>
                 ) : (
                   <div className="rounded-md border">
@@ -430,7 +430,7 @@ export default function KhataApprovals() {
                       <TableHeader>
                         <TableRow>
                           <TableHead>Payment ID</TableHead>
-                          <TableHead>Trader</TableHead>
+                          <TableHead>Vyapari</TableHead>
                           <TableHead>Amount</TableHead>
                           <TableHead>Payment Mode</TableHead>
                           <TableHead>Created By</TableHead>

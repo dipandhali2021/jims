@@ -34,7 +34,7 @@ export function AddVyapariTransactionDialog({
 }: AddVyapariTransactionDialogProps) {
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
-  const [isCredit, setIsCredit] = useState(true); // true = we owe trader, false = trader owes us
+  const [isCredit, setIsCredit] = useState(true); // true = we owe Vyapari, false = Vyapari owes us
   const [items, setItems] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);  const [isAdmin, setIsAdmin] = useState(false);
   
@@ -72,7 +72,7 @@ export function AddVyapariTransactionDialog({
     if (!vyapari?.id) {
       toast({
         title: 'Error',
-        description: 'Invalid trader data',
+        description: 'Invalid vyapari data',
         variant: 'destructive',
       });
       return;
@@ -136,9 +136,9 @@ export function AddVyapariTransactionDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px] w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add Transaction for {vyapari?.name || 'Trader'}</DialogTitle>
+          <DialogTitle>Add Transaction for {vyapari?.name || 'Vyapari'}</DialogTitle>
           <DialogDescription>
-            Add a new transaction to the trader's account.
+            Add a new transaction to the vyapari's account.
           </DialogDescription>
         </DialogHeader>
         

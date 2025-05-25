@@ -120,9 +120,9 @@ export function VyapariDetailsDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Trader Details</DialogTitle>
+          <DialogTitle>Vyapari Details</DialogTitle>
           <DialogDescription>
-            View trader information, transaction history, and payment records.
+            View vyapari information, transaction history, and payment records.
           </DialogDescription>
         </DialogHeader>
 
@@ -133,9 +133,9 @@ export function VyapariDetailsDialog({
         ) : !vyapari ? (
           <div className="flex flex-col items-center justify-center p-8 text-center">
             <AlertCircle className="h-12 w-12 text-muted-foreground mb-2" />
-            <h3 className="text-lg font-medium">Trader Not Found</h3>
+            <h3 className="text-lg font-medium">Vyapari Not Found</h3>
             <p className="text-sm text-muted-foreground">
-              The requested trader information could not be loaded.
+              The requested vyapari information could not be loaded.
             </p>
           </div>
         ) : (

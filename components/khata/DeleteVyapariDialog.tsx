@@ -42,7 +42,7 @@ export function DeleteVyapariDialog({
         onClose();
       }
     } catch (error) {
-      console.error('Error deleting trader:', error);
+      console.error('Error deleting vyapari:', error);
       // Keep the dialog open if there was an error
     } finally {
       setIsDeleting(false);
@@ -53,10 +53,10 @@ export function DeleteVyapariDialog({
     <AlertDialog open={open} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Force Delete Trader</AlertDialogTitle>
+          <AlertDialogTitle>Force Delete Vyapari</AlertDialogTitle>
           <AlertDialogDescription>
             <p className="mb-2">
-              You are about to forcefully delete the trader <strong>{vyapariName}</strong>.
+              You are about to forcefully delete the vyapari <strong>{vyapariName}</strong>.
             </p>
             <p className="mb-2 text-red-600 font-semibold">
               This action is irreversible and will delete all associated transactions, 

@@ -30,7 +30,7 @@ export async function GET(req: Request, { params }: RouteParams) {
 
     if (!vyapari) {
       return NextResponse.json(
-        { error: 'Trader not found' },
+        { error: 'Vyapari not found' },
         { status: 404 }
       );
     }
@@ -49,7 +49,7 @@ export async function GET(req: Request, { params }: RouteParams) {
   } catch (error) {
     console.error(`Error fetching vyapari payments ${params.id}:`, error);
     return NextResponse.json(
-      { error: 'Failed to fetch trader payments' },
+      { error: 'Failed to fetch vyapari payments' },
       { status: 500 }
     );
   }
@@ -75,7 +75,7 @@ export async function POST(req: Request, { params }: RouteParams) {
 
     if (!vyapari) {
       return NextResponse.json(
-        { error: 'Trader not found or not approved' },
+        { error: 'Vyapari not found or not approved' },
         { status: 404 }
       );
     }
@@ -133,7 +133,7 @@ export async function POST(req: Request, { params }: RouteParams) {
   } catch (error) {
     console.error(`Error creating vyapari payment ${params.id}:`, error);
     return NextResponse.json(
-      { error: 'Failed to create trader payment' },
+      { error: 'Failed to create vyapari payment' },
       { status: 500 }
     );
   }

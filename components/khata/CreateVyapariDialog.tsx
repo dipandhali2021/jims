@@ -67,7 +67,7 @@ export function CreateVyapariDialog({
       if (!isAdmin) {
         toast({
           title: 'Success',
-          description: 'Trader created successfully. Waiting for admin approval.',
+          description: 'Vyapari created successfully. Waiting for admin approval.',
         });
       }
     } catch (error) {
@@ -81,9 +81,9 @@ export function CreateVyapariDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Add New Trader</DialogTitle>
+          <DialogTitle>Add New Vyapari</DialogTitle>
           <DialogDescription>
-            Enter the trader (VYAPARI) details below. Click save when you're done.
+            Enter the vyapari details below. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
 
@@ -94,7 +94,7 @@ export function CreateVyapariDialog({
               id="name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Trader name"
+              placeholder="Vyapari name"
               required
             />
           </div>

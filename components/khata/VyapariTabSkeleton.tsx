@@ -11,7 +11,7 @@ export function VyapariTabSkeleton() {
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Traders (VYAPARI)</CardTitle>
+              <CardTitle>Vyaparis</CardTitle>
               <Skeleton className="h-4 w-60 mt-1" />
             </div>
             <Skeleton className="h-10 w-32" />

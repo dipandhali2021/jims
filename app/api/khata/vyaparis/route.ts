@@ -42,7 +42,7 @@ export async function GET(req: Request) {
   } catch (error) {
     console.error('Error fetching vyaparis:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch traders' },
+      { error: 'Failed to fetch vyaparis' },
       { status: 500 }
     );
   }
@@ -103,14 +103,14 @@ export async function POST(req: Request) {
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
         return NextResponse.json(
-          { error: 'A trader with this information already exists' },
+          { error: 'A vyapari with this information already exists' },
           { status: 400 }
         );
       }
     }
     
     return NextResponse.json(
-      { error: 'Failed to create trader' },
+      { error: 'Failed to create vyapari' },
       { status: 500 }
     );
   }

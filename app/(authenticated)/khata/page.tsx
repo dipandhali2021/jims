@@ -62,7 +62,7 @@ export default function KhataPage() {
             <TabsList>
               <TabsTrigger value="vyapari" className="relative">
                 <Users className="h-4 w-4 mr-2" />
-                <span>VYAPARI (Traders)</span>
+                <span>Vyapari</span>
               </TabsTrigger>
               <TabsTrigger value="karigar">
                 <UserCircle className="h-4 w-4 mr-2" />

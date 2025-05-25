@@ -52,7 +52,7 @@ export async function GET(req: Request, { params }: RouteParams) {
 
     if (!vyapari) {
       return NextResponse.json(
-        { error: 'Trader not found' },
+        { error: 'Vyapari not found' },
         { status: 404 }
       );
     }
@@ -61,7 +61,7 @@ export async function GET(req: Request, { params }: RouteParams) {
   } catch (error) {
     console.error(`Error fetching vyapari ${params.id}:`, error);
     return NextResponse.json(
-      { error: 'Failed to fetch trader details' },
+      { error: 'Failed to fetch vyapari details' },
       { status: 500 }
     );
   }
@@ -92,7 +92,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
 
     if (!existingVyapari) {
       return NextResponse.json(
-        { error: 'Trader not found' },
+        { error: 'Vyapari not found' },
         { status: 404 }
       );
     }
@@ -129,7 +129,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
   } catch (error) {
     console.error(`Error updating vyapari ${params.id}:`, error);
     return NextResponse.json(
-      { error: 'Failed to update trader' },
+      { error: 'Failed to update vyapari' },
       { status: 500 }
     );
   }

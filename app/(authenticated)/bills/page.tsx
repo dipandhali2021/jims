@@ -400,17 +400,6 @@ export default function BillsPage() {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              className="h-8 w-8 p-0"
-                              title="Edit Bill"
-                              onClick={() => handleEditBill(bill)}
-                            >
-                              <Edit className="h-4 w-4" />
-                              <span className="sr-only">Edit</span>
-                            </Button>
-                            
-                            <Button 
-                              variant="ghost" 
-                              size="sm" 
                               className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
                               title="Delete Bill"
                               onClick={() => handleDeleteBill(bill.id)}

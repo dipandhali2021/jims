@@ -173,7 +173,7 @@ export async function PUT(
               const sequentialNumber = (transactionCountForYear + 1).toString().padStart(4, '0');
               const transactionId = `VT-${currentYear}-${sequentialNumber}`;
               
-              // Create vyapari transaction - negative amount means the trader owes us money
+              // Create vyapari transaction - negative amount means the Vyapari owes us money
               // We can reuse the GST values and taxable status already calculated above
               const vyapariTransactionAmount = billType === 'GST' && isTaxable
                 ? salesRequest.totalValue + (sgst || 0) + (cgst || 0) + (igst || 0) 
@@ -183,7 +183,7 @@ export async function PUT(
                 data: {
                   transactionId,
                   description: `Sales Request ${salesRequest.requestId} approved`,
-                  amount: -vyapariTransactionAmount, // Negative amount - trader owes us money
+                  amount: -vyapariTransactionAmount, // Negative amount - Vyapari owes us money
                   items: {
                     salesRequestId: salesRequest.requestId,
                     items: transactionItems,

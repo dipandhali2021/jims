@@ -100,7 +100,7 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
         console.error('Failed to load vyapari data:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load trader data',
+          description: 'Failed to load vyapari data',
           variant: 'destructive',
         });
       } finally {
@@ -155,13 +155,13 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
       
       toast({
         title: 'Success',
-        description: `Trader ${approve ? 'approved' : 'rejected'} successfully`,
+        description: `Vyapari ${approve ? 'approved' : 'rejected'} successfully`,
       });
     } catch (error) {
       console.error('Failed to update status:', error);
       toast({
         title: 'Error',
-        description: `Failed to ${approve ? 'approve' : 'reject'} trader. Please try again.`,
+        description: `Failed to ${approve ? 'approve' : 'reject'} vyapari. Please try again.`,
         variant: 'destructive',
       });
     } finally {
@@ -198,7 +198,7 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                 <div>
                   <CardTitle>Pending Approvals</CardTitle>
                   <CardDescription>
-                    {pendingApprovals.length} trader {pendingApprovals.length === 1 ? 'record' : 'records'} pending approval
+                    {pendingApprovals.length} vyapari {pendingApprovals.length === 1 ? 'record' : 'records'} pending approval
                   </CardDescription>
                 </div>
               </div>
@@ -281,9 +281,9 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle>Traders (VYAPARI)</CardTitle>
+                <CardTitle>Vyaparis</CardTitle>
                 <CardDescription>
-                  Manage your traders, their transactions, and payment records
+                  Manage your vyaparis, their transactions, and payment records
                 </CardDescription>
               </div>
               <Button onClick={() => setShowCreateDialog(true)}>
@@ -298,7 +298,7 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                 <div className="relative">
                   <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                   <Input
-                    placeholder="Search traders..."
+                    placeholder="Search vyaparis..."
                     className="pl-9 w-[250px]"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -316,7 +316,7 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
               </div>
             </div>            {filteredVyaparis.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
-                No traders found. Try different search criteria or add a new trader.
+                No vyaparis found. Try different search criteria or add a new vyapari.
               </div>
             ) : (
               <div className="rounded-md border">
@@ -404,14 +404,14 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                                 variant="outline"
                                 size="icon"
                                 className="h-8 w-8 text-red-600"
-                                title="Delete Trader"
+                                title="Delete Vyapari"
                                 onClick={() => {
                                   setSelectedVyapari(vyapari);
                                   setShowDeleteDialog(true);
                                 }}
                               >
                                 <Trash className="h-4 w-4" />
-                                <span className="sr-only">Delete Trader</span>
+                                <span className="sr-only">Delete Vyapari</span>
                               </Button>
                             )}
                           </div>

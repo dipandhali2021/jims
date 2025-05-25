@@ -71,10 +71,10 @@ export function CreateBulkSalesRequestDialog({
           const approvedTraders = data.filter((trader: any) => trader.isApproved);
           setTraders(approvedTraders);
         } catch (error) {
-          console.error('Failed to load traders:', error);
+          console.error('Failed to load vyaparis:', error);
           toast({
             title: 'Error',
-            description: 'Failed to load traders',
+            description: 'Failed to load vyaparis',
             variant: 'destructive',
           });
         } finally {
@@ -128,7 +128,7 @@ export function CreateBulkSalesRequestDialog({
       if (!selectedTrader) {
       toast({
         title: 'Error',
-        description: 'Please select a trader',
+        description: 'Please select a vyapari',
         variant: 'destructive',
       });
       return;
@@ -136,7 +136,7 @@ export function CreateBulkSalesRequestDialog({
       if (selectedTrader === 'custom-trader' && !otherCustomerName.trim()) {
       toast({
         title: 'Error',
-        description: 'Please enter trader name',
+        description: 'Please enter vyapari name',
         variant: 'destructive',
       });
       return;
@@ -250,13 +250,13 @@ export function CreateBulkSalesRequestDialog({
               </div>              {selectedTrader === 'custom-trader' && (
                 <div>
                   <Label htmlFor="otherCustomerName" className="text-sm font-medium text-gray-700">
-                    Custom Trader Name
+                    Custom Vyapari Name
                   </Label>
                   <Input
                     id="otherCustomerName"
                     value={otherCustomerName}
                     onChange={(e) => setOtherCustomerName(e.target.value)}
-                    placeholder="Enter trader name"
+                    placeholder="Enter vyapari name"
                     className="w-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     required
                   />
