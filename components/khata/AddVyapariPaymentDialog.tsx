@@ -40,7 +40,8 @@ export function AddVyapariPaymentDialog({
   vyapari,
 }: AddVyapariPaymentDialogProps) {  const [amount, setAmount] = useState('');
   const [paymentMode, setPaymentMode] = useState('Cash');  
-  const [paymentDirection, setPaymentDirection] = useState<'to_vyapari' | 'from_vyapari'>('from_vyapari');
+  // Always use 'from_vyapari' direction as default since all payments decrease balance now
+  const paymentDirection = 'from_vyapari';
   const [referenceNumber, setReferenceNumber] = useState('');
   const [notes, setNotes] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -107,10 +108,8 @@ export function AddVyapariPaymentDialog({
       };
       
       await createVyapariPayment(vyapari.id, paymentData);
-        // Reset form
-      setAmount('');
+        // Reset form      setAmount('');
       setPaymentMode('Cash');
-      setPaymentDirection('to_vyapari');
       setReferenceNumber('');
       setNotes('');
       
@@ -194,24 +193,7 @@ export function AddVyapariPaymentDialog({
                   ))}
                 </SelectContent>
               </Select>
-            </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="paymentDirection" className="text-right">
-                Direction *
-              </Label>
-              <Select
-                value={paymentDirection}
-                onValueChange={(value) => setPaymentDirection(value as 'to_vyapari' | 'from_vyapari')}
-              >
-                <SelectTrigger id="paymentDirection" className="col-span-3">
-                  <SelectValue placeholder="Select payment direction" />
-                </SelectTrigger>
-                <SelectContent>
-                  {/* <SelectItem value="to_vyapari">Paid to Trader</SelectItem> */}
-                  <SelectItem value="from_vyapari">Received from Trader</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            </div>              {/* Payment direction removed as all payments now reduce balance the same way */}
             
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="referenceNumber" className="text-right">

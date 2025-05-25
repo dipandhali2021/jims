@@ -255,8 +255,8 @@ export function VyapariDetailsDialog({
                             </TableCell>
                             
                             <TableCell className="text-right">
-                              <span className={transaction.amount > 0 ? "text-red-500" : "text-green-500"}>
-                                {transaction.amount > 0 ? "+" : "-"}
+                              <span className={transaction.amount > 0 ? "text-green-500" : "text-red-500"}>
+                                {/* {transaction.am ount > 0 ? "+" : "-"} */}
                                 {formatCurrency(Math.abs(transaction.amount))}
                               </span>
                             </TableCell>
@@ -302,10 +302,8 @@ export function VyapariDetailsDialog({
                                 </div>
                               )}
                             </TableCell>
-                            <TableCell>{payment.referenceNumber || '-'}</TableCell>
-                            <TableCell className="text-right">
-                              <span className={payment.paymentDirection === 'to_vyapari' ? "text-red-500" : "text-green-500"}>
-                                {payment.paymentDirection === 'to_vyapari' ? "- " : "+ "}
+                            <TableCell>{payment.referenceNumber || '-'}</TableCell>                            <TableCell className="text-right">
+                              <span className="text-green-500">
                                 {formatCurrency(payment.amount)}
                               </span>
                             </TableCell>

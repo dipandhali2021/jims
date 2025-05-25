@@ -57,24 +57,17 @@ export async function GET(req: Request, { params }: RouteParams) {
     });
 
     const transactionTotal = transactionsSum._sum.amount || 0;
-    
-    // Calculate payment totals based on direction
-    let paidToVyapariTotal = 0;
-    let paidByVyapariTotal = 0;
+      // Calculate total payments (all payments reduce balance regardless of direction)
+    let totalPayments = 0;
     
     for (const payment of payments) {
-      // Use type assertion since TypeScript doesn't have paymentDirection in its type definition
-      const direction = (payment as any).paymentDirection;
-      if (direction === 'to_vyapari') {
-        paidToVyapariTotal += payment.amount;
-      } else if (direction === 'from_vyapari') {
-        paidByVyapariTotal += payment.amount;
-      }
-    }    // Final balance: positive means we owe them, negative means they owe us
+      // Add all payments regardless of direction
+      totalPayments += payment.amount;
+    }
+      // Final balance: positive means we owe them, negative means they owe us
     // Transactions affect the balance (positive amounts are what we owe)
-    // Payments to vyapari reduce what we owe
-    // Payments from vyapari reduce what they owe us
-    const balance = transactionTotal - paidToVyapariTotal - paidByVyapariTotal;
+    // All payments reduce the balance regardless of direction
+    const balance = transactionTotal + totalPayments;
 
     return NextResponse.json({ balance });
   } catch (error) {
