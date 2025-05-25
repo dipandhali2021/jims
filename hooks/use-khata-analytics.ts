@@ -23,8 +23,24 @@ export interface KarigarAnalytics {
     amount: number;
     createdAt: string;
   }[];
+  recentPayments: {
+    id: string;
+    paymentId: string;
+    karigarName: string;
+    description: string;
+    amount: number;
+    createdAt: string;
+  }[];
   totalTransactionAmount: number;
+  totalPaymentAmount: number;
   monthlyTransactionCount: number;
+  monthlyPaymentCount: number;
+  totalTransactions: number;
+  totalPayments: number;
+  pendingTransactions: number;
+  pendingTransactionAmount: number;
+  resolvedTransactions: number;
+  resolvedTransactionAmount: number;
   amountWeOwe: number;
   amountOwedToUs: number;
   topKarigars: {
@@ -33,6 +49,11 @@ export interface KarigarAnalytics {
     totalAmount: number;
   }[];
   transactionChart: {
+    date: string;
+    totalAmount: number;
+    count: number;
+  }[];
+  paymentChart: {
     date: string;
     totalAmount: number;
     count: number;
@@ -49,8 +70,24 @@ export interface VyapariAnalytics {
     amount: number;
     createdAt: string;
   }[];
+  recentPayments: {
+    id: string;
+    paymentId: string;
+    vyapariName: string;
+    description: string;
+    amount: number;
+    createdAt: string;
+  }[];
   totalTransactionAmount: number;
+  totalPaymentAmount: number;
   monthlyTransactionCount: number;
+  monthlyPaymentCount: number;
+  totalTransactions: number;
+  totalPayments: number;
+  pendingTransactions: number;
+  pendingTransactionAmount: number;
+  resolvedTransactions: number;
+  resolvedTransactionAmount: number;
   amountWeOwe: number;
   amountOwedToUs: number;
   topVyaparis: {
@@ -59,6 +96,11 @@ export interface VyapariAnalytics {
     totalAmount: number;
   }[];
   transactionChart: {
+    date: string;
+    totalAmount: number;
+    count: number;
+  }[];
+  paymentChart: {
     date: string;
     totalAmount: number;
     count: number;

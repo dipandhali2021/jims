@@ -44,8 +44,24 @@ export async function GET(req: Request) {
         }
       });
 
-      // Get recent transactions
+      // Get recent transactions and payments
       const karigarTransactions = await prisma.karigarTransaction.findMany({
+        where: timeRangeFilter,
+        include: {
+          karigar: {
+            select: {
+              name: true,
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: 10
+      });
+
+      // Get recent payments
+      const karigarPayments = await prisma.karigarPayment.findMany({
         where: timeRangeFilter,
         include: {
           karigar: {
@@ -76,9 +92,7 @@ export async function GET(req: Request) {
             lte: currentMonthEnd
           }
         }
-      });
-
-      // Calculate positive (amounts we owe to karigars) and negative amounts (karigars owe us)
+      });      // Calculate positive (amounts we owe to karigars) and negative amounts (karigars owe us)
       const positiveTransactions = await prisma.karigarTransaction.aggregate({
         where: {
           ...timeRangeFilter,
@@ -93,6 +107,67 @@ export async function GET(req: Request) {
         where: {
           ...timeRangeFilter,
           amount: { lt: 0 }
+        },
+        _sum: {
+          amount: true
+        }
+      });
+      
+      // Calculate total payments amount
+      const karigarPaymentSum = await prisma.karigarPayment.aggregate({
+        where: timeRangeFilter,
+        _sum: {
+          amount: true
+        }
+      });
+
+      // Get payment counts
+      const totalPayments = await prisma.karigarPayment.count({
+        where: timeRangeFilter
+      });
+      
+      const totalTransactions = await prisma.karigarTransaction.count({
+        where: timeRangeFilter
+      });
+      
+      const monthlyPaymentCount = await prisma.karigarPayment.count({
+        where: {
+          createdAt: {
+            gte: currentMonthStart,
+            lte: currentMonthEnd
+          }
+        }
+      });
+        // Get pending transaction data (not approved transactions)
+      const pendingTransactions = await prisma.karigarTransaction.count({
+        where: {
+          ...timeRangeFilter,
+          isApproved: false
+        }
+      });
+      
+      const pendingTransactionSum = await prisma.karigarTransaction.aggregate({
+        where: {
+          ...timeRangeFilter,
+          isApproved: false
+        },
+        _sum: {
+          amount: true
+        }
+      });
+      
+      // Get resolved transaction data (approved transactions)
+      const resolvedTransactions = await prisma.karigarTransaction.count({
+        where: {
+          ...timeRangeFilter,
+          isApproved: true
+        }
+      });
+      
+      const resolvedTransactionSum = await prisma.karigarTransaction.aggregate({
+        where: {
+          ...timeRangeFilter,
+          isApproved: true
         },
         _sum: {
           amount: true
@@ -127,23 +202,51 @@ export async function GET(req: Request) {
           };
         })
       );
-        // Format transaction data for charts
-      const transactionsByDate = await prisma.$queryRaw`
-        SELECT 
-          TO_CHAR("createdAt", 'YYYY-MM-DD') as "date",
-          SUM("amount") as "totalAmount",
-          COUNT(*) as "count"
-        FROM "KarigarTransaction"
-        WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
-        GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
-        ORDER BY "date"
-      `;
+        // Format transaction and payment data for charts
+        const [transactionsByDate, paymentsByDate] = await Promise.all([
+          prisma.$queryRaw`
+            SELECT
+              TO_CHAR("createdAt", 'YYYY-MM-DD') as "date",
+              SUM("amount") as "totalAmount",
+              COUNT(*) as "count"
+            FROM "KarigarTransaction"
+            WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+            GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
+            ORDER BY "date"
+          `,
+          prisma.$queryRaw`
+            SELECT
+              TO_CHAR("createdAt", 'YYYY-MM-DD') as "date",
+              SUM("amount") as "totalAmount",
+              COUNT(*) as "count"
+            FROM "KarigarPayment"
+            WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+            GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
+            ORDER BY "date"
+          `
+        ]);
+  
+        // Convert BigInt values to regular numbers
+        const formattedTransactionsByDate = (transactionsByDate as any[]).map(item => ({
+          date: item.date,
+          totalAmount: Number(item.totalAmount),
+          count: Number(item.count)
+        }));
+  
+        const formattedPaymentsByDate = (paymentsByDate as any[]).map(item => ({
+          date: item.date,
+          totalAmount: Number(item.totalAmount),
+          count: Number(item.count)
+        }));
 
-      // Convert BigInt values to regular numbers
-      const formattedTransactionsByDate = (transactionsByDate as any[]).map(item => ({
-        date: item.date,
-        totalAmount: Number(item.totalAmount),
-        count: Number(item.count)
+      // Format payments data
+      const formattedKarigarPayments = karigarPayments.map(p => ({
+        id: p.id,
+        paymentId: p.paymentId,
+        karigarName: p.karigar.name,
+        description: p.notes || `Payment: ${p.paymentId}`,
+        amount: p.amount,
+        createdAt: format(p.createdAt, 'MMM dd, yyyy'),
       }));
 
       karigarData = {
@@ -156,12 +259,22 @@ export async function GET(req: Request) {
           amount: t.amount,
           createdAt: format(t.createdAt, 'MMM dd, yyyy'),
         })),
+        recentPayments: formattedKarigarPayments,
         totalTransactionAmount: Number(karigarTransactionSum._sum.amount) || 0,
+        totalPaymentAmount: Number(karigarPaymentSum._sum.amount) || 0,
         monthlyTransactionCount,
+        monthlyPaymentCount,
+        totalTransactions,
+        totalPayments,
+        pendingTransactions,
+        pendingTransactionAmount: Number(pendingTransactionSum._sum.amount) || 0,
+        resolvedTransactions,
+        resolvedTransactionAmount: Number(resolvedTransactionSum._sum.amount) || 0,
         amountWeOwe: Number(positiveTransactions._sum.amount) || 0,
         amountOwedToUs: Math.abs(Number(negativeTransactions._sum.amount) || 0),
         topKarigars: topKarigarDetails,
         transactionChart: formattedTransactionsByDate,
+        paymentChart: formattedPaymentsByDate,
       };
     }
 
@@ -174,8 +287,24 @@ export async function GET(req: Request) {
         }
       });
 
-      // Get recent transactions
+      // Get recent transactions and payments
       const vyapariTransactions = await prisma.vyapariTransaction.findMany({
+        where: timeRangeFilter,
+        include: {
+          vyapari: {
+            select: {
+              name: true,
+            }
+          }
+        },
+        orderBy: {
+          createdAt: 'desc'
+        },
+        take: 10
+      });
+
+      // Get recent payments
+      const vyapariPayments = await prisma.vyapariPayment.findMany({
         where: timeRangeFilter,
         include: {
           vyapari: {
@@ -206,9 +335,7 @@ export async function GET(req: Request) {
             lte: currentMonthEnd
           }
         }
-      });
-
-      // Calculate positive (amounts we owe to vyaparis) and negative amounts (vyaparis owe us)
+      });      // Calculate positive (amounts we owe to vyaparis) and negative amounts (vyaparis owe us)
       const positiveTransactions = await prisma.vyapariTransaction.aggregate({
         where: {
           ...timeRangeFilter,
@@ -223,6 +350,67 @@ export async function GET(req: Request) {
         where: {
           ...timeRangeFilter,
           amount: { lt: 0 }
+        },
+        _sum: {
+          amount: true
+        }
+      });
+      
+      // Calculate total payments amount
+      const vyapariPaymentSum = await prisma.vyapariPayment.aggregate({
+        where: timeRangeFilter,
+        _sum: {
+          amount: true
+        }
+      });
+
+      // Get payment counts
+      const totalPayments = await prisma.vyapariPayment.count({
+        where: timeRangeFilter
+      });
+      
+      const totalTransactions = await prisma.vyapariTransaction.count({
+        where: timeRangeFilter
+      });
+      
+      const monthlyPaymentCount = await prisma.vyapariPayment.count({
+        where: {
+          createdAt: {
+            gte: currentMonthStart,
+            lte: currentMonthEnd
+          }
+        }
+      });
+        // Get pending transaction data (not approved transactions)
+      const pendingTransactions = await prisma.vyapariTransaction.count({
+        where: {
+          ...timeRangeFilter,
+          isApproved: false
+        }
+      });
+      
+      const pendingTransactionSum = await prisma.vyapariTransaction.aggregate({
+        where: {
+          ...timeRangeFilter,
+          isApproved: false
+        },
+        _sum: {
+          amount: true
+        }
+      });
+      
+      // Get resolved transaction data (approved transactions)
+      const resolvedTransactions = await prisma.vyapariTransaction.count({
+        where: {
+          ...timeRangeFilter,
+          isApproved: true
+        }
+      });
+      
+      const resolvedTransactionSum = await prisma.vyapariTransaction.aggregate({
+        where: {
+          ...timeRangeFilter,
+          isApproved: true
         },
         _sum: {
           amount: true
@@ -257,23 +445,51 @@ export async function GET(req: Request) {
           };
         })
       );
-        // Format transaction data for charts
-      const transactionsByDate = await prisma.$queryRaw`
-        SELECT 
-          TO_CHAR("createdAt", 'YYYY-MM-DD') as "date",
-          SUM("amount") as "totalAmount",
-          COUNT(*) as "count"
-        FROM "VyapariTransaction"
-        WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
-        GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
-        ORDER BY "date"
-      `;
+        // Format transaction and payment data for charts
+        const [transactionsByDate, paymentsByDate] = await Promise.all([
+          prisma.$queryRaw`
+            SELECT
+              TO_CHAR("createdAt", 'YYYY-MM-DD') as "date",
+              SUM("amount") as "totalAmount",
+              COUNT(*) as "count"
+            FROM "VyapariTransaction"
+            WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+            GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
+            ORDER BY "date"
+          `,
+          prisma.$queryRaw`
+            SELECT
+              TO_CHAR("createdAt", 'YYYY-MM-DD') as "date",
+              SUM("amount") as "totalAmount",
+              COUNT(*) as "count"
+            FROM "VyapariPayment"
+            WHERE "createdAt" >= ${startDate} AND "createdAt" <= ${endDate}
+            GROUP BY TO_CHAR("createdAt", 'YYYY-MM-DD')
+            ORDER BY "date"
+          `
+        ]);
+  
+        // Convert BigInt values to regular numbers
+        const formattedTransactionsByDate = (transactionsByDate as any[]).map(item => ({
+          date: item.date,
+          totalAmount: Number(item.totalAmount),
+          count: Number(item.count)
+        }));
+  
+        const formattedPaymentsByDate = (paymentsByDate as any[]).map(item => ({
+          date: item.date,
+          totalAmount: Number(item.totalAmount),
+          count: Number(item.count)
+        }));
 
-      // Convert BigInt values to regular numbers
-      const formattedTransactionsByDate = (transactionsByDate as any[]).map(item => ({
-        date: item.date,
-        totalAmount: Number(item.totalAmount),
-        count: Number(item.count)
+      // Format payments data
+      const formattedVyapariPayments = vyapariPayments.map(p => ({
+        id: p.id,
+        paymentId: p.paymentId,
+        vyapariName: p.vyapari.name,
+        description: p.notes || `Payment: ${p.paymentId}`,
+        amount: p.amount,
+        createdAt: format(p.createdAt, 'MMM dd, yyyy'),
       }));
 
       vyapariData = {
@@ -286,12 +502,22 @@ export async function GET(req: Request) {
           amount: t.amount,
           createdAt: format(t.createdAt, 'MMM dd, yyyy'),
         })),
-        totalTransactionAmount: Number(vyapariTransactionSum._sum.amount) || 0,
+        recentPayments: formattedVyapariPayments,
+        totalTransactionAmount: Number(vyapariTransactionSum._sum?.amount) || 0,
+        totalPaymentAmount: Number(vyapariPaymentSum._sum?.amount) || 0,
         monthlyTransactionCount,
-        amountWeOwe: Number(positiveTransactions._sum.amount) || 0,
-        amountOwedToUs: Math.abs(Number(negativeTransactions._sum.amount) || 0),
+        monthlyPaymentCount,
+        totalTransactions,
+        totalPayments,
+        pendingTransactions,
+        pendingTransactionAmount: Number(pendingTransactionSum._sum?.amount) || 0,
+        resolvedTransactions,
+        resolvedTransactionAmount: Number(resolvedTransactionSum._sum?.amount) || 0,
+        amountWeOwe: Number(positiveTransactions._sum?.amount) || 0,
+        amountOwedToUs: Math.abs(Number(negativeTransactions._sum?.amount) || 0),
         topVyaparis: topVyapariDetails,
         transactionChart: formattedTransactionsByDate,
+        paymentChart: formattedPaymentsByDate,
       };
     }
 

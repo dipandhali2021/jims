@@ -7,6 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useKhataAnalytics, KhataAnalytics } from '@/hooks/use-khata-analytics';
 import { TransactionCalendar } from '@/components/khata/TransactionCalendar';
 import { ApprovalCounter } from '@/components/khata/ApprovalCounter';
+import { ComparisonCard } from '@/components/khata/ComparisonCard';
+import { PendingResolvedCard } from '@/components/khata/PendingResolvedCard';
+import { StatCard } from '@/components/khata/StatCard';
+import { KhataDashboardSkeleton } from '@/components/khata/KhataDashboardSkeleton';
 import { 
   UserCircle, 
   Users, 
@@ -14,12 +18,15 @@ import {
   ArrowUp,
   ArrowDown, 
   CreditCard, 
-  Clock, 
-  Loader2,
+  Clock,
   DollarSign,
   BadgeIndianRupee,
   IndianRupee,
-  CircleDollarSign
+  CircleDollarSign,
+  Receipt,
+  CreditCard as PaymentIcon,
+  CheckCircle,
+  AlertCircle
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
@@ -77,91 +84,107 @@ export default function KhataDashboard() {
       currency: 'INR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount);
+      signDisplay: 'never',
+    }).format(Math.abs(amount));
   };
-
-  // Prepare chart data for Karigar transactions
+  // Prepare chart data for Karigar transactions and payments
   const karigarChartData = useMemo(() => {
-    if (!analytics?.karigar?.transactionChart) return null;
+    if (!analytics?.karigar?.transactionChart || !analytics?.karigar?.paymentChart) return null;
+
+    // Get unique dates from both transaction and payment data
+    const allDates = Array.from(new Set([
+      ...analytics.karigar.transactionChart.map(item => item.date),
+      ...analytics.karigar.paymentChart.map(item => item.date)
+    ])).sort();
     
-    const labels = analytics.karigar.transactionChart.map(item => 
-      format(new Date(item.date), 'dd MMM')
-    );
+    const labels = allDates.map(date => format(new Date(date), 'dd MMM'));
     
-    const amounts = analytics.karigar.transactionChart.map(item => 
-      parseFloat(item.totalAmount.toString())
+    // Create amount maps with date as key for quick lookup
+    const transactionMap = new Map(
+      analytics.karigar.transactionChart.map(item => [item.date, parseFloat(item.totalAmount.toString())])
     );
-    
-    const counts = analytics.karigar.transactionChart.map(item => 
-      parseInt(item.count.toString())
+    const paymentMap = new Map(
+      analytics.karigar.paymentChart.map(item => [item.date, parseFloat(item.totalAmount.toString())])
     );
+
+    // Map each date to its amounts, using absolute values and 0 if no transaction/payment exists for that date
+    const transactionAmounts = allDates.map(date => Math.abs(transactionMap.get(date) || 0));
+    const paymentAmounts = allDates.map(date => Math.abs(paymentMap.get(date) || 0));
     
     return {
       labels,
       datasets: [
         {
           label: 'Transaction Amount',
-          data: amounts,
-          borderColor: 'rgb(79, 70, 229)',
-          backgroundColor: 'rgba(79, 70, 229, 0.1)',
-          fill: true,
+          data: transactionAmounts,
+          borderColor: 'rgb(124, 58, 237)', // Purple
+          backgroundColor: 'rgba(124, 58, 237, 0.1)',
+          fill: false,
           tension: 0.4,
           yAxisID: 'y'
         },
         {
-          label: 'Transaction Count',
-          data: counts,
-          borderColor: 'rgb(245, 158, 11)',
-          backgroundColor: 'rgba(245, 158, 11, 0.1)',
-          borderDashed: [5, 5],
+          label: 'Payment Amount',
+          data: paymentAmounts,
+          borderColor: 'rgb(16, 185, 129)', // Green
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: false,
           tension: 0.4,
-          yAxisID: 'y1'
+          yAxisID: 'y',
+          borderDash: [5, 5]
         }
       ]
     };
   }, [analytics]);
-
-  // Prepare chart data for Vyapari transactions
+  // Prepare chart data for Vyapari transactions and payments
   const vyapariChartData = useMemo(() => {
-    if (!analytics?.vyapari?.transactionChart) return null;
+    if (!analytics?.vyapari?.transactionChart || !analytics?.vyapari?.paymentChart) return null;
+
+    // Get unique dates from both transaction and payment data
+    const allDates = Array.from(new Set([
+      ...analytics.vyapari.transactionChart.map(item => item.date),
+      ...analytics.vyapari.paymentChart.map(item => item.date)
+    ])).sort();
     
-    const labels = analytics.vyapari.transactionChart.map(item => 
-      format(new Date(item.date), 'dd MMM')
-    );
+    const labels = allDates.map(date => format(new Date(date), 'dd MMM'));
     
-    const amounts = analytics.vyapari.transactionChart.map(item => 
-      parseFloat(item.totalAmount.toString())
+    // Create amount maps with date as key for quick lookup
+    const transactionMap = new Map(
+      analytics.vyapari.transactionChart.map(item => [item.date, parseFloat(item.totalAmount.toString())])
     );
-    
-    const counts = analytics.vyapari.transactionChart.map(item => 
-      parseInt(item.count.toString())
+    const paymentMap = new Map(
+      analytics.vyapari.paymentChart.map(item => [item.date, parseFloat(item.totalAmount.toString())])
     );
+
+    // Map each date to its amounts, using absolute values and 0 if no transaction/payment exists for that date
+    const transactionAmounts = allDates.map(date => Math.abs(transactionMap.get(date) || 0));
+    const paymentAmounts = allDates.map(date => Math.abs(paymentMap.get(date) || 0));
     
     return {
       labels,
       datasets: [
         {
           label: 'Transaction Amount',
-          data: amounts,
-          borderColor: 'rgb(14, 165, 233)',
-          backgroundColor: 'rgba(14, 165, 233, 0.1)',
-          fill: true,
+          data: transactionAmounts,
+          borderColor: 'rgb(59, 130, 246)', // Blue
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          fill: false,
           tension: 0.4,
           yAxisID: 'y'
         },
         {
-          label: 'Transaction Count',
-          data: counts,
-          borderColor: 'rgb(249, 115, 22)',
-          backgroundColor: 'rgba(249, 115, 22, 0.1)',
-          borderDashed: [5, 5],
+          label: 'Payment Amount',
+          data: paymentAmounts,
+          borderColor: 'rgb(16, 185, 129)', // Green
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: false,
           tension: 0.4,
-          yAxisID: 'y1'
+          yAxisID: 'y',
+          borderDash: [5, 5]
         }
       ]
     };
   }, [analytics]);
-
   // Chart options
   const chartOptions: ChartOptions<'line'> = {
     responsive: true,
@@ -177,22 +200,18 @@ export default function KhataDashboard() {
         title: {
           display: true,
           text: 'Amount (₹)'
-        }
-      },
-      y1: {
-        type: 'linear' as const,
-        display: true,
-        position: 'right' as const,
-        grid: {
-          drawOnChartArea: false,
         },
-        title: {
-          display: true,
-          text: 'Count'
-        }
-      },
+        beginAtZero: true
+      }
     },
     plugins: {
+      legend: {
+        position: 'top',
+        labels: {
+          usePointStyle: true,
+          boxWidth: 6
+        }
+      },
       tooltip: {
         callbacks: {
           label: function(context) {
@@ -200,11 +219,7 @@ export default function KhataDashboard() {
             if (label) {
               label += ': ';
             }
-            if (context.dataset.label === 'Transaction Amount') {
-              label += formatCurrency(context.parsed.y);
-            } else {
-              label += context.parsed.y;
-            }
+            label += formatCurrency(context.parsed.y);
             return label;
           }
         }
@@ -244,7 +259,7 @@ export default function KhataDashboard() {
       datasets: [
         {
           label: 'Total Amount',
-          data: analytics.vyapari.topVyaparis.map(v => v.totalAmount),
+          data: analytics.vyapari.topVyaparis.map(v => Math.abs(v.totalAmount)),
           backgroundColor: [
             'rgba(14, 165, 233, 0.7)',
             'rgba(14, 165, 233, 0.6)',
@@ -284,16 +299,9 @@ export default function KhataDashboard() {
     }
   };
 
-  // If loading
+  // If loading, show skeleton UI
   if (isLoading && !analytics) {
-    return (
-      <div className="flex h-[600px] w-full items-center justify-center">
-        <div className="flex flex-col items-center gap-2">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          <p className="text-sm text-muted-foreground">Loading analytics data...</p>
-        </div>
-      </div>
-    );
+    return <KhataDashboardSkeleton />;
   }
 
   return (
@@ -306,24 +314,7 @@ export default function KhataDashboard() {
               Overview of your Karigar (artisan) and Vyapari (trader) transactions and balances.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Select 
-              value={timeframe} 
-              onValueChange={(value) => setTimeframe(value)}
-            >
-              <SelectTrigger className="w-[140px]">
-                <SelectValue placeholder="Time Period" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="7">Last 7 days</SelectItem>
-                <SelectItem value="30">Last 30 days</SelectItem>
-                <SelectItem value="60">Last 60 days</SelectItem>
-                <SelectItem value="90">Last 90 days</SelectItem>
-                <SelectItem value="180">Last 6 months</SelectItem>
-                <SelectItem value="365">Last year</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          
         </div>
 
         <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -339,156 +330,85 @@ export default function KhataDashboard() {
               <div className="w-full">
                 <ApprovalCounter />
               </div>
-              
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 {/* Summary Cards */}
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Total Artisans</CardDescription>
-                    <CardTitle className="text-3xl">
-                      {analytics?.karigar?.totalKarigars || 0}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground flex items-center">
-                      <UserCircle className="mr-1 h-4 w-4" />
-                      <span>Active Karigars</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                <StatCard 
+                  title="Total Artisans"
+                  value={analytics?.karigar?.totalKarigars || 0}
+                  description="Active Karigars"
+                  icon={<UserCircle className="h-5 w-5" />}
+                  iconColor="bg-purple-100 text-purple-700"
+                />
+                
+                <StatCard 
+                  title="Total Traders"
+                  value={analytics?.vyapari?.totalVyaparis || 0}
+                  description="Active Vyaparis"
+                  icon={<Users className="h-5 w-5" />}
+                  iconColor="bg-blue-100 text-blue-700"
+                />
 
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Total Traders</CardDescription>
-                    <CardTitle className="text-3xl">
-                      {analytics?.vyapari?.totalVyaparis || 0}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground flex items-center">
-                      <Users className="mr-1 h-4 w-4" />
-                      <span>Active Vyaparis</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Karigar Transactions</CardDescription>
-                    <CardTitle className="text-3xl">
-                      {formatCurrency(analytics?.karigar?.totalTransactionAmount || 0)}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-xs text-muted-foreground">
-                      <div className="flex items-center">
-                        <BadgeIndianRupee className="mr-1 h-4 w-4" />
-                        <span>Total value in selected period</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Vyapari Transactions</CardDescription>
-                    <CardTitle className="text-3xl">
-                      {formatCurrency(analytics?.vyapari?.totalTransactionAmount || 0)}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-xs text-muted-foreground">
-                      <div className="flex items-center">
-                        <BadgeIndianRupee className="mr-1 h-4 w-4" />
-                        <span>Total value in selected period</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+               
               </div>
-
+              
               <div className="grid gap-4 md:grid-cols-2">
-                {/* Overall Balance Cards */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Karigar Balance Summary</CardTitle>
-                    <CardDescription>
-                      Current outstanding balances with artisans
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="mr-2 rounded-full bg-purple-100 p-2 text-purple-600">
-                            <ArrowUp className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">We Owe</p>
-                            <p className="text-2xl font-bold">
-                              {formatCurrency(analytics?.karigar?.amountWeOwe || 0)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="mr-2 rounded-full bg-green-100 p-2 text-green-600">
-                            <ArrowDown className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Owed To Us</p>
-                            <p className="text-2xl font-bold">
-                              {formatCurrency(analytics?.karigar?.amountOwedToUs || 0)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        <p>Net balance reflects your current position with all artisans.</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Vyapari Balance Summary</CardTitle>
-                    <CardDescription>
-                      Current outstanding balances with traders
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="mr-2 rounded-full bg-blue-100 p-2 text-blue-600">
-                            <ArrowUp className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">We Owe</p>
-                            <p className="text-2xl font-bold">
-                              {formatCurrency(analytics?.vyapari?.amountWeOwe || 0)}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center">
-                          <div className="mr-2 rounded-full bg-green-100 p-2 text-green-600">
-                            <ArrowDown className="h-4 w-4" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-medium">Owed To Us</p>
-                            <p className="text-2xl font-bold">
-                              {formatCurrency(analytics?.vyapari?.amountOwedToUs || 0)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="text-sm text-muted-foreground">
-                        <p>Net balance reflects your current position with all traders.</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Karigar Transaction vs Payment Card */}
+                <ComparisonCard
+                  title="Karigar Activity"
+                  description="Comparison of transaction requests and actual payments"
+                  leftLabel="Transactions"
+                  rightLabel="Payments"
+                  leftValue={analytics?.karigar?.totalTransactions || 0}
+                  rightValue={analytics?.karigar?.totalPayments || 0}
+                  leftAmount={analytics?.karigar?.totalTransactionAmount || 0}
+                  rightAmount={analytics?.karigar?.totalPaymentAmount || 0}
+                  leftIcon={<Receipt className="h-4 w-4" />}
+                  rightIcon={<PaymentIcon className="h-4 w-4" />}
+                  leftColor="text-purple-600 bg-purple-100"
+                  rightColor="text-emerald-600 bg-emerald-100"
+                  formatCurrency={formatCurrency}
+                />
+                
+                {/* Vyapari Transaction vs Payment Card */}
+                <ComparisonCard
+                  title="Vyapari Activity"
+                  description="Comparison of transaction requests and actual payments"
+                  leftLabel="Transactions"
+                  rightLabel="Payments"
+                  leftValue={analytics?.vyapari?.totalTransactions || 0}
+                  rightValue={analytics?.vyapari?.totalPayments || 0}
+                  leftAmount={analytics?.vyapari?.totalTransactionAmount || 0}
+                  rightAmount={analytics?.vyapari?.totalPaymentAmount || 0}
+                  leftIcon={<Receipt className="h-4 w-4" />}
+                  rightIcon={<PaymentIcon className="h-4 w-4" />}
+                  leftColor="text-blue-600 bg-blue-100"
+                  rightColor="text-emerald-600 bg-emerald-100"
+                  formatCurrency={formatCurrency}
+                />
               </div>
+              
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Transaction status cards */}                <PendingResolvedCard 
+                  title="Karigar Approval Status"
+                  description="Overview of pending and approved transactions"
+                  pendingCount={analytics?.karigar?.pendingTransactions || 0}
+                  resolvedCount={analytics?.karigar?.resolvedTransactions || 0}
+                  pendingAmount={analytics?.karigar?.pendingTransactionAmount || 0}
+                  resolvedAmount={analytics?.karigar?.resolvedTransactionAmount || 0}
+                  formatCurrency={formatCurrency}
+                />
+                  <PendingResolvedCard 
+                  title="Vyapari Approval Status"
+                  description="Overview of pending and approved transactions"
+                  pendingCount={analytics?.vyapari?.pendingTransactions || 0}
+                  resolvedCount={analytics?.vyapari?.resolvedTransactions || 0}
+                  pendingAmount={analytics?.vyapari?.pendingTransactionAmount || 0}
+                  resolvedAmount={analytics?.vyapari?.resolvedTransactionAmount || 0}
+                  formatCurrency={formatCurrency}
+                />
+              </div>
+
+             
                 <div className="grid gap-4 md:grid-cols-2">
                 {/* Transaction Charts */}
                 <Card className="col-span-1 md:col-span-1">
@@ -539,15 +459,17 @@ export default function KhataDashboard() {
                 {/* Transaction Calendars */}
                 <TransactionCalendar
                   transactions={analytics?.karigar?.transactionChart || []}
-                  title="Karigar Transaction Calendar"
-                  description="Daily transaction overview for artisans"
+                  payments={analytics?.karigar?.paymentChart || []}
+                  title="Karigar Activity Calendar"
+                  description="Daily transactions and payments for artisans"
                   colorClass="bg-purple-50 text-purple-900"
                 />
                 
                 <TransactionCalendar
                   transactions={analytics?.vyapari?.transactionChart || []}
-                  title="Vyapari Transaction Calendar"
-                  description="Daily transaction overview for traders"
+                  payments={analytics?.vyapari?.paymentChart || []}
+                  title="Vyapari Activity Calendar"
+                  description="Daily transactions and payments for traders"
                   colorClass="bg-blue-50 text-blue-900"
                 />
               </div>
@@ -587,9 +509,7 @@ export default function KhataDashboard() {
                               <td className="p-3 text-sm">{transaction.karigarName}</td>
                               <td className="p-3 text-sm max-w-[200px] truncate">{transaction.description}</td>
                               <td className="p-3 text-sm font-medium">
-                                <span className={transaction.amount > 0 ? 'text-red-600' : 'text-green-600'}>
-                                  {formatCurrency(transaction.amount)}
-                                </span>
+                                {formatCurrency(transaction.amount)}
                               </td>
                               <td className="p-3 text-sm text-muted-foreground">{transaction.createdAt}</td>
                             </tr>
@@ -606,9 +526,7 @@ export default function KhataDashboard() {
                               <td className="p-3 text-sm">{transaction.vyapariName}</td>
                               <td className="p-3 text-sm max-w-[200px] truncate">{transaction.description}</td>
                               <td className="p-3 text-sm font-medium">
-                                <span className={transaction.amount > 0 ? 'text-red-600' : 'text-green-600'}>
-                                  {formatCurrency(transaction.amount)}
-                                </span>
+                                {formatCurrency(transaction.amount)}
                               </td>
                               <td className="p-3 text-sm text-muted-foreground">{transaction.createdAt}</td>
                             </tr>
@@ -629,88 +547,71 @@ export default function KhataDashboard() {
             </TabsContent>
 
             {/* Karigar Tab */}
-            <TabsContent value="karigar" className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Total Artisans</CardDescription>
-                    <CardTitle className="text-3xl">
-                      {analytics?.karigar?.totalKarigars || 0}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground flex items-center">
-                      <UserCircle className="mr-1 h-4 w-4" />
-                      <span>Active Karigars</span>
-                    </div>
-                  </CardContent>
-                </Card>
+            <TabsContent value="karigar" className="space-y-6">              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard 
+                  title="Total Artisans"
+                  value={analytics?.karigar?.totalKarigars || 0}
+                  description="Active Karigars"
+                  icon={<UserCircle className="h-5 w-5" />}
+                  iconColor="bg-purple-100 text-purple-700"
+                />
+                
+                <StatCard 
+                  title="Monthly Activity"
+                  value={analytics?.karigar?.monthlyTransactionCount || 0}
+                  description={`${analytics?.karigar?.monthlyPaymentCount || 0} payments`}
+                  icon={<TrendingUp className="h-5 w-5" />}
+                  iconColor="bg-indigo-100 text-indigo-700"
+                />
 
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Monthly Transactions</CardDescription>
-                    <CardTitle className="text-3xl">
-                      {analytics?.karigar?.monthlyTransactionCount || 0}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground flex items-center">
-                      <TrendingUp className="mr-1 h-4 w-4" />
-                      <span>Current month activity</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>We Owe</CardDescription>
-                    <CardTitle className="text-3xl text-red-600">
-                      {formatCurrency(analytics?.karigar?.amountWeOwe || 0)}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground flex items-center">
-                      <ArrowUp className="mr-1 h-4 w-4 text-red-600" />
-                      <span>Amounts to be paid to artisans</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Owed To Us</CardDescription>
-                    <CardTitle className="text-3xl text-green-600">
-                      {formatCurrency(analytics?.karigar?.amountOwedToUs || 0)}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground flex items-center">
-                      <ArrowDown className="mr-1 h-4 w-4 text-green-600" />
-                      <span>Amounts to be collected from artisans</span>
-                    </div>
-                  </CardContent>
-                </Card>
+                
+              </div>
+              
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Transaction vs Payment Card */}
+                <ComparisonCard
+                  title="Karigar Activity"
+                  description="Comparison of transaction requests and actual payments"
+                  leftLabel="Transactions"
+                  rightLabel="Payments"
+                  leftValue={analytics?.karigar?.totalTransactions || 0}
+                  rightValue={analytics?.karigar?.totalPayments || 0}
+                  leftAmount={analytics?.karigar?.totalTransactionAmount || 0}
+                  rightAmount={analytics?.karigar?.totalPaymentAmount || 0}
+                  leftIcon={<Receipt className="h-4 w-4" />}
+                  rightIcon={<PaymentIcon className="h-4 w-4" />}
+                  leftColor="text-purple-600 bg-purple-100"
+                  rightColor="text-emerald-600 bg-emerald-100"
+                  formatCurrency={formatCurrency}
+                />
+                  {/* Approval status card */}
+                <PendingResolvedCard 
+                  title="Approval Status"
+                  description="Overview of pending and approved transactions"
+                  pendingCount={analytics?.karigar?.pendingTransactions || 0}
+                  resolvedCount={analytics?.karigar?.resolvedTransactions || 0}
+                  pendingAmount={analytics?.karigar?.pendingTransactionAmount || 0}
+                  resolvedAmount={analytics?.karigar?.resolvedTransactionAmount || 0}
+                  formatCurrency={formatCurrency}
+                />
               </div>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Karigar Transactions Over Time</CardTitle>
+              <Card>                <CardHeader>
+                  <CardTitle>Karigar Activity Over Time</CardTitle>
                   <CardDescription>
-                    Transaction amounts and count for the selected period
+                    Transaction and payment amounts for the selected period
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-1">
                   {karigarChartData ? (
-                    <Line data={karigarChartData} options={chartOptions} height={300} />
+                    <Line data={karigarChartData} options={chartOptions} height={100} />
                   ) : (
-                    <div className="flex h-[300px] items-center justify-center">
+                    <div className="flex h-[200px] items-center justify-center">
                       <p className="text-sm text-muted-foreground">No transaction data available</p>
                     </div>
                   )}
                 </CardContent>
-              </Card>
-
-              <div className="grid gap-4 md:grid-cols-2">
+              </Card>              <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                   <CardHeader>
                     <CardTitle>Top Artisans</CardTitle>
@@ -730,9 +631,7 @@ export default function KhataDashboard() {
                                 <p className="text-xs text-muted-foreground">Artisan</p>
                               </div>
                             </div>
-                            <div className="font-medium">
-                              {formatCurrency(karigar.totalAmount)}
-                            </div>
+                            
                           </div>
                         ))}
                       </div>
@@ -755,13 +654,8 @@ export default function KhataDashboard() {
                         {analytics.karigar.recentTransactions.slice(0, 5).map((transaction) => (
                           <div key={transaction.id} className="flex items-center justify-between">
                             <div className="flex items-center max-w-[70%]">
-                              <div className={`mr-2 rounded-full p-1 ${
-                                transaction.amount > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                              }`}>
-                                {transaction.amount > 0 ? 
-                                  <ArrowUp className="h-4 w-4" /> : 
-                                  <ArrowDown className="h-4 w-4" />
-                                }
+                              <div className="mr-2 rounded-full p-1 bg-purple-100 text-purple-700">
+                                <Receipt className="h-4 w-4" />
                               </div>
                               <div className="overflow-hidden">
                                 <p className="font-medium truncate">{transaction.karigarName}</p>
@@ -769,9 +663,7 @@ export default function KhataDashboard() {
                               </div>
                             </div>
                             <div>
-                              <p className={`text-sm font-medium ${
-                                transaction.amount > 0 ? 'text-red-600' : 'text-green-600'
-                              }`}>
+                              <p className="text-sm font-medium">
                                 {formatCurrency(transaction.amount)}
                               </p>
                               <p className="text-xs text-right text-muted-foreground">{transaction.createdAt}</p>
@@ -786,92 +678,115 @@ export default function KhataDashboard() {
                     )}
                   </CardContent>
                 </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Karigar Payments</CardTitle>
+                    <CardDescription>Latest payments to/from artisans</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    {analytics?.karigar?.recentPayments?.length ? (
+                      <div className="space-y-4">
+                        {analytics.karigar.recentPayments.slice(0, 5).map((payment) => (
+                          <div key={payment.id} className="flex items-center justify-between">
+                            <div className="flex items-center max-w-[70%]">
+                              <div className="mr-2 rounded-full p-1 bg-emerald-100 text-emerald-700">
+                                <PaymentIcon className="h-4 w-4" />
+                              </div>
+                              <div className="overflow-hidden">
+                                <p className="font-medium truncate">{payment.karigarName}</p>
+                                <p className="truncate text-xs text-muted-foreground">{payment.description || `Payment: ${payment.paymentId}`}</p>
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-emerald-600">
+                                {formatCurrency(payment.amount)}
+                              </p>
+                              <p className="text-xs text-right text-muted-foreground">{payment.createdAt}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="py-8 text-center text-sm text-muted-foreground">
+                        No recent payments
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
+
+             
             </TabsContent>
 
             {/* Vyapari Tab */}
-            <TabsContent value="vyapari" className="space-y-6">
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Total Traders</CardDescription>
-                    <CardTitle className="text-3xl">
-                      {analytics?.vyapari?.totalVyaparis || 0}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground flex items-center">
-                      <Users className="mr-1 h-4 w-4" />
-                      <span>Active Vyaparis</span>
-                    </div>
-                  </CardContent>
-                </Card>
+            <TabsContent value="vyapari" className="space-y-6">              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatCard 
+                  title="Total Traders"
+                  value={analytics?.vyapari?.totalVyaparis || 0}
+                  description="Active Vyaparis"
+                  icon={<Users className="h-5 w-5" />}
+                  iconColor="bg-blue-100 text-blue-700"
+                />
+                
+                <StatCard 
+                  title="Monthly Activity"
+                  value={analytics?.vyapari?.monthlyTransactionCount || 0}
+                  description={`${analytics?.vyapari?.monthlyPaymentCount || 0} payments`}
+                  icon={<TrendingUp className="h-5 w-5" />}
+                  iconColor="bg-indigo-100 text-indigo-700"
+                />
 
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Monthly Transactions</CardDescription>
-                    <CardTitle className="text-3xl">
-                      {analytics?.vyapari?.monthlyTransactionCount || 0}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground flex items-center">
-                      <TrendingUp className="mr-1 h-4 w-4" />
-                      <span>Current month activity</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>We Owe</CardDescription>
-                    <CardTitle className="text-3xl text-red-600">
-                      {formatCurrency(analytics?.vyapari?.amountWeOwe || 0)}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground flex items-center">
-                      <ArrowUp className="mr-1 h-4 w-4 text-red-600" />
-                      <span>Amounts to be paid to traders</span>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardDescription>Owed To Us</CardDescription>
-                    <CardTitle className="text-3xl text-green-600">
-                      {formatCurrency(analytics?.vyapari?.amountOwedToUs || 0)}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-sm text-muted-foreground flex items-center">
-                      <ArrowDown className="mr-1 h-4 w-4 text-green-600" />
-                      <span>Amounts to be collected from traders</span>
-                    </div>
-                  </CardContent>
-                </Card>
+              </div>
+              
+              <div className="grid gap-4 md:grid-cols-2">
+                {/* Transaction vs Payment Card */}
+                <ComparisonCard
+                  title="Vyapari Activity"
+                  description="Comparison of transaction requests and actual payments"
+                  leftLabel="Transactions"
+                  rightLabel="Payments"
+                  leftValue={analytics?.vyapari?.totalTransactions || 0}
+                  rightValue={analytics?.vyapari?.totalPayments || 0}
+                  leftAmount={analytics?.vyapari?.totalTransactionAmount || 0}
+                  rightAmount={analytics?.vyapari?.totalPaymentAmount || 0}
+                  leftIcon={<Receipt className="h-4 w-4" />}
+                  rightIcon={<PaymentIcon className="h-4 w-4" />}
+                  leftColor="text-blue-600 bg-blue-100"
+                  rightColor="text-emerald-600 bg-emerald-100"
+                  formatCurrency={formatCurrency}
+                />
+                  {/* Approval status card */}
+                <PendingResolvedCard 
+                  title="Approval Status"
+                  description="Overview of pending and approved transactions"
+                  pendingCount={analytics?.vyapari?.pendingTransactions || 0}
+                  resolvedCount={analytics?.vyapari?.resolvedTransactions || 0}
+                  pendingAmount={analytics?.vyapari?.pendingTransactionAmount || 0}
+                  resolvedAmount={analytics?.vyapari?.resolvedTransactionAmount || 0}
+                  formatCurrency={formatCurrency}
+                />
               </div>
 
               <Card>
                 <CardHeader>
-                  <CardTitle>Vyapari Transactions Over Time</CardTitle>
+                  <CardTitle>Vyapari Activity Over Time</CardTitle>
                   <CardDescription>
-                    Transaction amounts and count for the selected period
+                    Transaction and payment amounts for the selected period
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-1">
                   {vyapariChartData ? (
-                    <Line data={vyapariChartData} options={chartOptions} height={300} />
+                    <Line data={vyapariChartData} options={chartOptions} height={100} />
                   ) : (
-                    <div className="flex h-[300px] items-center justify-center">
+                    <div className="flex h-[200px] items-center justify-center">
                       <p className="text-sm text-muted-foreground">No transaction data available</p>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              <div className="grid gap-4 md:grid-cols-2">
+              <div className="grid gap-4 md:grid-cols-3">
                 <Card>
                   <CardHeader>
                     <CardTitle>Top Traders</CardTitle>
@@ -891,9 +806,7 @@ export default function KhataDashboard() {
                                 <p className="text-xs text-muted-foreground">Trader</p>
                               </div>
                             </div>
-                            <div className="font-medium">
-                              {formatCurrency(vyapari.totalAmount)}
-                            </div>
+                            
                           </div>
                         ))}
                       </div>
@@ -904,10 +817,44 @@ export default function KhataDashboard() {
                     )}
                   </CardContent>
                 </Card>
-
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Recent Vyapari Transactions</CardTitle>
+                   <CardHeader>
+                     <CardTitle>Recent Vyapari Payments</CardTitle>
+                     <CardDescription>Latest payments to/from traders</CardDescription>
+                   </CardHeader>
+                   <CardContent>
+                     {analytics?.vyapari?.recentPayments?.length ? (
+                       <div className="space-y-4">
+                         {analytics.vyapari.recentPayments.slice(0, 5).map((payment) => (
+                           <div key={payment.id} className="flex items-center justify-between">
+                             <div className="flex items-center max-w-[70%]">
+                               <div className="mr-2 rounded-full p-1 bg-emerald-100 text-emerald-700">
+                                 <PaymentIcon className="h-4 w-4" />
+                               </div>
+                               <div className="overflow-hidden">
+                                 <p className="font-medium truncate">{payment.vyapariName}</p>
+                                 <p className="truncate text-xs text-muted-foreground">{payment.description || `Payment: ${payment.paymentId}`}</p>
+                               </div>
+                             </div>
+                             <div>
+                               <p className="text-sm font-medium text-emerald-600">
+                                 {formatCurrency(payment.amount)}
+                               </p>
+                               <p className="text-xs text-right text-muted-foreground">{payment.createdAt}</p>
+                             </div>
+                           </div>
+                         ))}
+                       </div>
+                     ) : (
+                       <div className="py-8 text-center text-sm text-muted-foreground">
+                         No recent payments
+                       </div>
+                     )}
+                   </CardContent>
+                </Card>
+                <Card>
+                   <CardHeader>
+                     <CardTitle>Recent Vyapari Transactions</CardTitle>
                     <CardDescription>Latest trader transactions</CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -916,13 +863,8 @@ export default function KhataDashboard() {
                         {analytics.vyapari.recentTransactions.slice(0, 5).map((transaction) => (
                           <div key={transaction.id} className="flex items-center justify-between">
                             <div className="flex items-center max-w-[70%]">
-                              <div className={`mr-2 rounded-full p-1 ${
-                                transaction.amount > 0 ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'
-                              }`}>
-                                {transaction.amount > 0 ? 
-                                  <ArrowUp className="h-4 w-4" /> : 
-                                  <ArrowDown className="h-4 w-4" />
-                                }
+                              <div className="mr-2 rounded-full p-1 bg-blue-100 text-blue-700">
+                                <Receipt className="h-4 w-4" />
                               </div>
                               <div className="overflow-hidden">
                                 <p className="font-medium truncate">{transaction.vyapariName}</p>
@@ -930,9 +872,7 @@ export default function KhataDashboard() {
                               </div>
                             </div>
                             <div>
-                              <p className={`text-sm font-medium ${
-                                transaction.amount > 0 ? 'text-red-600' : 'text-green-600'
-                              }`}>
+                              <p className="text-sm font-medium">
                                 {formatCurrency(transaction.amount)}
                               </p>
                               <p className="text-xs text-right text-muted-foreground">{transaction.createdAt}</p>
@@ -948,6 +888,8 @@ export default function KhataDashboard() {
                   </CardContent>
                 </Card>
               </div>
+
+          
             </TabsContent>
           </div>
         </Tabs>

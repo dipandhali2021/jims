@@ -15,6 +15,7 @@ interface TransactionDay {
 
 interface TransactionCalendarProps {
   transactions: TransactionDay[];
+  payments: TransactionDay[];
   title: string;
   description?: string;
   colorClass?: string;
@@ -22,6 +23,7 @@ interface TransactionCalendarProps {
 
 export function TransactionCalendar({
   transactions,
+  payments,
   title,
   description,
   colorClass = 'bg-blue-50 text-blue-900'
@@ -34,7 +36,7 @@ export function TransactionCalendar({
       currency: 'INR',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount);
+    }).format(Math.abs(amount));
   };
 
   // Navigate to previous month
@@ -78,10 +80,13 @@ export function TransactionCalendar({
     return days;
   }, [currentMonth]);
 
-  // Find transaction for specific day
-  const getTransactionForDay = (date: Date) => {
+  // Find data for specific day
+  const getDataForDay = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd');
-    return transactions.find(t => t.date === dateStr);
+    return {
+      transaction: transactions.find(t => t.date === dateStr),
+      payment: payments.find(p => p.date === dateStr)
+    };
   };
 
   return (
@@ -119,7 +124,7 @@ export function TransactionCalendar({
         </div>
         <div className="grid grid-cols-7 gap-1 mt-1">
           {calendarDays.map((day, i) => {
-            const transaction = getTransactionForDay(day);
+            const dayData = getDataForDay(day);
             const isCurrentMonth = isSameMonth(day, currentMonth);
             const isToday = isSameDay(day, new Date());
             
@@ -136,16 +141,31 @@ export function TransactionCalendar({
                   isCurrentMonth ? 'bg-muted text-foreground' : 'bg-muted/50 text-muted-foreground'
                 }`}>{format(day, 'd')}</span>
                 
-                {transaction && (
-                  <div className="mt-5 w-full">
-                    <div className={cn(
-                      "text-xs px-1 py-0.5 rounded-sm mt-1 truncate",
-                      colorClass,
-                      transaction.count > 0 && "font-medium"
-                    )}>
-                      {transaction.count} tx
-                    </div>
-                    <div className="text-xs font-semibold truncate">{formatCurrency(transaction.totalAmount)}</div>
+                {(dayData.transaction || dayData.payment) && (
+                  <div className="mt-5 w-full space-y-1">
+                    {dayData.transaction && (
+                      <div>
+                        <div className={cn(
+                          "text-2xs px-1 py-0.5 rounded-sm truncate",
+                          colorClass,
+                          dayData.transaction.count > 0 && "font-medium"
+                        )}>
+                          {dayData.transaction.count} tx
+                        </div>
+                        <div className="text-2xs font-medium truncate">{formatCurrency(dayData.transaction.totalAmount)}</div>
+                      </div>
+                    )}
+                    {dayData.payment && (
+                      <div>
+                        <div className={cn(
+                          "text-2xs px-1 py-0.5 rounded-sm truncate bg-emerald-50 text-emerald-900",
+                          dayData.payment.count > 0 && "font-medium"
+                        )}>
+                          {dayData.payment.count} py
+                        </div>
+                        <div className="text-2xs font-medium truncate">{formatCurrency(dayData.payment.totalAmount)}</div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
