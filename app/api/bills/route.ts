@@ -124,8 +124,8 @@ export async function POST(req: NextRequest) {
         // Include custom fields in response but not for database
         dateOfSupply: dateOfSupply || null,
         timeOfSupply: timeOfSupply || null,
-        cgstPercentage: cgstPercentage || 9,
-        sgstPercentage: sgstPercentage || 9,
+        cgstPercentage: cgstPercentage || 0,
+        sgstPercentage: sgstPercentage || 0,
         igstPercentage: igstPercentage || 0,
         isFakeBill: true,
       }, { status: 201 });
@@ -139,8 +139,8 @@ export async function POST(req: NextRequest) {
         _meta: {
           dateOfSupply: dateOfSupply || null,
           timeOfSupply: timeOfSupply || null,
-          cgstPercentage: cgstPercentage || 9,
-          sgstPercentage: sgstPercentage || 9,
+          cgstPercentage: cgstPercentage || 0,
+          sgstPercentage: sgstPercentage || 0,
           igstPercentage: igstPercentage || 0,
           hsnCode: hsnCode || '0'
         }

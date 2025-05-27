@@ -114,8 +114,8 @@ export async function PUT(
         
         if (billType === 'GST' && isTaxable) {
           // Get the GST percentages from billDetails or use defaults
-          const cgstPercentage = billDetails?.cgstPercentage || 9;
-          const sgstPercentage = billDetails?.sgstPercentage || 9;
+          const cgstPercentage = billDetails?.cgstPercentage || 0;
+          const sgstPercentage = billDetails?.sgstPercentage || 0;
           const igstPercentage = billDetails?.igstPercentage || 0;
           
           // Calculate GST amounts
@@ -237,8 +237,8 @@ export async function PUT(
         }
         
         // Get the GST percentages from billDetails or use defaults
-        const cgstPercentage = billDetails?.cgstPercentage || 9;
-        const sgstPercentage = billDetails?.sgstPercentage || 9;
+        const cgstPercentage = billDetails?.cgstPercentage || 0;
+        const sgstPercentage = billDetails?.sgstPercentage || 0;
         const igstPercentage = billDetails?.igstPercentage || 0;
         const cgstRate = cgstPercentage / 100;
         const sgstRate = sgstPercentage / 100;
@@ -306,14 +306,15 @@ export async function PUT(
           _meta: {
             dateOfSupply: date || null,
             timeOfSupply: timeOfSupply,
-            cgstPercentage: cgstPercentage || 9,
-            sgstPercentage: sgstPercentage || 9,
+            cgstPercentage: cgstPercentage || 0,
+            sgstPercentage: sgstPercentage || 0,
             igstPercentage: igstPercentage || 0,
             hsnCode: defaultHsnCode || '0',
             // Add the item-specific HSN codes to meta data
             itemHsnCodes: itemHsnCodes || {}
           }
         };
+
         
         // Create bill record with additional GST details if provided
         await prisma.bill.create({

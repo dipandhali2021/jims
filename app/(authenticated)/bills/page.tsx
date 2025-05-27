@@ -347,17 +347,18 @@ export default function BillsPage() {
                           {bill.billType === 'GST' && (
                             <div className="text-xs text-muted-foreground">
                               {(() => {                                // Extract GST percentages from bill items
-                                let cgstPercentage = "9";
-                                let sgstPercentage = "9";
+                                let cgstPercentage = "0";
+                                let sgstPercentage = "0";
                                 let igstPercentage = "0";
-                                let totalGstPercentage = "18";
+                                let totalGstPercentage = "0";
                                 
                                 try {
                                   if (bill.items && typeof bill.items === 'object') {
                                     const items = bill.items as any;
                                     if (items._meta) {
-                                      cgstPercentage = items._meta.cgstPercentage || "9";
-                                      sgstPercentage = items._meta.sgstPercentage || "9";
+                                      console.log("meta",items._meta)
+                                      cgstPercentage = items._meta.cgstPercentage || "0";
+                                      sgstPercentage = items._meta.sgstPercentage || "0";
                                       igstPercentage = items._meta.igstPercentage || "0";
                                       
                                       totalGstPercentage = (
@@ -371,12 +372,8 @@ export default function BillsPage() {
                                 
                                 // Show the appropriate GST breakdown based on which components are present
                                 let gstLabel = "GST";
-                                if (parseFloat(cgstPercentage) > 0 && parseFloat(sgstPercentage) > 0) {
-                                  gstLabel = `CGST+SGST`;
-                                } else if (parseFloat(igstPercentage) > 0) {
-                                  gstLabel = `IGST`;
-                                }
                                 
+                                console.log("totalGstPercentage",totalGstPercentage)
                                 return `Incl. ${gstLabel} (${totalGstPercentage}%): ₹${((bill.sgst || 0) + (bill.cgst || 0) + (bill.igst || 0)).toFixed(2)}`;
                               })()}
                             </div>
