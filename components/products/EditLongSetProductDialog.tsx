@@ -72,7 +72,13 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
     sellingPrice: product.price.toString(),
     stock: product.stock.toString(),
   });
-
+  // New state for stock adjustment
+  const [stockAdjustment, setStockAdjustment] = useState({
+    currentStock: product.stock,
+    newStock: product.stock.toString(),
+    showAdjustment: true, // Set to true by default
+  });
+  
   // Product parts data
   const [parts, setParts] = useState<LongSetProductPart[]>([]);
   const [removedPartIds, setRemovedPartIds] = useState<string[]>([]);
@@ -190,7 +196,6 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
       }
     ]);
   };
-
   const removePart = (index: number) => {
     const part = parts[index];
     
@@ -208,6 +213,20 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
         description: 'A long set product must have at least one part',
       });
     }
+  };
+    // Function to handle stock adjustment changes
+  const handleStockAdjustment = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newStockValue = e.target.value;
+    setStockAdjustment(prev => ({
+      ...prev,
+      newStock: newStockValue
+    }));
+    
+    // Also update the form data stock field to keep them in sync
+    setFormData(prev => ({
+      ...prev,
+      stock: newStockValue
+    }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -309,8 +328,7 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
       });
       return false;
     }
-    
-    if (!formData.stock || isNaN(parseInt(formData.stock))) {
+      if (!formData.stock || isNaN(parseInt(formData.stock))) {
       setError("Valid stock quantity is required");
       toast({
         title: 'Error',
@@ -318,7 +336,18 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
         variant: 'destructive',
       });
       return false;
-    }    // Validate parts
+    }
+    
+    // Validate new stock value
+    if (isNaN(parseInt(stockAdjustment.newStock)) || parseInt(stockAdjustment.newStock) < 0) {
+      setError("Valid new stock quantity is required");
+      toast({
+        title: 'Error',
+        description: 'Please enter a valid new stock quantity',
+        variant: 'destructive',
+      });
+      return false;
+    }// Validate parts
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       if (!part.partName.trim()) {
@@ -363,19 +392,20 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
       const totalCostPrice = parts.reduce((sum, part) => {
         const partCost = part.costPrice ? parseFloat(part.costPrice) : 0;
         return sum + (isNaN(partCost) ? 0 : partCost);
-      }, 0);
-
-      // Build data for submit
+      }, 0);      // Build data for submit
       const longSetProductData = {
         id: product.longSetProduct?.id || product.id, // Use longSetProduct.id if available
         name: formData.name,
         sku: formData.sku,
         description: formData.description || '',
         category: finalCategory,
-        material: finalMaterial,
-        price: parseFloat(formData.sellingPrice),
+        material: finalMaterial,        price: parseFloat(formData.sellingPrice),
         costPrice: totalCostPrice > 0 ? totalCostPrice : null,
-        stock: parseInt(formData.stock),
+        stock: parseInt(stockAdjustment.newStock),
+        stockAdjustment: {
+          currentStock: stockAdjustment.currentStock,
+          newStock: parseInt(stockAdjustment.newStock)
+        },
         parts: parts.map(part => ({
           id: part.id,
           partName: part.partName,
@@ -395,10 +425,10 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
           if (key !== 'parts' && key !== 'removedPartIds') {
             data.append(key, String(value));
           }
-        });
-        // Add parts as JSON string
+        });        // Add parts as JSON string
         data.append('parts', JSON.stringify(longSetProductData.parts));
         data.append('removedPartIds', JSON.stringify(longSetProductData.removedPartIds));
+        data.append('stockAdjustment', JSON.stringify(longSetProductData.stockAdjustment));
         data.append('image', imageFile);
         
         requestOptions = {
@@ -610,21 +640,35 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
                   disabled
                   className="bg-muted"
                 />
-              </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="stock">Stock Quantity</Label>
-                <Input
-                  id="stock"
-                  name="stock"
-                  placeholder="Enter stock quantity"
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={formData.stock}
-                  onChange={handleFormChange}
-                  required
-                />
+              </div>                <div className="space-y-2">
+                  <Label htmlFor="stock">Stock Adjustment</Label>
+                  <div className="space-y-2 border rounded-md p-3 bg-muted/30">
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label htmlFor="currentStock" className="text-xs text-muted-foreground">Current Stock</Label>
+                        <Input
+                          id="currentStock"
+                          value={stockAdjustment.currentStock}
+                          disabled
+                          className="bg-muted"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="newStock" className="text-xs text-muted-foreground">New Stock</Label>
+                        <Input
+                          id="newStock"
+                          name="newStock"
+                          placeholder="Enter new stock"
+                          type="number"
+                          min="0"
+                          step="1"
+                          value={stockAdjustment.newStock}
+                          onChange={handleStockAdjustment}
+                          required
+                        />
+                      </div>
+                    </div>
+                  </div>
               </div>
             </div>
             

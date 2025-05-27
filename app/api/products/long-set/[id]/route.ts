@@ -65,8 +65,9 @@ export async function PUT(
       if (image) {
         const uploadResult = await uploadImageToStorage(image);
         imageUrl = await getImageUrl(uploadResult.path);
-      }
-
+      }      const stockAdjustmentData = formData.get("stockAdjustment");
+      const stockAdjustment = stockAdjustmentData ? JSON.parse(stockAdjustmentData as string) : null;
+      
       updateData = {
         name: formData.get("name") as string,
         sku: formData.get("sku") as string,
@@ -76,6 +77,7 @@ export async function PUT(
         price: parseFloat(formData.get("price") as string),
         costPrice: formData.get("costPrice") ? parseFloat(formData.get("costPrice") as string) : null,
         stock: parseInt(formData.get("stock") as string),
+        stockAdjustment: stockAdjustment,
         imageUrl,
         parts: JSON.parse(formData.get("parts") as string),
       };
@@ -106,8 +108,8 @@ export async function PUT(
               category: updateData.category,
               material: updateData.material,
               price: updateData.price,
-              costPrice: updateData.costPrice,
-              stock: updateData.stock,
+              costPrice: updateData.costPrice,              stock: updateData.stock,
+              stockAdjustment: updateData.stockAdjustment ? updateData.stockAdjustment.newStock - updateData.stockAdjustment.currentStock : null,
               imageUrl: updateData.imageUrl,
               longSetParts: JSON.stringify(updateData.parts),
             },
