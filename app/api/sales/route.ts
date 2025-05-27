@@ -70,8 +70,6 @@ export async function GET(req: NextRequest) {
         console.error('Error parsing transaction items', e);
       }
       
-      console.log('Parsed items:', items);
-      console.log('Product names extracted:', productNames);
       
       return {
         id: transaction.orderId,

@@ -163,7 +163,6 @@ export default function AdminDashboard() {
     return filteredTransactions.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredTransactions, currentPage, itemsPerPage]);
 
-  console.log('Paginated Transactions:', paginatedTransactions);
   
   // Calculate total pages
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
@@ -239,7 +238,7 @@ export default function AdminDashboard() {
       }
       const transResponse = await fetch(`/api/sales?${transParams.toString()}`);
       if (!transResponse.ok) throw new Error('Failed to fetch transactions');
-      let transData = await transResponse.json();      console.log('Raw transaction data:', transData);
+      let transData = await transResponse.json();  
       
       // Ensure id field is set for all transactions
       transData = transData.map((transaction: any) => {
@@ -271,7 +270,6 @@ export default function AdminDashboard() {
         };
       });
       
-      console.log('Processed transaction data:', transData);
       setTransactions(transData);
     } catch (error) {
       toast({
@@ -287,7 +285,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     fetchAnalytics();
   }, [timeframe, date?.from, date?.to, transactionType, fetchAnalytics]);
-
+  console.log('Analytics data:', analytics);
   if (isLoading || !analytics) {
     return (
       <div className="p-3 md:p-6 max-w-screen-2xl mx-auto space-y-4">

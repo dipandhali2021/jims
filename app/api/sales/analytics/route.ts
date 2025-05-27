@@ -332,22 +332,38 @@ export async function GET(req: NextRequest) {
     // This helps identify best performing products
     const productSales = new Map();
     transactions.forEach(transaction => {
-      // Ensure items is properly parsed as an array
-      const items = Array.isArray(transaction.items) ? transaction.items : 
-                   (typeof transaction.items === 'string' ? JSON.parse(transaction.items) : []);
+      // Handle items that are objects with numeric keys (not true arrays)
+      let itemsArray: any[] = [];
       
-      if (items && Array.isArray(items)) {
-        items.forEach(item => {
-          const currentSales = productSales.get(item.productId) || {
-            name: item.productName,
-            quantity: 0,
-            revenue: 0,
-          };
-          productSales.set(item.productId, {
-            name: item.productName,
-            quantity: currentSales.quantity + item.quantity,
-            revenue: currentSales.revenue + item.total,
-          });
+      if (Array.isArray(transaction.items)) {
+        itemsArray = transaction.items;
+      } else if (typeof transaction.items === 'string') {
+        try {
+          itemsArray = JSON.parse(transaction.items);
+        } catch (e) {
+          itemsArray = [];
+        }
+      } else if (transaction.items && typeof transaction.items === 'object') {
+        // Convert object with numeric keys to array
+        itemsArray = Object.keys(transaction.items as object)
+          .filter(key => !isNaN(Number(key)))
+          .map(key => (transaction.items as any)[key]);
+      }
+      
+      if (itemsArray && itemsArray.length > 0) {
+        itemsArray.forEach(item => {
+          if (item && item.productId) {
+            const currentSales = productSales.get(item.productId) || {
+              name: item.productName,
+              quantity: 0,
+              revenue: 0,
+            };
+            productSales.set(item.productId, {
+              name: item.productName,
+              quantity: currentSales.quantity + item.quantity,
+              revenue: currentSales.revenue + item.total,
+            });
+          }
         });
       }
     });
@@ -364,23 +380,39 @@ export async function GET(req: NextRequest) {
     // This provides insights into which categories drive the most revenue
     const categoryRevenue = new Map();
     transactions.forEach(transaction => {
-      // Ensure items is properly parsed as an array
-      const items = Array.isArray(transaction.items) ? transaction.items : 
-                   (typeof transaction.items === 'string' ? JSON.parse(transaction.items) : []);
+      // Handle items that are objects with numeric keys (not true arrays)
+      let itemsArray: any[] = [];
       
-      if (items && Array.isArray(items)) {
-        items.forEach(item => {
-          // Note: Category info needs to be included in transaction items during creation
-          const category = item.category || 'Uncategorized';
-          const currentRevenue = categoryRevenue.get(category) || 0;
-          categoryRevenue.set(
-            category,
-            currentRevenue + item.total
-          );
+      if (Array.isArray(transaction.items)) {
+        itemsArray = transaction.items;
+      } else if (typeof transaction.items === 'string') {
+        try {
+          itemsArray = JSON.parse(transaction.items);
+        } catch (e) {
+          itemsArray = [];
+        }
+      } else if (transaction.items && typeof transaction.items === 'object') {
+        // Convert object with numeric keys to array
+        itemsArray = Object.keys(transaction.items as object)
+          .filter(key => !isNaN(Number(key)))
+          .map(key => (transaction.items as any)[key]);
+      }
+      
+      if (itemsArray && itemsArray.length > 0) {
+        itemsArray.forEach(item => {
+          if (item) {
+            // Note: Category info needs to be included in transaction items during creation
+            const category = item.category || 'Uncategorized';
+            const currentRevenue = categoryRevenue.get(category) || 0;
+            categoryRevenue.set(
+              category,
+              currentRevenue + item.total
+            );
+          }
         });
       }
     });
-
+    
     const revenueByCategory = Array.from(categoryRevenue.entries())
       .map(([category, revenue]) => ({
         category,
