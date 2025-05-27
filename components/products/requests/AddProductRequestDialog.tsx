@@ -500,7 +500,7 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
           </div>          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="costPrice" className="font-medium">
-                Cost Price (₹) (Kharid Mulya) *
+                Cost Price (₹) *
               </Label>
               <Input
                 id="costPrice"
@@ -517,7 +517,7 @@ export function AddProductRequestDialog({ onRequestCreated }: AddProductRequestD
             </div>
             <div className="space-y-2">
               <Label htmlFor="price" className="font-medium">
-                Selling Price (₹) (Bikri Mulya) *
+                Selling Price (₹)*
               </Label>
               <Input
                 id="price"

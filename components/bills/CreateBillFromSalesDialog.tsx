@@ -30,13 +30,14 @@ export function CreateBillFromSalesDialog({
   const [customerState, setCustomerState] = useState("");
   const [transportMode, setTransportMode] = useState("");
   const [vehicleNo, setVehicleNo] = useState("");
-  const [placeOfSupply, setPlaceOfSupply] = useState("Maharashtra");
-  const [isTaxable, setIsTaxable] = useState(true); // Default to true for GST bills
+  const [placeOfSupply, setPlaceOfSupply] = useState("Maharashtra");  const [isTaxable, setIsTaxable] = useState(true); // Default to true for GST bills
+  // GST mode toggle: true for SGST+CGST, false for IGST
+  const [isIntraState, setIsIntraState] = useState(true); // Default to intra-state (SGST+CGST)
   // Separate GST percentage fields
-  const [cgstPercentage, setCgstPercentage] = useState("9"); // Default 9%
-  const [sgstPercentage, setSgstPercentage] = useState("9"); // Default 9%
+  const [cgstPercentage, setCgstPercentage] = useState("1.5"); // Default 1.5%
+  const [sgstPercentage, setSgstPercentage] = useState("1.5"); // Default 1.5%
   const [igstPercentage, setIgstPercentage] = useState("0"); // Default 0% for intra-state
-  const [defaultHsnCode, setDefaultHsnCode] = useState("7113"); // Default HSN code for jewelry
+  const [defaultHsnCode, setDefaultHsnCode] = useState("0"); // Default HSN code for jewelry
   const [dateOfSupply, setDateOfSupply] = useState(format(new Date(), "yyyy-MM-dd"));
   const [timeOfSupply, setTimeOfSupply] = useState(format(new Date(), "HH:mm"));
   
@@ -47,10 +48,25 @@ export function CreateBillFromSalesDialog({
       acc[itemId] = item.product?.hsnCode || defaultHsnCode;
       return acc;
     }, {}) || {}
-  );
-  const { createBill } = useBills();
+  );  const { createBill } = useBills();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Handle GST mode toggle
+  const handleGstModeChange = (intraState: boolean) => {
+    setIsIntraState(intraState);
+    if (intraState) {
+      // Intra-state: SGST + CGST
+      setCgstPercentage('1.5');
+      setSgstPercentage('1.5');
+      setIgstPercentage('0');
+    } else {
+      // Inter-state: IGST only
+      setCgstPercentage('0');
+      setSgstPercentage('0');
+      setIgstPercentage('3');
+    }
+  };
   
   const handleHsnCodeChange = (itemId: string, value: string) => {
     setProductHsnCodes(prev => ({
@@ -294,9 +310,7 @@ export function CreateBillFromSalesDialog({
                     })}
                   </div>
                 </div>
-              )}
-
-              {/* Tax Section */}
+              )}              {/* Tax Section */}
               <div className="mb-6">
                 <h3 className="text-sm font-medium mb-2 border-b pb-1">Tax Details</h3>
                 <div className="flex items-center space-x-2 mb-3">
@@ -307,13 +321,45 @@ export function CreateBillFromSalesDialog({
                   />
                   <Label htmlFor="isTaxable">Tax is payable on Reverse Charge</Label>
                 </div>
+
+                {/* GST Mode Toggle */}
+                
+                  <div className="flex items-center space-x-4 bg-muted p-3 rounded-md mb-4">
+                    <Label className="text-sm font-medium">GST Type:</Label>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="intraState"
+                        name="gstMode"
+                        checked={isIntraState}
+                        onChange={() => handleGstModeChange(true)}
+                        className="w-4 h-4"
+                      />
+                      <Label htmlFor="intraState" className="text-sm cursor-pointer">
+                        Intra-State (SGST + CGST)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        id="interState"
+                        name="gstMode"
+                        checked={!isIntraState}
+                        onChange={() => handleGstModeChange(false)}
+                        className="w-4 h-4"
+                      />
+                      <Label htmlFor="interState" className="text-sm cursor-pointer">
+                        Inter-State (IGST)
+                      </Label>
+                    </div>
+                  </div>
+           
                   
                 <div className="grid md:grid-cols-3 gap-3">
                   <div className="space-y-2">
                     <Label htmlFor="cgstPercentage">CGST (%)</Label>
                     <Input
                       id="cgstPercentage"
-                      disabled={!isTaxable}
                       type="number"
                       placeholder="CGST percentage"
                       value={cgstPercentage}
@@ -328,7 +374,6 @@ export function CreateBillFromSalesDialog({
                       placeholder="SGST percentage"
                       value={sgstPercentage}
                       onChange={(e) => setSgstPercentage(e.target.value)}
-                      disabled={!isTaxable}
                     />
                   </div>
                   <div className="space-y-2">
@@ -339,7 +384,6 @@ export function CreateBillFromSalesDialog({
                       placeholder="IGST percentage"
                       value={igstPercentage}
                       onChange={(e) => setIgstPercentage(e.target.value)}
-                      disabled={!isTaxable}
                     />
                     <p className="text-xs text-muted-foreground">For inter-state transactions</p>
                   </div>

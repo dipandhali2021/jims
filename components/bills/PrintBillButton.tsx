@@ -401,7 +401,7 @@ const generateGstBillHtml = (bill: Bill) => {
               <tr>
                 <td>${idx + 1}</td>
                 <td class="particulars-column" style="text-align:left;padding-left:5px;">${item.name}</td>
-                <td>${item.hsn || "7113"}</td>
+                <td>${item.hsn}</td>
                 <td>${item.quantity}</td>
                 <td>${item.rate?.toFixed(2)}</td>
                 <td>${item.amount?.toFixed(2)}</td>

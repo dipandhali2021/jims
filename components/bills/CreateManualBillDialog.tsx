@@ -42,11 +42,12 @@ export function CreateManualBillDialog({
   const [customerState, setCustomerState] = useState('');
   const [transportMode, setTransportMode] = useState('');
   const [vehicleNo, setVehicleNo] = useState('');
-  const [placeOfSupply, setPlaceOfSupply] = useState('Maharashtra');
-  const [isTaxable, setIsTaxable] = useState(true); // Default to true for GST bills
+  const [placeOfSupply, setPlaceOfSupply] = useState('Maharashtra');  const [isTaxable, setIsTaxable] = useState(true); // Default to true for GST bills
+  // GST mode toggle: true for SGST+CGST, false for IGST
+  const [isIntraState, setIsIntraState] = useState(true); // Default to intra-state (SGST+CGST)
   // Separate GST percentage fields
-  const [cgstPercentage, setCgstPercentage] = useState('9'); // Default 9%
-  const [sgstPercentage, setSgstPercentage] = useState('9'); // Default 9%
+  const [cgstPercentage, setCgstPercentage] = useState('1.5'); // Default 1.5%
+  const [sgstPercentage, setSgstPercentage] = useState('1.5'); // Default 1.5%
   const [igstPercentage, setIgstPercentage] = useState('0'); // Default 0% for intra-state
   const [dateOfSupply, setDateOfSupply] = useState(
     format(new Date(), 'yyyy-MM-dd')
@@ -65,7 +66,7 @@ export function CreateManualBillDialog({
       name: '',
       quantity: 1,
       rate: 0,
-      hsn: billType === 'gst' ? '7113' : undefined,
+      hsn: billType === 'gst' ? '0' : undefined,
     },
   ]);
 
@@ -97,7 +98,7 @@ export function CreateManualBillDialog({
         name: '',
         quantity: 1,
         rate: 0,
-        hsn: billType === 'gst' ? '7113' : undefined,
+        hsn: billType === 'gst' ? '0' : undefined,
       },
     ]);
   };
@@ -132,13 +133,29 @@ export function CreateManualBillDialog({
         name: product.name,
         quantity: 1,
         rate: product.price,
-        hsn: billType === 'gst' ? '7113' : undefined,
+        hsn: billType === 'gst' ? '0' : undefined,
         productId: product.id,
       };
       setItems(updatedItems);
       setShowProductSearch(false);
       setCurrentEditingIndex(null);
       setSearchTerm('');
+    }
+  };
+
+  // Handle GST mode toggle
+  const handleGstModeChange = (intraState: boolean) => {
+    setIsIntraState(intraState);
+    if (intraState) {
+      // Intra-state: SGST + CGST
+      setCgstPercentage('1.5');
+      setSgstPercentage('1.5');
+      setIgstPercentage('0');
+    } else {
+      // Inter-state: IGST only
+      setCgstPercentage('0');
+      setSgstPercentage('0');
+      setIgstPercentage('3');
     }
   };
 
@@ -219,7 +236,7 @@ export function CreateManualBillDialog({
       cgstPercentage: parseFloat(cgstPercentage),
       sgstPercentage: parseFloat(sgstPercentage),
       igstPercentage: parseFloat(igstPercentage),
-      hsnCode: billType === 'gst' ? items[0]?.hsn || '7113' : undefined,
+      hsnCode: billType === 'gst' ? items[0]?.hsn || '0' : undefined,
     };
 
     const result = await createBill(apiData);
@@ -250,15 +267,15 @@ export function CreateManualBillDialog({
     setCustomerAddress("");
     setCustomerState("");
     setTransportMode("");
-    setVehicleNo("");
-    setPlaceOfSupply("Maharashtra");
+    setVehicleNo("");    setPlaceOfSupply("Maharashtra");
     setIsTaxable(true);
-    setCgstPercentage("9");
-    setSgstPercentage("9");
+    setIsIntraState(true);
+    setCgstPercentage("1.5");
+    setSgstPercentage("1.5");
     setIgstPercentage("0");
     setDateOfSupply(format(new Date(), "yyyy-MM-dd"));
     setTimeOfSupply(format(new Date(), "HH:mm"));
-    setItems([{ name: "", quantity: 1, rate: 0, hsn: currentBillType === "gst" ? "7113" : undefined }]);
+    setItems([{ name: "", quantity: 1, rate: 0, hsn: currentBillType === "gst" ? "0" : undefined }]);
   };
 
   const resetFormAndClose = () => {
@@ -360,8 +377,7 @@ export function CreateManualBillDialog({
             {/* GST Tax Information */}
             {billType === 'gst' && (
               <div className="border-t py-3 mb-3">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center space-x-2">
+                <div className="flex flex-wrap items-center gap-3">                  <div className="flex items-center space-x-2">
                     <Switch
                       id="isTaxable"
                       checked={isTaxable}
@@ -371,6 +387,39 @@ export function CreateManualBillDialog({
                       Tax is payable on Reverse Charge
                     </Label>
                   </div>
+
+                  {/* GST Mode Toggle */}
+                  
+                    <div className="flex items-center space-x-4 bg-muted p-3 rounded-md">
+                      <Label className="text-sm font-medium">GST Type:</Label>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="intraState"
+                          name="gstMode"
+                          checked={isIntraState}
+                          onChange={() => handleGstModeChange(true)}
+                          className="w-4 h-4"
+                        />
+                        <Label htmlFor="intraState" className="text-sm cursor-pointer">
+                          Intra-State (SGST + CGST)
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          id="interState"
+                          name="gstMode"
+                          checked={!isIntraState}
+                          onChange={() => handleGstModeChange(false)}
+                          className="w-4 h-4"
+                        />
+                        <Label htmlFor="interState" className="text-sm cursor-pointer">
+                          Inter-State (IGST)
+                        </Label>
+                      </div>
+                    </div>
+                  
 
                   <div className="flex flex-wrap gap-3">
                     <div className="w-[80px]">
@@ -383,6 +432,7 @@ export function CreateManualBillDialog({
                         value={cgstPercentage}
                         onChange={(e) => setCgstPercentage(e.target.value)}
                         className="h-8"
+                     
                       />
                     </div>
                     <div className="w-[80px]">

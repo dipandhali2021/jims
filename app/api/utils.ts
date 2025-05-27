@@ -45,9 +45,10 @@ export async function uploadImageToStorage(image: File): Promise<{ url: string; 
     
     console.log('Cloudinary upload successful:', result.secure_url);
     
+    // Store the full public ID including the folder
     return {
       url: result.secure_url,
-      path: `jewelry-inventory/${result.public_id.split('/').pop()}`
+      path: result.public_id // Store the complete public_id which includes the folder
     };
   } catch (error) {
     console.error('Error uploading to Cloudinary:', error);
@@ -72,11 +73,31 @@ export async function getImageUrl(path: string): Promise<string> {
   
   // Get the URL from Cloudinary
   try {
-    const result = await cloudinary.api.resource(path);
+    // Use proper error handling if the resource doesn't exist
+    let publicId = path;
+    
+    // Check if path already contains folder; if not, assume it's in jewelry-inventory folder
+    if (!path.includes('/')) {
+      publicId = `jewelry-inventory/${path}`;
+    }
+    
+    console.log(`Getting image URL for public ID: ${publicId}`);
+    const result = await cloudinary.api.resource(publicId);
     return result.secure_url;
   } catch (error) {
-    console.error('Error getting image URL:', error);
-    return 'https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png';
+    console.error(`Error getting image URL for path "${path}":`, error);
+    
+    // Try a direct URL construction as fallback
+    try {
+      const cloud_name = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+      const publicId = !path.includes('/') ? `jewelry-inventory/${path}` : path;
+      const constructedUrl = `https://res.cloudinary.com/${cloud_name}/image/upload/${publicId}`;
+      console.log(`Constructed URL fallback: ${constructedUrl}`);
+      return constructedUrl;
+    } catch (fallbackError) {
+      console.error('Fallback URL construction failed:', fallbackError);
+      return 'https://lgshoplocal.com/wp-content/uploads/2020/04/placeholderproduct-500x500-1.png';
+    }
   }
 }
 
@@ -91,11 +112,28 @@ export async function deleteImageFromStorage(imageUrl: string): Promise<void> {
     // Only delete images that are stored in our Cloudinary folder
     if (imageUrl.includes('cloudinary.com') && imageUrl.includes('jewelry-inventory')) {
       // Extract public ID from the URL
-      const publicId = imageUrl.split('/').slice(-2).join('/').split('.')[0];
-      if (publicId) {
-        console.log(`Deleting image from Cloudinary: ${publicId}`);
-        await cloudinary.uploader.destroy(publicId);
-        console.log(`Successfully deleted image: ${publicId}`);
+      // Format: https://res.cloudinary.com/dqcbbgdbc/image/upload/v1748228777/jewelry-inventory/ex0xkuzzz14y8u629neg.png
+      
+      // Skip the domain and upload part, then extract everything after the version number
+      const urlParts = imageUrl.split('/');
+      
+      // Find the index where "upload" appears
+      const uploadIndex = urlParts.findIndex(part => part === 'upload');
+      
+      if (uploadIndex !== -1 && uploadIndex + 2 < urlParts.length) {
+        // Skip the version part (v1748228777) and extract the folder + filename
+        const extractedParts = urlParts.slice(uploadIndex + 2);
+        
+        // Join to create public ID and remove file extension
+        const publicId = extractedParts.join('/').split('.')[0];
+        
+        if (publicId) {
+          console.log(`Deleting image from Cloudinary: ${publicId}`);
+          await cloudinary.uploader.destroy(publicId);
+          console.log(`Successfully deleted image: ${publicId}`);
+        }
+      } else {
+        console.error(`Could not parse public ID from URL: ${imageUrl}`);
       }
     }
   } catch (error) {

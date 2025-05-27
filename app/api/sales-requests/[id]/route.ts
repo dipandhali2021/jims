@@ -219,7 +219,7 @@ export async function PUT(
         const billNumber = `BILL-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
         
         // Get the default HSN code from billDetails or use default
-        const defaultHsnCode = billDetails?.hsnCode || '7113';
+        const defaultHsnCode = billDetails?.hsnCode || '0';
         
         // Extract item-specific HSN codes from the request
         const itemHsnCodes = billDetails?.itemHsnCodes || {};
@@ -309,7 +309,7 @@ export async function PUT(
             cgstPercentage: cgstPercentage || 9,
             sgstPercentage: sgstPercentage || 9,
             igstPercentage: igstPercentage || 0,
-            hsnCode: defaultHsnCode || '7113',
+            hsnCode: defaultHsnCode || '0',
             // Add the item-specific HSN codes to meta data
             itemHsnCodes: itemHsnCodes || {}
           }

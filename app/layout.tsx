@@ -7,7 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Jewelry Inventory",
+  title: "Omkar Gold Covering",
   description: "Jewellery Gold Covering Service and management",
   keywords: "jewellery, gold, covering, service",  
 };

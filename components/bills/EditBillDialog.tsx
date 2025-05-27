@@ -39,13 +39,20 @@ export function EditBillDialog({
     } catch (error) {
       console.error('Error parsing GST percentages:', error);
     }
-    return { cgst: '9', sgst: '9', igst: '0' }; // Default GST percentages
+    return { cgst: '1.5', sgst: '1.5', igst: '0' }; // Default GST percentages
   };
   console.log('Bill:', bill);
-  const gstPercentages = extractGstPercentages(bill);
-  const [cgstPercentage, setCgstPercentage] = useState(gstPercentages.cgst);
+  const gstPercentages = extractGstPercentages(bill);  const [cgstPercentage, setCgstPercentage] = useState(gstPercentages.cgst);
   const [sgstPercentage, setSgstPercentage] = useState(gstPercentages.sgst);
   const [igstPercentage, setIgstPercentage] = useState(gstPercentages.igst);
+  // GST mode toggle: true for SGST+CGST, false for IGST
+  const [isIntraState, setIsIntraState] = useState(() => {
+    // Determine initial state based on current GST percentages
+    const cgst = parseFloat(gstPercentages.cgst);
+    const sgst = parseFloat(gstPercentages.sgst);
+    const igst = parseFloat(gstPercentages.igst);
+    return cgst > 0 || sgst > 0; // If CGST or SGST is present, it's intra-state
+  });
   // Initialize with default values from bill prop
   const [isTaxable, setIsTaxable] = useState(bill?.isTaxable !== false);
   const [editedBill, setEditedBill] = useState<Partial<Bill>>({
@@ -221,7 +228,7 @@ export function EditBillDialog({
                     type="number"
                     value={cgstPercentage}
                     onChange={(e) => setCgstPercentage(e.target.value)}
-                    disabled={!isTaxable}                  />
+                                    />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="sgstPercentage">SGST (%)</Label>
@@ -231,7 +238,6 @@ export function EditBillDialog({
                     type="number"
                     value={sgstPercentage}
                     onChange={(e) => setSgstPercentage(e.target.value)}
-                    disabled={!isTaxable}
                   />
                 </div>
                 <div className="space-y-2">
@@ -242,7 +248,6 @@ export function EditBillDialog({
                     type="number"
                     value={igstPercentage}
                     onChange={(e) => setIgstPercentage(e.target.value)}
-                    disabled={!isTaxable}
                   />
                   <p className="text-xs text-muted-foreground">
                     For inter-state transactions

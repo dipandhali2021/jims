@@ -116,7 +116,7 @@ export async function POST(req: NextRequest) {
         sgst,
         cgst,
         igst,
-        hsnCodes: { codes: hsnCode ? [hsnCode] : ['7113'] },
+        hsnCodes: { codes: hsnCode ? [hsnCode] : [null] },
         transportMode,
         vehicleNo,
         placeOfSupply,
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
           cgstPercentage: cgstPercentage || 9,
           sgstPercentage: sgstPercentage || 9,
           igstPercentage: igstPercentage || 0,
-          hsnCode: hsnCode || '7113'
+          hsnCode: hsnCode || '0'
         }
       } : items;
     
@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
         sgst,
         cgst,
         igst,
-        hsnCodes: { codes: hsnCode ? [hsnCode] : ['7113'] },
+        hsnCodes: { codes: hsnCode ? [hsnCode] : ['0'] },
         transportMode,
         vehicleNo,
         placeOfSupply,

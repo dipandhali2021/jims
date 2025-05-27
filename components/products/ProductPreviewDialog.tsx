@@ -93,9 +93,9 @@ export function ProductPreviewDialog({ product }: ProductPreviewDialogProps) {
             </DialogHeader>
               <div className="space-y-4 flex-grow">
               <div>
-                <h4 className="font-medium text-lg">Selling Price (Bikroy Mullo): {formattedPrice}</h4>
+                <h4 className="font-medium text-lg">Selling Price: {formattedPrice}</h4>
                 {product.costPrice && (
-                  <h4 className="font-medium">Cost Price (Kroy Mullo): {formattedCostPrice}</h4>
+                  <h4 className="font-medium">Cost Price: {formattedCostPrice}</h4>
                 )}
                 <p className="text-sm text-gray-500">In Stock: {product.stock}</p>
               </div>

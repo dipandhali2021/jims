@@ -30,9 +30,7 @@ export function ProductStockLevelsChart({ products = [] }: ProductStockProps) {
             Current inventory for your most important products
           </CardDescription>
         </div>
-        <Button variant="outline" size="sm" className="flex items-center gap-1">
-          View All <ArrowRight className="h-4 w-4" />
-        </Button>
+      
       </CardHeader>
       <CardContent>
         {products.length === 0 ? (

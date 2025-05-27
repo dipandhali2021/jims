@@ -291,15 +291,8 @@ export default function KhataApprovals() {
           </Button>
         </div>
 
-        <Tabs defaultValue="vyapari-transactions" value={activeTab} onValueChange={setActiveTab}>
+        <Tabs defaultValue="vyapari-payments" value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
-            <TabsTrigger value="vyapari-transactions" className="flex items-center gap-1">
-              <FileText className="h-4 w-4" />
-              <span>Vyapari Transactions</span>
-              {pendingVyapariTransactions.length > 0 && (
-                <Badge variant="secondary">{pendingVyapariTransactions.length}</Badge>
-              )}
-            </TabsTrigger>
             <TabsTrigger value="vyapari-payments" className="flex items-center gap-1">
               <CreditCard className="h-4 w-4" />
               <span>Vyapari Payments</span>
