@@ -111,7 +111,7 @@ const generateGstBillHtml = (bill: Bill) => {
           left: 0;
           top: 0;
           width: 64px;
-          height: 48px;
+          height: 64px;
         }
         .company-logo img {
           width: 100%;
@@ -120,52 +120,62 @@ const generateGstBillHtml = (bill: Bill) => {
         .contact-details {
           position: absolute;
           right: 0;
-          top: 0;
-          font-size: 11px;
+          top: 5px;
+          font-size: 12px;
           text-align: right;
-          line-height: 1.2;
+          line-height: 1.3;
+          font-weight: bold;
+        }        .invoice-box-top {
+          position: absolute;
+          left: 50%;
+          top: 0;
+          transform: translateX(-50%);
+          width: fit-content;
+          z-index: 10;
+        }
+        .invoice-label-top {
+          text-align: center;
+          font-weight: bold;
+          margin: 0 auto;
+          width: fit-content;
+          background-color: #0B5394;
+          color: white;
+          padding: 4px 10px;
+          font-size: 14px;
+          border-radius: 15px;
+          display: block;
+        }
+        .invoice-jurisdiction-top {
+          text-align: center;
+          font-size: 11px;
+          margin: 2px 0 0 0;
+          padding: 0;
+          display: block;
+          color: #0B5394;
         }
         .bill-title { 
           color: #cc0000; 
-          font-size: 26px; 
+          font-size: 32px; 
           font-weight: bold; 
           margin: 0;
           text-align: center;
-          padding-top: 10px;
+          padding-top: 50px;
           letter-spacing: 1px;
         }
         .bill-address {
-          margin: 2px 0;
+          margin: 3px 0;
           font-size: 11px; 
           text-align: center;
-          padding: 1px 0;
+          padding: 0;
+          color: #0B5394;
         }
         .bill-gstin {
           margin: 0;
-          font-size: 11px;
+          font-size: 12px;
           text-align: center;
           padding-bottom: 2px;
-        }
-        .invoice-box {
-          width: 100%;
-          margin-top: 2px;
-          margin-bottom: 2px;
-        }
-        .invoice-label {
-          text-align: center;
           font-weight: bold;
-          margin: 0;
-          background-color: #000080;
-          color: white;
-          padding: 4px 0;
-          font-size: 13px;
-        }
-        .invoice-jurisdiction {
-          text-align: center;
-          font-size: 11px;
-          margin: 0;
-          padding: 2px 0;
-          border-bottom: 1px solid #ddd;
+          color: #7B241C;
         }
         .bill-info { 
           display: flex; 
@@ -312,20 +322,19 @@ const generateGstBillHtml = (bill: Bill) => {
       <div class="bill-container">
         <div class="bill-header">
           <div class="company-logo">
-            <img src="/assets/logo.png" width="50" height="50" alt="Omkar Gold Covering Logo" />
+            <img src="/assets/logo.png" width="60" height="60" alt="Omkar Gold Covering Logo" />
+          </div>
+          <div class="invoice-box-top">
+            <p class="invoice-label-top">GST INVOICE</p>
+            <p class="invoice-jurisdiction-top">Subject To Thane Jurisdiction</p>
           </div>
           <div class="contact-details">
             Kanchan : 9699233831<br>
             Office : 9702833831
           </div>
           <h1 class="bill-title">OMKAR GOLD COVERING</h1>
-          <p class="bill-address">A-101,102 NAGEE PALACE CHS LTD NAGEE PALACE NAVGHAR ROAD SAIBABA NAGAR BHAINDER EAST THANE 401105</p>
+          <p class="bill-address">Room No. C-7, Mamta Industrial Estate, Navghar Road, Near Sri Ram Jewellers, Bhayander (E), Thane - 401105.</p>
           <p class="bill-gstin">GSTIN : 27AZNPG8654N1Z1</p>
-        </div>
-        
-        <div class="invoice-box">
-          <p class="invoice-label">GST INVOICE</p>
-          <p class="invoice-jurisdiction">Subject To Thane Jurisdiction</p>
         </div>
         
         <div class="bill-info">
