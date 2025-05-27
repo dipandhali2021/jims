@@ -54,7 +54,6 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
   const { fetchKarigars } = useKarigar();
   const { user } = useUser();
   const isAdmin = user?.publicMetadata?.role === 'admin';
-
   // Base product form data
   const [formData, setFormData] = useState({
     name: '',
@@ -64,7 +63,7 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
     material: '',
     customCategory: '',
     customMaterial: '',
-    costPrice: '',
+    // costPrice will be calculated from parts
     sellingPrice: '',
     stock: '1',
   });
@@ -110,12 +109,23 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
       [name]: value
     }));
   };
-
   const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+  
+  // Calculate total cost price from all parts
+  const calculateTotalCostPrice = () => {
+    let total = 0;
+    parts.forEach(part => {
+      const costPrice = parseFloat(part.costPrice);
+      if (!isNaN(costPrice)) {
+        total += costPrice;
+      }
+    });
+    return total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   const handlePartChange = (index: number, field: string, value: string) => {
@@ -158,7 +168,6 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
       setPreviewUrl(URL.createObjectURL(file));
     }
   };
-
   const resetForm = () => {
     setFormData({
       name: '',
@@ -168,7 +177,6 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
       material: '',
       customCategory: '',
       customMaterial: '',
-      costPrice: '',
       sellingPrice: '',
       stock: '1',
     });
@@ -221,7 +229,11 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
 
       // Prepare data with custom category/material if "Other" is selected
       const finalCategory = formData.category === 'Other' ? formData.customCategory : formData.category;
-      const finalMaterial = formData.material === 'Other' ? formData.customMaterial : formData.material;
+      const finalMaterial = formData.material === 'Other' ? formData.customMaterial : formData.material;      // Calculate total cost price from all parts
+      const totalCostPrice = parts.reduce((sum, part) => {
+        const partCost = part.costPrice ? parseFloat(part.costPrice) : 0;
+        return sum + (isNaN(partCost) ? 0 : partCost);
+      }, 0);
 
       // Build data for submit
       const longSetProductData = {
@@ -231,7 +243,7 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
         category: finalCategory,
         material: finalMaterial,
         price: parseFloat(formData.sellingPrice),
-        costPrice: formData.costPrice ? parseFloat(formData.costPrice) : null,
+        costPrice: totalCostPrice > 0 ? totalCostPrice : null,
         stock: parseInt(formData.stock),
         parts: parts.map(part => ({
           partName: part.partName,
@@ -318,10 +330,10 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
         <Button 
           variant="outline" 
           size="sm" 
-          className="gap-1"
+          className="gap-1 p-4"
         >
           <PlusCircle className="h-4 w-4" />
-          {isAdmin ? "Create Long Set Request" : "Request Long Set"}
+          {isAdmin ? "Create Long Set " : "Request Long Set"}
         </Button>
       </DialogTrigger>
 
@@ -426,8 +438,7 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
                 )}
               </div>
             </div>
-            
-            {/* Price and Stock */}
+              {/* Price and Stock */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="sellingPrice">Selling Price (₹) <span className="text-red-500">*</span></Label>
@@ -444,16 +455,14 @@ export function AddLongSetProductDialog({ onProductAdded }: { onProductAdded: ()
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="costPrice">Cost Price (₹)</Label>
+                <Label htmlFor="calculatedCostPrice">Cost Price (₹) <span className="text-xs text-muted-foreground ml-1">(Auto-calculated)</span></Label>
                 <Input
-                  id="costPrice"
-                  name="costPrice"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                  value={formData.costPrice}
-                  onChange={handleFormChange}
+                  id="calculatedCostPrice"
+                  name="calculatedCostPrice"
+                  type="text"
+                  value={calculateTotalCostPrice()}
+                  disabled
+                  className="bg-muted"
                 />
               </div>
               <div className="space-y-2">

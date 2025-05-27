@@ -374,9 +374,9 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
                           {balances[karigar.id] !== undefined && (
                             <div className="text-xs text-muted-foreground">
                               {balances[karigar.id] < 0
-                                ? 'You have to pay them'
+                                ? 'They have to pay you'
                                 : balances[karigar.id] > 0
-                                  ? 'They have to pay you'
+                                  ? 'You have to pay them'
                                   : 'No balance'}
                             </div>
                           )}

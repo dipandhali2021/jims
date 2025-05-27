@@ -59,7 +59,7 @@ model Product {
   userId            String
   salesItems        SalesItem[]
   productRequests   ProductRequest[]
-  LongSetProduct    LongSetProduct?
+  longSetProducts   LongSetProduct[]
 }
 
 model SalesRequest {
@@ -386,10 +386,11 @@ model LongSetProduct {
   parts             LongSetProductPart[]
   // Relation to regular Product for inventory tracking
   product           Product?             @relation(fields: [productId], references: [id])
-  productId         String?              @unique
+  productId         String?
 
   @@index([userId])
   @@index([sku])
+  @@index([productId])
 }
 
 model LongSetProductPart {

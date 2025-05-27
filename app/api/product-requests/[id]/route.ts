@@ -267,9 +267,7 @@ interface ProductRequestDetails {
                     }))
                   }
                 }
-              });
-
-              // If parts have karigars specified, add transactions to their accounts
+              });              // If parts have karigars specified, add transactions to their accounts
               if (parts.length > 0) {
                 for (const part of parts) {
                   if (part.karigarId) {
@@ -279,11 +277,14 @@ interface ProductRequestDetails {
                     
                     if (karigar) {
                       const partCost = part.costPrice || 0;
-                      // Create transaction for this part
+                      const productStock = productRequest.details.stock || 0;
+                      const totalPartCost = partCost * productStock; // Multiply by stock quantity
+                      
+                      // Create transaction for this part (multiplied by stock)
                       const transaction = await createKarigarTransaction(
                         karigar.id,
-                        `Long set product part: ${part.partName} for ${productRequest.details.name}`,
-                        partCost,
+                        `Long set product part: ${part.partName} for ${productRequest.details.name} (${productStock} units)`,
+                        totalPartCost,
                         productRequest.requestId,
                         productRequest.details.name || 'New long set product',
                         userId
@@ -416,32 +417,107 @@ interface ProductRequestDetails {
                       }
                     }
                   });
-                }
-
-                // Update or create parts
+                }                // Update or create parts
                 for (const part of parts) {
+                  // Determine if this part has a karigar that needs transaction (new or updated)
+                  const partKarigarId = part.karigarId && part.karigarId !== 'none' ? part.karigarId : null;
+                  
                   if (part.id) {
                     // Update existing part
+                    const existingPart = await prisma.longSetProductPart.findUnique({
+                      where: { id: part.id },
+                      include: { karigar: true }
+                    });
+                    
                     await prisma.longSetProductPart.update({
                       where: { id: part.id },
                       data: {
                         partName: part.partName,
                         partDescription: part.partDescription || '',
                         costPrice: part.costPrice || null,
-                        karigarId: part.karigarId && part.karigarId !== 'none' ? part.karigarId : null
+                        karigarId: partKarigarId
                       }
                     });
+                    
+                    // If karigar changed or cost price changed for existing part, create a transaction
+                    if (partKarigarId && 
+                        (existingPart?.karigarId !== partKarigarId || existingPart?.costPrice !== part.costPrice)) {
+                      const karigar = await prisma.karigar.findUnique({
+                        where: { id: partKarigarId }
+                      });
+                      
+                      if (karigar) {
+                        const partCost = part.costPrice || 0;
+                        const productStock = longSetProduct.stock || 0;
+                        const totalPartCost = partCost * productStock; // Multiply by stock quantity
+                        
+                        // Create transaction for this updated part
+                        const transaction = await createKarigarTransaction(
+                          karigar.id,
+                          `Updated long set product part: ${part.partName} for ${longSetProduct.name} (${productStock} units)`,
+                          totalPartCost,
+                          productRequest.requestId,
+                          longSetProduct.name,
+                          userId
+                        );
+                        
+                        // Auto-approve the transaction
+                        if (transaction) {
+                          await prisma.karigarTransaction.update({
+                            where: { id: transaction.id },
+                            data: {
+                              isApproved: true,
+                              approvedById: userId
+                            }
+                          });
+                        }
+                      }
+                    }
                   } else {
                     // Create new part
-                    await prisma.longSetProductPart.create({
+                    const createdPart = await prisma.longSetProductPart.create({
                       data: {
                         partName: part.partName,
                         partDescription: part.partDescription || '',
                         costPrice: part.costPrice || null,
-                        karigarId: part.karigarId && part.karigarId !== 'none' ? part.karigarId : null,
+                        karigarId: partKarigarId,
                         longSetProductId: longSetProduct.id
                       }
                     });
+                    
+                    // If karigar specified for new part, create a transaction
+                    if (partKarigarId) {
+                      const karigar = await prisma.karigar.findUnique({
+                        where: { id: partKarigarId }
+                      });
+                      
+                      if (karigar) {
+                        const partCost = part.costPrice || 0;
+                        const productStock = longSetProduct.stock || 0;
+                        const totalPartCost = partCost * productStock; // Multiply by stock quantity
+                        
+                        // Create transaction for this new part
+                        const transaction = await createKarigarTransaction(
+                          karigar.id,
+                          `New long set product part: ${part.partName} for ${longSetProduct.name} (${productStock} units)`,
+                          totalPartCost,
+                          productRequest.requestId,
+                          longSetProduct.name,
+                          userId
+                        );
+                        
+                        // Auto-approve the transaction
+                        if (transaction) {
+                          await prisma.karigarTransaction.update({
+                            where: { id: transaction.id },
+                            data: {
+                              isApproved: true,
+                              approvedById: userId
+                            }
+                          });
+                        }
+                      }
+                    }
                   }
                 }
               }

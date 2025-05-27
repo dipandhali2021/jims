@@ -59,7 +59,6 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
   const [loadingKarigars, setLoadingKarigars] = useState(false);
   const { toast } = useToast();
   const { fetchKarigars } = useKarigar();
-
   // Base product form data
   const [formData, setFormData] = useState({
     name: product.name,
@@ -69,7 +68,7 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
     material: product.material,
     customCategory: '',
     customMaterial: '',
-    costPrice: product.costPrice?.toString() || '',
+    // costPrice will be calculated from parts
     sellingPrice: product.price.toString(),
     stock: product.stock.toString(),
   });
@@ -153,13 +152,22 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
       ...prev,
       [name]: value
     }));
-  };
-
-  const handleSelectChange = (name: string, value: string) => {
+  };  const handleSelectChange = (name: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+  };
+    // Calculate total cost price from all parts
+  const calculateTotalCostPrice = () => {
+    let total = 0;
+    parts.forEach(part => {
+      const costPrice = parseFloat(part.costPrice);
+      if (!isNaN(costPrice)) {
+        total += costPrice;
+      }
+    });
+    return total.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   };
 
   const handlePartChange = (index: number, field: string, value: string) => {
@@ -310,10 +318,7 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
         variant: 'destructive',
       });
       return false;
-    }
-
-    // Validate parts
-    let totalCostPrice = 0;
+    }    // Validate parts
     for (let i = 0; i < parts.length; i++) {
       const part = parts[i];
       if (!part.partName.trim()) {
@@ -336,18 +341,6 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
         });
         return false;
       }
-
-      if (part.costPrice) {
-        totalCostPrice += parseFloat(part.costPrice);
-      }
-    }
-
-    // Set total cost price based on sum of parts
-    if (totalCostPrice > 0) {
-      setFormData(prev => ({
-        ...prev,
-        costPrice: totalCostPrice.toString()
-      }));
     }
 
     return true;
@@ -366,7 +359,13 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
       
       // Prepare data with custom category/material if "Other" is selected
       const finalCategory = formData.category === 'Other' ? formData.customCategory : formData.category;
-      const finalMaterial = formData.material === 'Other' ? formData.customMaterial : formData.material;      // Build data for submit
+      const finalMaterial = formData.material === 'Other' ? formData.customMaterial : formData.material;      // Calculate total cost price from all parts
+      const totalCostPrice = parts.reduce((sum, part) => {
+        const partCost = part.costPrice ? parseFloat(part.costPrice) : 0;
+        return sum + (isNaN(partCost) ? 0 : partCost);
+      }, 0);
+
+      // Build data for submit
       const longSetProductData = {
         id: product.longSetProduct?.id || product.id, // Use longSetProduct.id if available
         name: formData.name,
@@ -375,7 +374,7 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
         category: finalCategory,
         material: finalMaterial,
         price: parseFloat(formData.sellingPrice),
-        costPrice: formData.costPrice ? parseFloat(formData.costPrice) : null,
+        costPrice: totalCostPrice > 0 ? totalCostPrice : null,
         stock: parseInt(formData.stock),
         parts: parts.map(part => ({
           id: part.id,
@@ -584,9 +583,8 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
                 )}
               </div>
             </div>
-            
-            {/* Price and Stock */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Price and Stock */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="sellingPrice">Selling Price (₹)</Label>
                 <Input
@@ -599,6 +597,18 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
                   value={formData.sellingPrice}
                   onChange={handleFormChange}
                   required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="calculatedCostPrice">Cost Price (₹) <span className="text-xs text-muted-foreground ml-1">(Auto-calculated)</span></Label>
+                <Input
+                  id="calculatedCostPrice" 
+                  name="calculatedCostPrice"
+                  type="text"
+                  value={calculateTotalCostPrice()}
+                  disabled
+                  className="bg-muted"
                 />
               </div>
               

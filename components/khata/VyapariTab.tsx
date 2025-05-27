@@ -375,9 +375,9 @@ export function VyapariTab({ isAdmin }: VyapariTabProps) {
                           {balances[vyapari.id] !== undefined && (
                             <div className="text-xs text-muted-foreground">
                               {balances[vyapari.id] < 0
-                                ? 'You have to pay them'
+                                ? 'They have to pay you'
                                 : balances[vyapari.id] > 0
-                                  ? 'They have to pay you'
+                                  ? 'You have to pay them'
                                   : 'No balance'}
                             </div>
                           )}
