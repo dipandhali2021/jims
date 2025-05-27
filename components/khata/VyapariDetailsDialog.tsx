@@ -118,7 +118,7 @@ export function VyapariDetailsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Vyapari Details</DialogTitle>
           <DialogDescription>
@@ -195,8 +195,8 @@ export function VyapariDetailsDialog({
                     {formatCurrency(Math.abs(balance))}
                     {balance !== 0 && (
                       balance > 0 
-                        ? <span className="ml-1">(We Owe)</span>
-                        : <span className="ml-1">(They Owe)</span>
+                        ? <span className="ml-1">(Pabe)</span>
+                        : <span className="ml-1">(Pabo)</span>
                     )}
                   </Badge>
                 </div>
@@ -219,104 +219,108 @@ export function VyapariDetailsDialog({
                 </TabsTrigger>
               </TabsList>
               
-              <TabsContent value="transactions" className="m-0 h-[400px]">
-                <ScrollArea className="h-full">
+              <TabsContent value="transactions" className="m-0 flex-1">
+                <div className="overflow-x-auto" style={{ height: "calc(85vh - 200px)" }}>
                   {transactions.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <FileText className="mx-auto h-8 w-8 mb-2" />
                       <p>No transactions found</p>
                     </div>
                   ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Transaction ID</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Description</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead className="text-right">Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {transactions.map((transaction) => (
-                          <TableRow key={transaction.id}>
-                            <TableCell className="font-medium">{transaction.transactionId}</TableCell>
-                            <TableCell>{formatDate(transaction.createdAt)}</TableCell>
-                            <TableCell>{transaction.description}</TableCell>
-                            <TableCell>
-                              {transaction.isApproved ? (
-                                <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Approved</Badge>
-                              ) : (
-                                <div className="flex items-center">
-                                  <AlarmClock className="h-3 w-3 mr-1 text-yellow-500" />
-                                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-50">Pending</Badge>
-                                </div>
-                              )}
-                            </TableCell>
-                            
-                            <TableCell className="text-right">
-                              <span className={transaction.amount > 0 ? "text-green-500" : "text-red-500"}>
-                                {/* {transaction.am ount > 0 ? "+" : "-"} */}
-                                {formatCurrency(Math.abs(transaction.amount))}
-                              </span>
-                            </TableCell>
+                    <div className="min-w-[800px]">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Transaction ID</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Description</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {transactions.map((transaction) => (
+                            <TableRow key={transaction.id}>
+                              <TableCell className="font-medium">{transaction.transactionId}</TableCell>
+                              <TableCell>{formatDate(transaction.createdAt)}</TableCell>
+                              <TableCell>{transaction.description}</TableCell>
+                              <TableCell>
+                                {transaction.isApproved ? (
+                                  <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Approved</Badge>
+                                ) : (
+                                  <div className="flex items-center">
+                                    <AlarmClock className="h-3 w-3 mr-1 text-yellow-500" />
+                                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-50">Pending</Badge>
+                                  </div>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <span className={transaction.amount > 0 ? "text-green-500" : "text-red-500"}>
+                                  {formatCurrency(Math.abs(transaction.amount))}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   )}
-                </ScrollArea>
+                </div>
               </TabsContent>
                 
-              <TabsContent value="payments" className="m-0 h-[400px]">
-                <ScrollArea className="h-full">
+              <TabsContent value="payments" className="m-0 flex-1">
+                <div className="overflow-x-auto" style={{ height: "calc(85vh - 200px)" }}>
                   {payments.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <CreditCard className="mx-auto h-8 w-8 mb-2" />
                       <p>No payments found</p>
                     </div>
                   ) : (
-                    <Table>                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Payment ID</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Payment Mode</TableHead>
-                          <TableHead>Status</TableHead>
-                          <TableHead>Reference</TableHead>
-                          <TableHead className="text-right">Amount</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {payments.map((payment) => (
-                          <TableRow key={payment.id}>                            <TableCell className="font-medium">{payment.paymentId}</TableCell>
-                            <TableCell>{formatDate(payment.createdAt)}</TableCell>
-                            <TableCell>{payment.paymentMode}</TableCell>
-                            
-                            <TableCell>
-                              {payment.isApproved ? (
-                                <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Approved</Badge>
-                              ) : (
-                                <div className="flex items-center">
-                                  <AlarmClock className="h-3 w-3 mr-1 text-yellow-500" />
-                                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-50">Pending</Badge>
-                                </div>
-                              )}
-                            </TableCell>
-                            <TableCell>{payment.referenceNumber || '-'}</TableCell>                            <TableCell className="text-right">
-                              <span className="text-green-500">
-                                {formatCurrency(payment.amount)}
-                              </span>
-                            </TableCell>
+                    <div className="min-w-[800px]">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Payment ID</TableHead>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Payment Mode</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>Reference</TableHead>
+                            <TableHead className="text-right">Amount</TableHead>
                           </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
+                        </TableHeader>
+                        <TableBody>
+                          {payments.map((payment) => (
+                            <TableRow key={payment.id}>
+                              <TableCell className="font-medium">{payment.paymentId}</TableCell>
+                              <TableCell>{formatDate(payment.createdAt)}</TableCell>
+                              <TableCell>{payment.paymentMode}</TableCell>
+                              <TableCell>
+                                {payment.isApproved ? (
+                                  <Badge variant="outline" className="bg-green-50 text-green-700 hover:bg-green-50">Approved</Badge>
+                                ) : (
+                                  <div className="flex items-center">
+                                    <AlarmClock className="h-3 w-3 mr-1 text-yellow-500" />
+                                    <Badge variant="outline" className="bg-yellow-50 text-yellow-700 hover:bg-yellow-50">Pending</Badge>
+                                  </div>
+                                )}
+                              </TableCell>
+                              <TableCell>{payment.referenceNumber || '-'}</TableCell>
+                              <TableCell className="text-right">
+                                <span className="text-green-500">
+                                  {formatCurrency(payment.amount)}
+                                </span>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
                   )}
-                </ScrollArea>
+                </div>
               </TabsContent>
             </Tabs>
             
-            <div className="flex justify-end mt-4">
+            <div className="flex justify-end">
               <Button variant="outline" onClick={onClose}>
                 Close
               </Button>

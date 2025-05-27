@@ -356,7 +356,6 @@ export default function BillsPage() {
                                   if (bill.items && typeof bill.items === 'object') {
                                     const items = bill.items as any;
                                     if (items._meta) {
-                                      console.log("meta",items._meta)
                                       cgstPercentage = items._meta.cgstPercentage || "0";
                                       sgstPercentage = items._meta.sgstPercentage || "0";
                                       igstPercentage = items._meta.igstPercentage || "0";
@@ -371,7 +370,7 @@ export default function BillsPage() {
                                 } catch (e) {}
                                 
                                 // Show the appropriate GST breakdown based on which components are present
-                                let gstLabel = "GST";
+                                const gstLabel = "GST";
                                 
                                 console.log("totalGstPercentage",totalGstPercentage)
                                 return `Incl. ${gstLabel} (${totalGstPercentage}%): ₹${((bill.sgst || 0) + (bill.cgst || 0) + (bill.igst || 0)).toFixed(2)}`;
