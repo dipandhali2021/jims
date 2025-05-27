@@ -98,8 +98,8 @@ export default function InventoryPage() {
               <ChevronDown className="h-4 w-4 rotate-90" />
             </Link>
           </Button>
-        </div>
-        <div className="flex items-center gap-2">
+        </div>        {/* For desktop: all buttons in single row */}
+        <div className="hidden md:flex items-center gap-2 justify-end">
           <Button
             variant="outline"
             size="icon"
@@ -131,6 +131,50 @@ export default function InventoryPage() {
               <AddProductRequestDialog onRequestCreated={refreshProducts} />
             </>
           )}
+        </div>
+        
+        {/* For mobile: split into two centered rows */}
+        <div className="flex flex-col gap-3 w-full md:hidden">
+          {/* First row with the first three buttons centered */}
+          <div className="flex items-center gap-2 justify-center">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setViewMode('grid')}
+              className={viewMode === 'grid' ? 'bg-accent' : ''}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => setViewMode('list')}
+              className={viewMode === 'list' ? 'bg-accent' : ''}
+            >
+              <List className="h-4 w-4" />
+            </Button>
+            {user?.publicMetadata?.role === 'admin' && (
+              <LowStockThresholdSetting 
+                currentThreshold={lowStockThreshold}
+                onThresholdUpdated={handleThresholdUpdated}
+              />
+            )}
+          </div>
+          
+          {/* Second row with remaining buttons centered */}
+          <div className="flex items-center gap-2 justify-center">
+            {user?.publicMetadata?.role === 'admin' ? (
+              <>
+                <AddLongSetProductDialog onProductAdded={refreshProducts} />
+                <AddProductDialog onProductAdded={refreshProducts} />
+              </>
+            ) : (
+              <>
+                <AddLongSetProductDialog onProductAdded={refreshProducts} />
+                <AddProductRequestDialog onRequestCreated={refreshProducts} />
+              </>
+            )}
+          </div>
         </div>
       </div>
 
