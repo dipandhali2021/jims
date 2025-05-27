@@ -150,14 +150,20 @@ export default function AdminDashboard() {
   // Calculate filtered and paginated transactions
   const filteredTransactions = transactions.filter((transaction) =>
     searchTerm === '' ||
-    transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    transaction.customer.toLowerCase().includes(searchTerm.toLowerCase())
+    (transaction.id && transaction.id.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    transaction.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (transaction.products && 
+      transaction.products.some(product => 
+        product.toLowerCase().includes(searchTerm.toLowerCase())
+      ))
   );
   
   const paginatedTransactions = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredTransactions.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredTransactions, currentPage, itemsPerPage]);
+
+  console.log('Paginated Transactions:', paginatedTransactions);
   
   // Calculate total pages
   const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
@@ -233,8 +239,11 @@ export default function AdminDashboard() {
       }
       const transResponse = await fetch(`/api/sales?${transParams.toString()}`);
       if (!transResponse.ok) throw new Error('Failed to fetch transactions');
-      let transData = await transResponse.json();
+      let transData = await transResponse.json();      console.log('Raw transaction data:', transData);
+      
+      // Ensure id field is set for all transactions
       transData = transData.map((transaction: any) => {
+        // Process date information
         if (transaction.date) {
           try {
             const dateValue = transaction.date.includes ? 
@@ -244,6 +253,10 @@ export default function AdminDashboard() {
               const istDate = toZonedTime(dateValue, 'Asia/Kolkata');
               return {
                 ...transaction,
+                // Ensure orderId is set (fallback to id)
+                orderId: transaction.orderId || transaction.id,
+                // Make sure products is an array
+                products: Array.isArray(transaction.products) ? transaction.products : ['Unknown Product'],
                 date: formatTZ(istDate, 'MMM dd, yyyy HH:mm', { timeZone: 'Asia/Kolkata' })
               };
             }
@@ -251,8 +264,14 @@ export default function AdminDashboard() {
             console.error('Error converting date:', e);
           }
         }
-        return transaction;
+        return {
+          ...transaction,
+          orderId: transaction.orderId || transaction.id,
+          products: Array.isArray(transaction.products) ? transaction.products : ['Unknown Product']
+        };
       });
+      
+      console.log('Processed transaction data:', transData);
       setTransactions(transData);
     } catch (error) {
       toast({
@@ -375,33 +394,7 @@ export default function AdminDashboard() {
           
           {/* Mobile date filter using Sheet for small screens */}
           {isMobile ? (
-            // <Sheet>
-            //   <SheetTrigger asChild>
-            //     <Button variant="outline" className="w-full md:w-auto flex items-center justify-between">
-            //       <span>
-            //         {date?.from ? new Date(date.from).toLocaleDateString() : 'Start date'} 
-            //         {' - '}
-            //         {date?.to ? new Date(date.to).toLocaleDateString() : 'End date'}
-            //       </span>
-            //       <ChevronDown className="h-4 w-4 ml-2" />
-            //     </Button>
-            //   </SheetTrigger>
-            //   <SheetContent className='bg-white overflow-y-auto ' >
-            //     <SheetHeader>
-            //       <SheetTitle>Select Date Range</SheetTitle>
-            //     </SheetHeader>
-            //     <div className="py-4">
-            //       <DateRangePicker
-            //         date={date}
-            //         onDateChange={(newDate) => {
-            //           setDate(newDate);
-            //           setTimeframe('Custom');
-            //         }}
-            //         className="w-full"
-            //       />
-            //     </div>
-            //   </SheetContent>
-            // </Sheet>
+            
             <DateRangePicker
               date={date}
               onDateChange={(newDate) => {
@@ -682,11 +675,10 @@ export default function AdminDashboard() {
             {/* Mobile Transaction Cards */}
           <div className="md:hidden space-y-3">
             {paginatedTransactions
-              .map((transaction: any) => (
-                <div key={transaction.id} className="border rounded-lg p-3">
+              .map((transaction: any) => (                <div key={transaction.id || transaction.orderId} className="border rounded-lg p-3">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <p className="font-medium text-sm">{transaction.id}</p>
+                      <p className="font-medium text-sm">{transaction.orderId || transaction.id}</p>
                       <p className="text-sm text-muted-foreground">{transaction.customer}</p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
@@ -703,9 +695,8 @@ export default function AdminDashboard() {
                         {transaction.status}
                       </span>
                     </div>
-                  </div>
-                  <div className="text-xs space-y-1">
-                    <p><span className="text-muted-foreground">Products:</span> {transaction.products.join(', ')}</p>
+                  </div>                  <div className="text-xs space-y-1">
+                    <p><span className="text-muted-foreground">Products:</span> {transaction.products && transaction.products.length > 0 ? transaction.products.join(', ') : 'No products'}</p>
                     <p><span className="text-muted-foreground">Date:</span> {formatIndianDateTime(transaction.date)}</p>
                     <p><span className="text-muted-foreground">Amount:</span> ₹{transaction.amount.toLocaleString()}</p>
                   </div>
@@ -728,12 +719,11 @@ export default function AdminDashboard() {
               </thead>
               <tbody>
                 {paginatedTransactions
-                  .map((transaction: any) => (
-                    <tr key={transaction.id} className="border-b hover:bg-muted/50 transition-colors">
-                      <td className="p-4 font-medium">{transaction.id}</td>
+                  .map((transaction: any) => (                    <tr key={transaction.id || transaction.orderId} className="border-b hover:bg-muted/50 transition-colors">
+                      <td className="p-4 font-medium">{transaction.orderId || transaction.id}</td>
                       <td className="p-4">{transaction.customer}</td>
                       <td className="p-4 max-w-xs truncate">
-                        {transaction.products.join(', ')}
+                        {transaction.products && transaction.products.length > 0 ? transaction.products.join(', ') : 'No products'}
                       </td>
                       <td className="p-4">{formatIndianDateTime(transaction.date)}</td>
                       <td className="p-4">

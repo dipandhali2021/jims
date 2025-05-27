@@ -37,26 +37,47 @@ export async function GET(req: NextRequest) {
     // Execute the properly structured query
     const recentTransactions = await prisma.transaction.findMany(queryOptions);
     
-    const formattedTransactions = recentTransactions.map(transaction => {
-      // Parse the JSON items field
-      let items = [];
+    const formattedTransactions = recentTransactions.map(transaction => {      // Parse the JSON items field
+      let items = {};
+      let productNames: string[] = [];
+      
       try {
         if (typeof transaction.items === 'string') {
           items = JSON.parse(transaction.items);
         } else {
-          items = transaction.items as any[];
+          items = transaction.items as any;
+        }
+        
+        // Extract product names from object with numeric keys
+        if (typeof items === 'object' && items !== null) {
+          // Handle both array format and object format (with numeric keys)
+          if (Array.isArray(items)) {
+            productNames = items.map(item => item.productName || 'Unknown Product');
+          } else {
+            // Process object with numeric keys (0, 1, 2, etc.)
+            productNames = Object.entries(items)
+              .filter(([key, value]) => {
+                // Only include numeric keys that have productName (exclude gstAmount, etc.)
+                return !isNaN(Number(key)) && 
+                      typeof value === 'object' && 
+                      value !== null &&
+                      'productName' in value;
+              })
+              .map(([_, item]) => (item as any).productName || 'Unknown Product');
+          }
         }
       } catch (e) {
         console.error('Error parsing transaction items', e);
-        items = [];
       }
+      
+      console.log('Parsed items:', items);
+      console.log('Product names extracted:', productNames);
       
       return {
         id: transaction.orderId,
+        orderId: transaction.orderId,
         customer: transaction.customer,
-        products: Array.isArray(items) 
-          ? items.map(item => item.productName || 'Unknown Product')
-          : ['Unknown Product'],
+        products: productNames.length > 0 ? productNames : ['Unknown Product'],
         // Format the date directly in IST
         date: formatInTimeZone(transaction.createdAt, IST_TIMEZONE, 'MMM dd, yyyy HH:mm'),
         // Also provide requestDate field which is simply an alias for createdAt to match expected API structure
