@@ -175,10 +175,11 @@ model ProductRequestDetails {
   price           Float?
   costPrice       Float?
   stock           Int?
-  stockAdjustment Int?
+  stockAdjustment Json?          // JSON object for stock adjustment details
   imageUrl        String?
   supplier        String?
   longSetParts    String?        // JSON string for long set product parts
+  removedPartIds  String?        // JSON string for removed part IDs
   request         ProductRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
   requestId       String         @unique
 }

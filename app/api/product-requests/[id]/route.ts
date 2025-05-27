@@ -86,7 +86,8 @@ async function createKarigarTransaction(
     });
     
     const sequentialNumber = (transactionCountForYear + 1).toString().padStart(4, '0');
-    const transactionId = `KT-${currentYear}-${sequentialNumber}`;    const transaction = await prisma.karigarTransaction.create({
+    const transactionId = `KT-${currentYear}-${sequentialNumber}`;    
+    const transaction = await prisma.karigarTransaction.create({
       data: {
         transactionId,
         description,
@@ -147,7 +148,7 @@ interface ProductRequestDetails {
   stock: number | null;
   imageUrl: string | null;
   supplier: string | null;
-  stockAdjustment?: number;
+  stockAdjustment?: any; // Changed to 'any' to handle both number and object types
   longSetParts: string | null;
   removedPartIds?: string | null;
 }
@@ -216,7 +217,9 @@ interface ProductRequestDetails {
           console.log('Rejecting edit without image change. No image deletion needed.');
         }
       }
-    }    // If request is approved, handle product operations based on request type
+    }    
+    
+    // If request is approved, handle product operations based on request type
     if (status === 'Approved') {
       switch (productRequest.requestType) {
         case 'add':
@@ -267,7 +270,9 @@ interface ProductRequestDetails {
                     }))
                   }
                 }
-              });              // If parts have karigars specified, add transactions to their accounts
+              });              
+              
+              // If parts have karigars specified, add transactions to their accounts
               if (parts.length > 0) {
                 for (const part of parts) {
                   if (part.karigarId) {
@@ -329,7 +334,7 @@ interface ProductRequestDetails {
                 if (karigar) {
                   const productCost = productRequest.details.costPrice || productRequest.details.price || 0;
                   const totalAmount = productCost * (productRequest.details.stock || 0);
-                    // Create automatically approved transaction - positive amount means we owe money to karigar
+                  // Create automatically approved transaction - positive amount means we owe money to karigar
                   const transaction = await createKarigarTransaction(
                     karigar.id,
                     `New product added: ${productRequest.details.name}`,
@@ -384,17 +389,28 @@ interface ProductRequestDetails {
                   ...(productRequest.details.material && { material: productRequest.details.material }),
                   ...(productRequest.details.imageUrl !== null && { imageUrl: productRequest.details.imageUrl }),
                 }
-              });
-
-              // Then update the long set product and its parts
+              });              // Then update the long set product and its parts
               if (productRequest.details.longSetParts) {
                 const parts = JSON.parse(productRequest.details.longSetParts);
                 const removedPartIds = productRequest.details.removedPartIds ? 
                   JSON.parse(productRequest.details.removedPartIds) : [];
 
+                // First find the longSetProduct associated with this productId
+                const longSetProductRecord = await prisma.longSetProduct.findFirst({
+                  where: { productId: productRequest.productId }
+                });
+                
+                if (!longSetProductRecord) {
+                  console.error(`LongSetProduct not found for product ID: ${productRequest.productId}`);
+                  return NextResponse.json(
+                    { error: 'Long Set Product not found' },
+                    { status: 404 }
+                  );
+                }
+
                 // Update long set product
                 const longSetProduct = await prisma.longSetProduct.update({
-                  where: { productId: productRequest.productId },
+                  where: { id: longSetProductRecord.id },
                   data: {
                     name: productRequest.details.name || '',
                     sku: productRequest.details.sku || '',
@@ -417,7 +433,20 @@ interface ProductRequestDetails {
                       }
                     }
                   });
-                }                // Update or create parts
+                }                
+                
+                // Parse stock adjustment data from request details
+                let stockDifference = 0;
+                if (productRequest.details?.stockAdjustment) {
+                  // Handle both object format (from long set dialog) and number format (from legacy code)
+                  if (typeof productRequest.details.stockAdjustment === 'object') {
+                    stockDifference = productRequest.details.stockAdjustment.stockDifference || 0;
+                  } else {
+                    stockDifference = productRequest.details.stockAdjustment || 0;
+                  }
+                }
+
+                // Update or create parts
                 for (const part of parts) {
                   // Determine if this part has a karigar that needs transaction (new or updated)
                   const partKarigarId = part.karigarId && part.karigarId !== 'none' ? part.karigarId : null;
@@ -470,6 +499,41 @@ interface ProductRequestDetails {
                               approvedById: userId
                             }
                           });
+                        }
+                      }
+                    }
+                    
+                    // If stock was increased and we have a karigar assigned, create a transaction for the additional units
+                    if (partKarigarId && stockDifference > 0) {
+                      const karigar = await prisma.karigar.findUnique({
+                        where: { id: partKarigarId }
+                      });
+                      
+                      if (karigar) {
+                        const partCost = part.costPrice || 0;
+                        const additionalUnitsCost = partCost * stockDifference; // Cost for additional units only
+                        
+                        if (additionalUnitsCost > 0) {
+                          // Create transaction for additional units
+                          const transaction = await createKarigarTransaction(
+                            karigar.id,
+                            `Additional stock for part: ${part.partName} in ${longSetProduct.name} (+${stockDifference} units)`,
+                            additionalUnitsCost,
+                            productRequest.requestId,
+                            longSetProduct.name,
+                            userId
+                          );
+                          
+                          // Auto-approve the transaction
+                          if (transaction) {
+                            await prisma.karigarTransaction.update({
+                              where: { id: transaction.id },
+                              data: {
+                                isApproved: true,
+                                approvedById: userId
+                              }
+                            });
+                          }
                         }
                       }
                     }
@@ -547,14 +611,16 @@ interface ProductRequestDetails {
               (productRequest.details.stockAdjustment && productRequest.details.stockAdjustment > 0))
             ) {
               const karigar = await findKarigarByName(productRequest.details.supplier);
-              if (karigar) {                const productCost = productRequest.details.costPrice !== undefined ? 
+              if (karigar) {                
+                const productCost = productRequest.details.costPrice !== undefined ? 
                   productRequest.details.costPrice : 
                   productRequest.product.costPrice || productRequest.product.price || 0;
                   
                 const stockChange = productRequest.details.stockAdjustment || 0;
                 const totalAmount = (productCost || 0) * stockChange;
                 
-                if (totalAmount > 0) {                  // Create transaction - positive amount means we owe money to karigar
+                if (totalAmount > 0) {                  
+                  // Create transaction - positive amount means we owe money to karigar
                   const transaction = await createKarigarTransaction(
                     karigar.id,
                     `Updated product: ${productRequest.product.name}`,
@@ -617,7 +683,9 @@ interface ProductRequestDetails {
     // Create notification for the user who made the request
     if (productRequest.userId) {
       let notificationMessage = '';
-      switch (productRequest.requestType) {        case 'add':          notificationMessage = `Your product add request (${productRequest.requestId}) has been ${status.toLowerCase()}.`;
+      switch (productRequest.requestType) {
+        case 'add':
+          notificationMessage = `Your product add request (${productRequest.requestId}) has been ${status.toLowerCase()}.`;
           if (status === 'Approved' && productRequest.details) {
             notificationMessage += ` Product "${productRequest.details.name}" has been added to inventory.`;
             if (productRequest.isLongSet) {
@@ -627,7 +695,8 @@ interface ProductRequestDetails {
             }
           }
           break;
-        case 'edit':          notificationMessage = `Your product edit request (${productRequest.requestId}) has been ${status.toLowerCase()}.`;
+        case 'edit':
+          notificationMessage = `Your product edit request (${productRequest.requestId}) has been ${status.toLowerCase()}.`;
           if (status === 'Approved' && productRequest.product) {
             notificationMessage += ` Changes to product "${productRequest.product.name}" have been applied.`;
             if (productRequest.details?.supplier && 

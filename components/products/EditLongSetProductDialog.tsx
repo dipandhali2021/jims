@@ -404,7 +404,8 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
         stock: parseInt(stockAdjustment.newStock),
         stockAdjustment: {
           currentStock: stockAdjustment.currentStock,
-          newStock: parseInt(stockAdjustment.newStock)
+          newStock: parseInt(stockAdjustment.newStock),
+          stockDifference: parseInt(stockAdjustment.newStock) - stockAdjustment.currentStock
         },
         parts: parts.map(part => ({
           id: part.id,
@@ -643,7 +644,7 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
               </div>                <div className="space-y-2">
                   <Label htmlFor="stock">Stock Adjustment</Label>
                   <div className="space-y-2 border rounded-md p-3 bg-muted/30">
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-3 gap-2">
                       <div>
                         <Label htmlFor="currentStock" className="text-xs text-muted-foreground">Current Stock</Label>
                         <Input
@@ -654,16 +655,41 @@ export function EditLongSetProductDialog({ product, onProductUpdated }: EditLong
                         />
                       </div>
                       <div>
-                        <Label htmlFor="newStock" className="text-xs text-muted-foreground">New Stock</Label>
+                        <Label htmlFor="stockToAdd" className="text-xs text-muted-foreground">Stock to Add</Label>
                         <Input
-                          id="newStock"
-                          name="newStock"
-                          placeholder="Enter new stock"
+                          id="stockToAdd"
+                          name="stockToAdd"
+                          placeholder="Enter quantity to add"
                           type="number"
                           min="0"
                           step="1"
+                          value={parseInt(stockAdjustment.newStock) - stockAdjustment.currentStock}
+                          onChange={(e) => {
+                            const toAdd = parseInt(e.target.value) || 0;
+                            const newTotal = stockAdjustment.currentStock + toAdd;
+                            setStockAdjustment(prev => ({
+                              ...prev,
+                              newStock: newTotal.toString()
+                            }));
+                            setFormData(prev => ({
+                              ...prev,
+                              stock: newTotal.toString()
+                            }));
+                          }}
+                          className="bg-white"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="finalStock" className="text-xs text-muted-foreground">Final Stocks</Label>
+                        <Input
+                          id="finalStock"
+                          name="finalStock"
                           value={stockAdjustment.newStock}
                           onChange={handleStockAdjustment}
+                          type="number"
+                          min="0"
+                          step="1"
+                          className="bg-white/50 border-green-200"
                           required
                         />
                       </div>

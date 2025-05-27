@@ -193,7 +193,7 @@ export async function GET(req: NextRequest) {
       where: whereClause,
       orderBy,
       include: {
-        LongSetProduct: {
+        longSetProducts: {
           include: {
             parts: {
               include: {
@@ -208,10 +208,10 @@ export async function GET(req: NextRequest) {
     // Transform products to add isLongSet flag
     const transformedProducts = products.map(product => ({
       ...product,
-      isLongSet: !!product.LongSetProduct,
-      longSetProduct: product.LongSetProduct ? {
-        id: product.LongSetProduct.id,
-        parts: product.LongSetProduct.parts
+      isLongSet: product.longSetProducts && product.longSetProducts.length > 0,
+      longSetProduct: product.longSetProducts && product.longSetProducts.length > 0 ? {
+        id: product.longSetProducts[0].id,
+        parts: product.longSetProducts[0].parts
       } : undefined
     }));
 
