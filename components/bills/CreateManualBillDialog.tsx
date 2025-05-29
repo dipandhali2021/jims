@@ -689,15 +689,18 @@ export function CreateManualBillDialog({
                     </>
                   )}
                 </div>
-              </div>
-
-              {/* Product Search Modal */}
+              </div>              {/* Product Search Modal */}
               {showProductSearch && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-                  <div className="bg-white p-4 rounded-lg w-full max-w-lg max-h-[80vh] overflow-y-auto">
-                    <h2 className="text-lg font-semibold mb-4">
-                      Select Product
-                    </h2>
+                <Dialog open={showProductSearch} onOpenChange={(open) => {
+                  if (!open) {
+                    setShowProductSearch(false);
+                    setCurrentEditingIndex(null);
+                  }
+                }}>
+                  <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Select Product</DialogTitle>
+                    </DialogHeader>
 
                     <div className="relative mb-4">
                       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -714,7 +717,7 @@ export function CreateManualBillDialog({
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       </div>
                     ) : filteredProducts.length > 0 ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto p-1">
                         {filteredProducts.map((product) => (
                           <div
                             key={product.id}
@@ -728,14 +731,13 @@ export function CreateManualBillDialog({
                                 className="w-12 h-12 object-cover rounded mr-3"
                               />
                             )}
-                            <div>
-                              <div className="font-medium">{product.name}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{product.name}</div>
                               <div className="text-sm text-muted-foreground">
-                                Product ID: {product.sku}
+                                ID: {product.sku}
                               </div>
                               <div className="text-sm">
-                                ₹{product.price.toLocaleString()} | Stock:{' '}
-                                {product.stock}
+                                ₹{product.price.toLocaleString()} | Stock: {product.stock}
                               </div>
                             </div>
                           </div>
@@ -758,8 +760,8 @@ export function CreateManualBillDialog({
                         Cancel
                       </Button>
                     </div>
-                  </div>
-                </div>
+                  </DialogContent>
+                </Dialog>
               )}
             </div>
           </div>
