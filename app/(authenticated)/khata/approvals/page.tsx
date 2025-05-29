@@ -273,7 +273,7 @@ export default function KhataApprovals() {
   };
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl">
+    <div className="container mx-auto py-6 max-w-7xl px-4">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -316,90 +316,7 @@ export default function KhataApprovals() {
             </TabsTrigger>
           </TabsList>
 
-          {/* Vyapari Transactions Tab */}
-          <TabsContent value="vyapari-transactions">
-            <Card>
-              <CardHeader>
-                <CardTitle>Pending Vyapari Transactions</CardTitle>
-                <CardDescription>Review and approve transactions created by shopkeepers</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingVyapariTransactions ? (
-                  <div className="flex justify-center items-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : pendingVyapariTransactions.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No pending vyapari transactions to approve
-                  </div>
-                ) : (
-                  <div className="rounded-md border">
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Transaction ID</TableHead>
-                          <TableHead>Vyapari</TableHead>
-                          <TableHead>Description</TableHead>
-                          <TableHead>Amount</TableHead>
-                          <TableHead>Created By</TableHead>
-                          <TableHead>Date</TableHead>
-                          <TableHead>Actions</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {pendingVyapariTransactions.map((transaction) => (
-                          <TableRow key={transaction.id}>
-                            <TableCell>{transaction.transactionId}</TableCell>
-                            <TableCell>{transaction.vyapari.name}</TableCell>
-                            <TableCell className="max-w-xs truncate">{transaction.description}</TableCell>
-                            <TableCell className={transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}>
-                              {formatCurrency(transaction.amount)}
-                            </TableCell>
-                            <TableCell>
-                              {transaction.createdBy.firstName} {transaction.createdBy.lastName}
-                            </TableCell>
-                            <TableCell>{formatDate(transaction.createdAt)}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-8 w-8 text-green-600"
-                                  onClick={() => handleVyapariTransactionApproval(transaction.id, true)}
-                                  disabled={loadingStates[transaction.id]?.approving || loadingStates[transaction.id]?.rejecting}
-                                >
-                                  {loadingStates[transaction.id]?.approving ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <CheckCircle className="h-4 w-4" />
-                                  )}
-                                  <span className="sr-only">Approve</span>
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-8 w-8 text-red-600"
-                                  onClick={() => handleVyapariTransactionApproval(transaction.id, false)}
-                                  disabled={loadingStates[transaction.id]?.approving || loadingStates[transaction.id]?.rejecting}
-                                >
-                                  {loadingStates[transaction.id]?.rejecting ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    <XCircle className="h-4 w-4" />
-                                  )}
-                                  <span className="sr-only">Reject</span>
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+        
 
           {/* Vyapari Payments Tab */}
           <TabsContent value="vyapari-payments">

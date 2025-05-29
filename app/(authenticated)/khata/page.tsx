@@ -27,7 +27,7 @@ export default function KhataPage() {
   const isAdmin = user?.publicMetadata?.role === 'admin';
   const [activeTab, setActiveTab] = useState('vyapari');
   return (
-    <div className="container mx-auto py-6 max-w-7xl">
+    <div className="container mx-auto py-6 max-w-7xl px-4">
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
@@ -35,7 +35,8 @@ export default function KhataPage() {
             <p className="text-muted-foreground">
               Manage your Vyapari and Karigar records, transactions, and payments.
             </p>
-          </div>          <div className="flex flex-col sm:flex-row gap-2">
+          </div>
+          <div className="flex gap-2 flex-wrap ">
             {isAdmin && (
               <Button 
                 className="flex items-center gap-2" 

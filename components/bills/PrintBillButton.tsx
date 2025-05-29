@@ -333,7 +333,7 @@ const generateGstBillHtml = (bill: Bill) => {
             Office : 9702833831
           </div>
           <h1 class="bill-title">OMKAR GOLD COVERING</h1>
-          <p class="bill-address">Room No. C-7, Mamta Industrial Estate, Navghar Road, Near Sri Ram Jewellers, Bhayander (E), Thane - 401105.</p>
+          <p class="bill-address">A-101,102 NAGEE PALACE CHS LTD NAGEE PALACE NAVGHAR ROAD SAIBABA NAGAR BHAINDER EAST THANE 401105</p>
           <p class="bill-gstin">GSTIN : 27AZNPG8654N1Z1</p>
         </div>
         

@@ -305,7 +305,7 @@ export default function KhataDashboard() {
   }
 
   return (
-    <div className="container mx-auto py-6 max-w-7xl">
+    <div className="container mx-auto py-6 max-w-7xl px-4">
       <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>

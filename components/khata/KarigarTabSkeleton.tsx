@@ -19,7 +19,7 @@ export function KarigarTabSkeleton() {
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <Skeleton className="h-10 w-[250px]" />
               <Skeleton className="h-10 w-32" />
             </div>

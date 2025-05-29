@@ -294,7 +294,7 @@ export function KarigarTab({ isAdmin }: KarigarTabProps) {
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <div className="relative">
                   <SearchIcon className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500" />
                   <Input
