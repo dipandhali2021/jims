@@ -102,11 +102,10 @@ export default function BillsPage() {
         (billTypeFilter === 'gst' && bill.billType === 'GST') ||
         (billTypeFilter === 'non-gst' && bill.billType === 'Non-GST')
       );
-      
-      return matchesSearch && matchesBillType;
+        return matchesSearch && matchesBillType;
     })
-    // Sort by date with most recent first
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    // Sort by creation time with most recent first
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Calculate paginated data
   const paginatedBills = filteredBills.slice(
