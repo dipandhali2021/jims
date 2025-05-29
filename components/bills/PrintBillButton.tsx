@@ -37,10 +37,21 @@ const getItemsArray = (items: any): BillItem[] => {
 };
 
 const getGstPercentage = (bill: Bill, type: 'sgst' | 'cgst' | 'igst'): number => {
-  if (!bill.isTaxable) return 0;
   
+  // First, try to get GST percentages directly from the bill object
+  const billAsAny = bill as any;
+  if (type === 'sgst' && billAsAny.sgstPercentage !== undefined) {
+    return parseFloat(billAsAny.sgstPercentage);
+  }
+  if (type === 'cgst' && billAsAny.cgstPercentage !== undefined) {
+    return parseFloat(billAsAny.cgstPercentage);
+  }
+  if (type === 'igst' && billAsAny.igstPercentage !== undefined) {
+    return parseFloat(billAsAny.igstPercentage);
+  }
+
   try {
-    // Try to get GST percentages from items._meta
+    // Fallback: Try to get GST percentages from items._meta
     if (bill.items && typeof bill.items === 'object') {
       const items = bill.items as any;
       if (items._meta) {
@@ -60,7 +71,7 @@ const getGstPercentage = (bill: Bill, type: 'sgst' | 'cgst' | 'igst'): number =>
     console.error('Error parsing GST percentage:', error);
   }
   
-  // Fall back to default logic if _meta is not available
+  // Final fallback to default logic if no percentages are available
   switch (type) {
     case 'sgst':
       return bill.customerState === 'Maharashtra' ? 9 : 0;
@@ -428,23 +439,21 @@ const generateGstBillHtml = (bill: Bill) => {
             `).join('')}
           </tbody>
         </table>
-        
-        <table class="totals-table">
+          <table class="totals-table">
           <tr>
             <td class="label">TOTAL</td>
             <td class="value">${getItemsArray(bill.items).reduce((sum, item) => sum + (item.amount || 0), 0).toFixed(2)}</td>
-          </tr>
-          ${bill.isTaxable ? `
+          </tr>          ${bill.isTaxable ? `
           <tr>
-            <td class="label">SGST</td>
+            <td class="label">SGST${getGstPercentage(bill, 'sgst') > 0 ? ` ( ${getGstPercentage(bill, 'sgst')}%)` : ""}</td>
             <td class="value">${bill.sgst ? bill.sgst.toFixed(2) : "0.00"}</td>
           </tr>
           <tr>
-            <td class="label">CGST</td>
+            <td class="label">CGST${getGstPercentage(bill, 'cgst') > 0 ? ` ( ${getGstPercentage(bill, 'cgst')}%)` : ""}</td>
             <td class="value">${bill.cgst ? bill.cgst.toFixed(2) : "0.00"}</td>
           </tr>
           <tr>
-            <td class="label">IGST</td>
+            <td class="label">IGST${getGstPercentage(bill, 'igst') > 0 ? ` ( ${getGstPercentage(bill, 'igst')}%)` : ""}</td>
             <td class="value">${bill.igst ? bill.igst.toFixed(2) : "0.00"}</td>
           </tr>
           ` : ""}
