@@ -26,7 +26,6 @@ export function NotificationDialog() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-
   const fetchNotifications = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -35,6 +34,21 @@ export function NotificationDialog() {
         throw new Error('Failed to fetch notifications');
       }
       const data = await response.json();
+      
+      // Check if notifications were automatically cleaned up
+      const previousCount = notifications.length;
+      const newCount = data.length;
+      
+      // If we had more than 10 notifications before and now we have exactly 10,
+      // show a toast to inform user about automatic cleanup
+      if (previousCount > 10 && newCount === 10) {
+        toast({
+          title: 'Automatic Cleanup',
+          description: `${previousCount - newCount} old notifications were automatically removed to keep only the 10 most recent ones.`,
+          variant: 'default',
+        });
+      }
+      
       setNotifications(data);
     } catch (error) {
       toast({
@@ -45,15 +59,17 @@ export function NotificationDialog() {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
-
+  }, [toast, notifications.length]);
   useEffect(() => {
     // Initial fetch when component mounts
     fetchNotifications();
-    // // Set up periodic refresh every 30 seconds
-    // const intervalId = setInterval(fetchNotifications, 30000);
-    // // Cleanup interval on unmount
-    // return () => clearInterval(intervalId);
+    
+    // Set up periodic refresh every 30 seconds to check for new notifications
+    // and handle automatic cleanup
+    const intervalId = setInterval(fetchNotifications, 30000);
+    
+    // Cleanup interval on unmount
+    return () => clearInterval(intervalId);
   }, [fetchNotifications]);
 
   // Helper function to get notification background color based on type
@@ -155,7 +171,6 @@ export function NotificationDialog() {
       });
     }
   };
-
   const deleteAllNotifications = async () => {
     try {
       const response = await fetch('/api/notifications', {
@@ -173,7 +188,7 @@ export function NotificationDialog() {
       setNotifications([]);
       toast({
         title: 'Success',
-        description: 'All notifications deleted',
+        description: 'All notifications deleted. New notifications will be automatically managed (max 10).',
       });
     } catch (error) {
       toast({
@@ -199,9 +214,13 @@ export function NotificationDialog() {
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-[380px] p-0" sideOffset={5}>
-        <div className="flex flex-col">
-          <div className="flex items-center justify-between p-4">
-            <h4 className="font-semibold">Notifications</h4>
+        <div className="flex flex-col">          <div className="flex items-center justify-between p-4">
+            <div>
+              <h4 className="font-semibold">Notifications</h4>
+              <p className="text-xs text-muted-foreground">
+                {notifications.length}/10 notifications (auto-cleanup enabled)
+              </p>
+            </div>
             <div className="flex gap-2">
               <Button
                 variant="outline"
@@ -225,15 +244,20 @@ export function NotificationDialog() {
                 </Button>
               )}
             </div>
-          </div>
-
-          <ScrollArea className="h-[300px] px-4">
+          </div>          <ScrollArea className="h-[300px] px-4">
             {notifications.length === 0 ? (
               <div className="text-center text-muted-foreground py-4">
                 No notifications
               </div>
             ) : (
               <div className="space-y-2">
+                {notifications.length === 10 && (
+                  <div className="p-2 rounded-lg bg-blue-50 border border-blue-200 mb-3">
+                    <p className="text-xs text-blue-700">
+                      <span className="font-medium">Auto-cleanup active:</span> Only the 10 most recent notifications are kept. Older ones are automatically removed.
+                    </p>
+                  </div>
+                )}
                 {notifications
                   .sort((a, b) => {
                     // First sort by read status (unread first)

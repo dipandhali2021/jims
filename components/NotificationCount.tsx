@@ -21,16 +21,19 @@ export function useNotificationCount() {
       const data = await response.json();
       setNotifications(data);
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch notifications',
-        variant: 'destructive',
-      });
+      // Silently handle errors in the count hook to avoid spam
+      console.error('Failed to fetch notification count:', error);
     }
-  }, [toast]);
+  }, []);
 
   useEffect(() => {
     fetchNotifications();
+    
+    // Set up periodic refresh every 30 seconds for real-time updates
+    const intervalId = setInterval(fetchNotifications, 30000);
+    
+    // Cleanup interval on unmount
+    return () => clearInterval(intervalId);
   }, [fetchNotifications]);
 
   const unreadCount = notifications.filter((n) => !n.isRead).length;

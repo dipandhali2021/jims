@@ -28,6 +28,35 @@ async function findAdminUsers() {
   }
 }
 
+// Helper function to clean up old notifications (keep only 10 most recent)
+async function cleanupOldNotifications(userId: string) {
+  const notificationCount = await prisma.notification.count({
+    where: { userId },
+  });
+
+  if (notificationCount > 10) {
+    // Get the 10 most recent notifications
+    const recentNotifications = await prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: { id: true },
+    });
+
+    const recentIds = recentNotifications.map(n => n.id);
+
+    // Delete all notifications except the 10 most recent
+    await prisma.notification.deleteMany({
+      where: {
+        userId,
+        id: {
+          notIn: recentIds,
+        },
+      },
+    });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = auth();
@@ -186,9 +215,7 @@ export async function POST(req: NextRequest) {
         notificationMessage = `Admin ${clerkUser.firstName} ${clerkUser.lastName} has requested to add long set product "${productName}" (${productRequest.requestId}). This requires approval.`;
       } else {
         notificationMessage = `New long set product request (${productRequest.requestId}) created by ${clerkUser.firstName} ${clerkUser.lastName} for product "${productName}".`;
-      }
-
-      // Create notifications for all admin users
+      }      // Create notifications for all admin users
       await prisma.notification.createMany({
         data: adminUserIds.map(adminId => ({
           title: 'New Long Set Product Request',
@@ -197,7 +224,15 @@ export async function POST(req: NextRequest) {
           userId: adminId
         }))
       });
+
+      // Clean up old notifications for each admin user (keep only 10 most recent)
+      for (const adminId of adminUserIds) {
+        await cleanupOldNotifications(adminId);
+      }
     }
+
+    // Cleanup old notifications
+    await cleanupOldNotifications(userId);
 
     return NextResponse.json(productRequest, { status: 201 });
   } catch (error) {

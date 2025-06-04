@@ -3,6 +3,35 @@ import { auth, clerkClient } from '@clerk/nextjs/server';
 import prisma from '@/lib/prisma';
 import { SalesItem } from '@prisma/client';
 
+// Helper function to clean up old notifications (keep only 10 most recent)
+async function cleanupOldNotifications(userId: string) {
+  const notificationCount = await prisma.notification.count({
+    where: { userId },
+  });
+
+  if (notificationCount > 10) {
+    // Get the 10 most recent notifications
+    const recentNotifications = await prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: { id: true },
+    });
+
+    const recentIds = recentNotifications.map(n => n.id);
+
+    // Delete all notifications except the 10 most recent
+    await prisma.notification.deleteMany({
+      where: {
+        userId,
+        id: {
+          notIn: recentIds,
+        },
+      },
+    });
+  }
+}
+
 // Helper to ensure user exists in database
 async function ensureUserExists(userId: string) {
   let user = await prisma.user.findUnique({ where: { id: userId } });
@@ -373,6 +402,9 @@ export async function PUT(
         userId: salesRequest.userId,
       }
     });
+
+    // Cleanup old notifications, keeping only the 10 most recent
+    await cleanupOldNotifications(salesRequest.userId);
 
     return NextResponse.json(updatedRequest);
   } catch (error) {

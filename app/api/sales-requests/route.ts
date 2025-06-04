@@ -29,6 +29,35 @@ async function findAdminUsers() {
   }
 }
 
+// Helper function to clean up old notifications (keep only 10 most recent)
+async function cleanupOldNotifications(userId: string) {
+  const notificationCount = await prisma.notification.count({
+    where: { userId },
+  });
+
+  if (notificationCount > 10) {
+    // Get the 10 most recent notifications
+    const recentNotifications = await prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: { id: true },
+    });
+
+    const recentIds = recentNotifications.map(n => n.id);
+
+    // Delete all notifications except the 10 most recent
+    await prisma.notification.deleteMany({
+      where: {
+        userId,
+        id: {
+          notIn: recentIds,
+        },
+      },
+    });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = auth();

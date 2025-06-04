@@ -198,9 +198,13 @@ export default function NotificationsPage() {
 
   return (
     <div className="container mx-auto max-w-3xl h-full py-6 space-y-6">
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
-          <CardTitle className="text-2xl font-bold">Notifications</CardTitle>
+      <Card>        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+          <div>
+            <CardTitle className="text-2xl font-bold">Notifications</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              {notifications.length}/∞ notifications (auto-cleanup keeps latest 10)
+            </p>
+          </div>
           <div className="flex gap-2">
             <Button
               variant="outline"

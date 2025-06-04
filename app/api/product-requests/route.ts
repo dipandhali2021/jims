@@ -35,6 +35,35 @@ async function findAdminUsers() {
   }
 }
 
+// Helper function to clean up old notifications (keep only 10 most recent)
+async function cleanupOldNotifications(userId: string) {
+  const notificationCount = await prisma.notification.count({
+    where: { userId },
+  });
+
+  if (notificationCount > 10) {
+    // Get the 10 most recent notifications
+    const recentNotifications = await prisma.notification.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+      select: { id: true },
+    });
+
+    const recentIds = recentNotifications.map(n => n.id);
+
+    // Delete all notifications except the 10 most recent
+    await prisma.notification.deleteMany({
+      where: {
+        userId,
+        id: {
+          notIn: recentIds,
+        },
+      },
+    });
+  }
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { userId } = auth();
@@ -338,9 +367,7 @@ export async function POST(req: NextRequest) {
             notificationMessage = `New product delete request (${productRequest.requestId}) created by ${user.firstName} ${user.lastName} for product "${productName}".`;
             break;
         }
-      }
-
-      // Create notifications for all relevant admin users
+      }      // Create notifications for all relevant admin users
       await prisma.notification.createMany({
         data: adminUserIds.map(adminId => ({
           title: `New Product ${requestTypeName} Request`,
@@ -349,6 +376,11 @@ export async function POST(req: NextRequest) {
           userId: adminId,
         }))
       });
+
+      // Clean up old notifications for each admin user
+      for (const adminId of adminUserIds) {
+        await cleanupOldNotifications(adminId);
+      }
     }
 
     return NextResponse.json(productRequest, { status: 201 });
