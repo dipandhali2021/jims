@@ -37,7 +37,7 @@ export function CreateBillFromSalesDialog({
   const [cgstPercentage, setCgstPercentage] = useState("1.5"); // Default 1.5%
   const [sgstPercentage, setSgstPercentage] = useState("1.5"); // Default 1.5%
   const [igstPercentage, setIgstPercentage] = useState("0"); // Default 0% for intra-state
-  const [defaultHsnCode, setDefaultHsnCode] = useState("0"); // Default HSN code for jewelry
+  const [defaultHsnCode, setDefaultHsnCode] = useState("7117"); // Default HSN code for jewelry
   const [dateOfSupply, setDateOfSupply] = useState(format(new Date(), "yyyy-MM-dd"));
   const [timeOfSupply, setTimeOfSupply] = useState(format(new Date(), "HH:mm"));
   

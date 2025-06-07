@@ -66,7 +66,7 @@ export function CreateManualBillDialog({
       name: '',
       quantity: 1,
       rate: 0,
-      hsn: billType === 'gst' ? '0' : undefined,
+      hsn: billType === 'gst' ? '7117' : undefined,
     },
   ]);
 
@@ -98,7 +98,7 @@ export function CreateManualBillDialog({
         name: '',
         quantity: 1,
         rate: 0,
-        hsn: billType === 'gst' ? '0' : undefined,
+        hsn: billType === 'gst' ? '7117' : undefined,
       },
     ]);
   };
@@ -133,7 +133,7 @@ export function CreateManualBillDialog({
         name: product.name,
         quantity: 1,
         rate: product.price,
-        hsn: billType === 'gst' ? '0' : undefined,
+        hsn: billType === 'gst' ? '7117' : undefined,
         productId: product.id,
       };
       setItems(updatedItems);
@@ -236,7 +236,7 @@ export function CreateManualBillDialog({
       cgstPercentage: parseFloat(cgstPercentage),
       sgstPercentage: parseFloat(sgstPercentage),
       igstPercentage: parseFloat(igstPercentage),
-      hsnCode: billType === 'gst' ? items[0]?.hsn || '0' : undefined,
+      hsnCode: billType === 'gst' ? items[0]?.hsn || '7117' : undefined,
     };
 
     const result = await createBill(apiData);

@@ -131,7 +131,7 @@ const generateGstBillHtml = (bill: Bill) => {
           position: absolute;
           right: 0;
           top: 5px;
-          font-size: 14px;
+          font-size: 16px;
           text-align: right;
           line-height: 1.3;
           font-weight: bold;
@@ -173,8 +173,9 @@ const generateGstBillHtml = (bill: Bill) => {
         }
         .bill-address {
           margin: 3px 0;
-          font-size: 13px; 
+          font-size: 16px; 
           text-align: center;
+          font-weight: bold;
           padding: 0;
           color: #0B5394;
         }
@@ -284,13 +285,33 @@ const generateGstBillHtml = (bill: Bill) => {
         }
         .totals-table .label {
           width: 85%;
-        }
-        .totals-table .value {
+        }        .totals-table .value {
           width: 15%;
-        }
-        .bank-details {
-          margin-top: 5px;
+        }        .bank-details {
+          margin-top: 10px;
           font-size: 11px;
+          display: flex;
+          justify-content: space-between;
+          border-top: 1px solid #ddd;
+          padding-top: 8px;
+          position: relative;
+        }
+        .account-details {
+          width: 25%;
+          text-align: left;
+          font-size: 11px;
+        }        
+        .certification-text {
+          width: 50%;
+          font-size: 10px;
+          text-align: justify;
+        }
+        
+        .company-name-right {
+          text-align: right;
+          font-size: 11px;
+          color: #7B241C;
+          font-weight: bold;
         }
         .signature-area {
           display: flex;
@@ -308,11 +329,6 @@ const generateGstBillHtml = (bill: Bill) => {
           text-align: center;
         }
         .auth-sign {
-          text-align: right;
-        }
-        .note {
-          margin-top: 5px;
-          font-size: 11px;
           text-align: right;
         }
         @media print {
@@ -458,10 +474,16 @@ const generateGstBillHtml = (bill: Bill) => {
             <td class="value">${bill.totalAmount?.toFixed(2)}</td>
           </tr>
         </table>
-        
-        <div class="bank-details">
-          <p>A/c. No.: 917020061582687&nbsp;&nbsp;&nbsp;&nbsp;IFSC CODE : UTIB0001842</p>
-          <p style="font-size:10px;">We hereby certify that original registration certificate under the CGST Act, 2017 is in force on the date on which the tax has been paid/payable by/to us on the goods specified in the Tax invoice & made as per the particulars given above.</p>
+          <div class="bank-details">
+          <div class="account-details">
+            <p>A/c. No.: 917020061582687<br>IFSC CODE : UTIB0001842</p>
+          </div>
+          <div class="certification-text">
+            <p>We hereby certify that original registration certificate under the CGST Act, 2017 is in force on the date on which the tax has been paid/payable by/to us on the goods specified in the Tax invoice & made as per the particulars given above.</p>
+            <div class="company-name-right">
+            <p>For OMKAR GOLD COVERING</p>
+            </div>
+          </div>
         </div>
         
         <div class="signature-area">
@@ -474,10 +496,6 @@ const generateGstBillHtml = (bill: Bill) => {
           <div class="signature-box auth-sign">
             <p>Auth. Sign</p>
           </div>
-        </div>
-        
-        <div class="note">
-          <p>For OMKAR GOLD COVERING</p>
         </div>
       </div>
       <script>
@@ -565,17 +583,16 @@ const generateNonGstBillHtml = (bill: Bill) => {
         }
         .bill-address {
           margin: 6px 0;
-          font-size: 13px; 
+          font-size: 18px; 
           text-align: center;
-          line-height: 1.6;
-          font-weight: 500;
+          line-height: 1.8;
+          font-weight: 600;
           padding: 0 15px;
         }
         .bill-specialty {
           margin: 6px 0;
           font-size: 14px;
           text-align: center;
-          font-style: italic;
           font-weight: bold;
           padding-bottom: 5px;
         }
@@ -586,7 +603,7 @@ const generateNonGstBillHtml = (bill: Bill) => {
           font-size: 15px;
           text-align: right;
           line-height: 1.6;
-          font-weight: 500;
+          font-weight: 600;
           padding: 5px 0;
         }.bill-form {
           border: 1px solid #000;
@@ -672,12 +689,47 @@ const generateNonGstBillHtml = (bill: Bill) => {
         .total-row td {
           padding-top: 4px;
           font-size: 15px;
-        }        .signature {
-          margin-top: 6px;
+        }        .bank-details {
+          margin-top: 5px;
+          font-size: 11px;
+          display: flex;
+          justify-content: space-between;
+          border-top: 1px solid #ddd;
+          padding-top: 5px;
+        }
+        .account-details {
+          width: 20%;
+          text-align: left;
+          font-size: 11px;
+        }
+        .certification-text {
+          width: 60%;
+          text-align: center;
+          font-size: 10px;
+        }
+        .company-name-right {
           text-align: right;
-          color: #cc0000;
+          font-size: 11px;
+          color: #7B241C;
           font-weight: bold;
-          font-size: 14px;
+        }
+        .signature-area {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 15px;
+        }
+        .signature-box {
+          width: 33%;
+          font-size: 11px;
+        }
+        .customer-sign {
+          text-align: left;
+        }
+        .center-sign {
+          text-align: center;
+        }
+        .auth-sign {
+          text-align: right;
         }
         @media print {
           body { margin: 0; padding: 0; }
@@ -703,7 +755,7 @@ const generateNonGstBillHtml = (bill: Bill) => {
           </div>
           <h1 class="bill-title">OMKAR GOLD COVERING</h1>
           <p class="bill-address">A-101,102 NAGEE PALACE CHS LTD NAGEE PALACE NAVGHAR ROAD SAIBABA NAGAR BHAINDER EAST THANE 401105</p>
-          <p class="bill-specialty">All Types of Imitation Jewellery Specialist In : Neckless</p>
+          <p class="bill-specialty">All Types of Imitation Jewellery Specialist In : Necklaces</p>
         </div>
         
         <div class="bill-form">
@@ -769,9 +821,28 @@ const generateNonGstBillHtml = (bill: Bill) => {
             </tr>
           </tbody>
         </table>
+          <div class="bank-details">
+          <div class="account-details">
+            <p>A/c. No.: 917020061582687<br>IFSC CODE : UTIB0001842</p>
+          </div>
+          <div class="certification-text">
+            <p>We hereby certify that original registration certificate under the CGST Act, 2017 is in force on the date on which the tax has been paid/payable by/to us on the goods specified in the Tax invoice & made as per the particulars given above.</p>
+          </div>
+          <div class="company-name-right">
+            <p>For OMKAR GOLD COVERING</p>
+          </div>
+        </div>
         
-        <div class="signature">
-          For OMKAR GOLD COVERING
+        <div class="signature-area">
+          <div class="signature-box customer-sign">
+            <p>Customer Sign</p>
+          </div>
+          <div class="signature-box center-sign">
+            <p>E. & O.E.<br>Thank You !</p>
+          </div>
+          <div class="signature-box auth-sign">
+            <p>Auth. Sign</p>
+          </div>
         </div>
       </div>
       <script>
