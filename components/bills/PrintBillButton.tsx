@@ -345,7 +345,7 @@ const generateGstBillHtml = (bill: Bill) => {
       <div class="bill-container">
         <div class="bill-header">
           <div class="company-logo">
-            <img src="/assets/logo.png" width="60" height="60" alt="Omkar Gold Covering Logo" />
+            <img src="/assets/logo.png" width="60" height="60" alt="Sen Jeweller Logo" />
           </div>
           <div class="invoice-box-top">
             <p class="invoice-label-top">GST INVOICE</p>
@@ -355,7 +355,7 @@ const generateGstBillHtml = (bill: Bill) => {
             Kanchan : 9699233831<br>
             Office : 9702833831
           </div>
-          <h1 class="bill-title">OMKAR GOLD COVERING</h1>
+          <h1 class="bill-title">Sen Jeweller</h1>
           <p class="bill-address">A-101,102 NAGEE PALACE CHS LTD NAGEE PALACE NAVGHAR ROAD SAIBABA NAGAR BHAINDER EAST THANE 401105</p>
           <p class="bill-gstin">GSTIN : 27AZNPG8654N1Z1</p>
         </div>
@@ -481,7 +481,7 @@ const generateGstBillHtml = (bill: Bill) => {
           <div class="certification-text">
             <p>We hereby certify that original registration certificate under the CGST Act, 2017 is in force on the date on which the tax has been paid/payable by/to us on the goods specified in the Tax invoice & made as per the particulars given above.</p>
             <div class="company-name-right">
-            <p>For OMKAR GOLD COVERING</p>
+            <p>For Sen Jeweller</p>
             </div>
           </div>
         </div>
@@ -707,11 +707,13 @@ const generateNonGstBillHtml = (bill: Bill) => {
           text-align: center;
           font-size: 10px;
         }
-        .company-name-right {
+        
+        .company-name-right-ngst {
           text-align: right;
-          font-size: 11px;
+          font-size: 20px;
           color: #7B241C;
           font-weight: bold;
+          margin:10px;
         }
         .signature-area {
           display: flex;
@@ -746,14 +748,14 @@ const generateNonGstBillHtml = (bill: Bill) => {
     <body>
       <div class="bill-container">
         <div class="bill-header">          <div class="company-logo">
-            <img src="/assets/logo.png" width="72" height="72" alt="Omkar Gold Covering Logo" />
+            <img src="/assets/logo.png" width="72" height="72" alt="Sen Jeweller Logo" />
           </div>
           <div class="om-sai-ram">OM SAI RAM</div>
           <div class="contact-details">
             Kanchan : 9699233831<br>
             Office : 9702833831
           </div>
-          <h1 class="bill-title">OMKAR GOLD COVERING</h1>
+          <h1 class="bill-title">Sen Jeweller</h1>
           <p class="bill-address">A-101,102 NAGEE PALACE CHS LTD NAGEE PALACE NAVGHAR ROAD SAIBABA NAGAR BHAINDER EAST THANE 401105</p>
           <p class="bill-specialty">All Types of Imitation Jewellery Specialist In : Necklaces</p>
         </div>
@@ -820,29 +822,8 @@ const generateNonGstBillHtml = (bill: Bill) => {
               <td>${(((bill.totalAmount || 0) % 1) * 100).toFixed(0).padStart(2, '0')}</td>
             </tr>
           </tbody>
-        </table>
-          <div class="bank-details">
-          <div class="account-details">
-            <p>A/c. No.: 917020061582687<br>IFSC CODE : UTIB0001842</p>
-          </div>
-          <div class="certification-text">
-            <p>We hereby certify that original registration certificate under the CGST Act, 2017 is in force on the date on which the tax has been paid/payable by/to us on the goods specified in the Tax invoice & made as per the particulars given above.</p>
-          </div>
-          <div class="company-name-right">
-            <p>For OMKAR GOLD COVERING</p>
-          </div>
-        </div>
-        
-        <div class="signature-area">
-          <div class="signature-box customer-sign">
-            <p>Customer Sign</p>
-          </div>
-          <div class="signature-box center-sign">
-            <p>E. & O.E.<br>Thank You !</p>
-          </div>
-          <div class="signature-box auth-sign">
-            <p>Auth. Sign</p>
-          </div>
+        </table>        <div class="company-name-right-ngst">
+          For Sen Jeweller
         </div>
       </div>
       <script>

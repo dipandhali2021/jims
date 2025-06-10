@@ -178,7 +178,7 @@ export default function SignIn() {
             <Gem className="h-6 w-6 text-yellow-600" />
           </div>
           <CardTitle className="text-2xl font-bold text-center">
-            Welcome to Omkar Gold Covering
+            Welcome to Sen Jeweller
           </CardTitle>
           <CardDescription className="text-center">
             {!needsFaceVerification 

@@ -5,27 +5,48 @@ A comprehensive jewelry shop management system built with Next.js, featuring rol
 ## Implemented Features
 
 ### 1. User Management 👥
-The system implements role-based access control (RBAC) with two user types:
-- **Admin (Owner)**: Full control over inventory and sales approval
-- **Shopkeeper (Worker)**: Can browse products and create sales requests
+The system implements role-based access control (RBAC) with enhanced admin capabilities:
+- **Admin (Owner)**
+  - 🔐 Full system control
+  - 👤 User role management
+  - 📝 Action logging
+  - 🔄 Role modification
+  - 🚫 User deletion
+  - 👁️ Face authentication (upcoming)
+- **Shopkeeper (Worker)**
+  - 🛍️ Browse products
+  - 📋 Create sales requests
+  - 📦 View inventory
 
 Additional user features:
 - 🔐 Google Sign-In integration
 - ⭐ Premium subscription system
 - 👤 User profile management
+- 📝 Activity logging
 
 ### 2. Product Management 💎
 Products are managed with jewelry-specific attributes:
 - 📦 Product ID tracking
-- 📝 Detailed product information (name, description, category)
+- 📝 Detailed product information
 - 🏷️ Material specification
 - 💰 Price and stock management
 - 🖼️ Image support
 - 📊 Automated inventory tracking
 - ⚠️ Low stock threshold alerts
-- 📋 Product request workflow (Add/Edit/Delete)
+- 📋 Product request workflow
 
-### 3. Sales Management 💫
+### 3. Long Set Product Management 💍
+Specialized system for managing complex jewelry sets:
+- 📦 Multi-part product tracking
+- 👨‍🔧 Karigar (artisan) assignment per part
+- 💰 Individual part cost tracking
+- 📊 Consolidated pricing
+- 🔄 Inventory synchronization
+- 📝 Detailed part descriptions
+- 🏷️ SKU management for sets
+- 📈 Part-wise progress tracking
+
+### 4. Sales Management 💫
 Comprehensive sales handling system:
 - 🛍️ Single/bulk sales request creation
 - 👥 Customer information tracking
@@ -33,9 +54,60 @@ Comprehensive sales handling system:
 - 🧮 Automated total value calculation
 - 📈 Sales analytics and reporting
 - 📜 Complete transaction history
-- 🏷️ Unique request ID generation (Format: SR-YYYY-XXXX)
+- 🏷️ Unique request ID generation
+- 💳 Payment tracking
 
-### 4. Notification System 🔔
+### 5. Khata Book System 📒
+Comprehensive financial tracking for traders and artisans:
+- 👥 Vyapari (Trader) management
+- 👨‍🎨 Karigar (Artisan) management
+- 💳 Payment tracking and approvals
+- 📋 Transaction records
+- 💼 Balance sheet management
+- 🔄 Automatic balance updates
+- 📱 Mobile-friendly interface
+- ✅ Multi-level approval system
+- 📊 Financial analytics
+- 🔍 Transaction history search
+- 💰 Outstanding balance tracking
+- 📅 Payment schedule management
+
+### 6. Advanced Billing System 🧾
+Automated billing with GST support:
+- 🏷️ GST/Non-GST bill generation
+- 📊 SGST/CGST/IGST calculation
+- 🏢 Business details management
+- 📝 HSN code support
+- 🚛 Transport details tracking
+- 💼 Place of supply tracking
+- 🔄 Automatic numbering
+- 📱 Mobile-friendly printing
+- 📨 Email bill option
+- 💾 PDF generation
+- 🔍 Bill search and filtering
+- 📁 Bill archiving
+
+### 7. Enhanced Dashboards 📊
+Multiple specialized dashboards:
+- **Inventory Dashboard**
+  - 📦 Stock level monitoring
+  - ⚠️ Low stock alerts
+  - 📈 Stock trend analysis
+  - 🔄 Reorder suggestions
+  
+- **Sales Dashboard**
+  - 💰 GST/Non-GST sale filtering
+  - 📊 Revenue analytics
+  - 📈 Sales trends
+  - 🎯 Target tracking
+  
+- **Khata Book Dashboard**
+  - 💳 Payment tracking
+  - 📊 Balance analytics
+  - 🔄 Transaction history
+  - 📈 Payment trends
+
+### 8. Notification System 🔔
 Real-time notifications for:
 - 📫 Sales request status updates
 - 🆕 New request notifications
@@ -67,6 +139,52 @@ flowchart TD
     style C fill:#bbf,stroke:#333
     style H fill:#dfd,stroke:#333
     style K fill:#ffd,stroke:#333
+```
+
+### Long Set Product Workflow
+```mermaid
+flowchart TD
+    A[Admin] -->|Creates| B[Long Set Product]
+    B -->|Defines| C[Product Parts]
+    C -->|Assigns| D[Karigar]
+    D -->|Updates| E[Part Status]
+    E -->|Tracks| F[Completion]
+    F -->|Updates| G[Inventory]
+    G -->|Enables| H[Sales]
+    
+    I[Karigar] -->|Views| J[Assigned Parts]
+    J -->|Updates| K[Work Status]
+    K -->|Notifies| A
+    
+    style A fill:#bbf,stroke:#333
+    style I fill:#f9f,stroke:#333
+    style F fill:#dfd,stroke:#333
+    style H fill:#ffd,stroke:#333
+```
+
+### Khata Book Workflow
+```mermaid
+flowchart TD
+    A[Admin] -->|Manages| B{Entity Type}
+    B -->|Trader| C[Vyapari]
+    B -->|Artisan| D[Karigar]
+    
+    C -->|Records| E[Transactions]
+    D -->|Records| F[Transactions]
+    
+    E & F -->|Requires| G[Approval]
+    G -->|Updates| H[Balance]
+    
+    C & D -->|Makes| I[Payments]
+    I -->|Updates| H
+    
+    H -->|Generates| J[Reports]
+    J -->|Shows| K[Analytics]
+    
+    style A fill:#bbf,stroke:#333
+    style B fill:#ffd,stroke:#333
+    style G fill:#f9f,stroke:#333
+    style K fill:#dfd,stroke:#333
 ```
 
 ### Sales Request Workflow
@@ -112,6 +230,7 @@ flowchart LR
 - Node.js (v14 or later)
 - PostgreSQL database
 - NPM or Yarn
+- Modern web browser
 
 ### Installation
 
@@ -149,7 +268,8 @@ npm run dev
 - **API**: Next.js API routes
 - **Analytics**: Built-in sales and inventory analytics
 - **Authentication**: NextAuth.js with Google Sign-In
+- **Styling**: Tailwind CSS and Shadcn UI
 
 ## License
 
-This project is licensed under the MIT License.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
